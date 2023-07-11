@@ -1,3 +1,4 @@
+# zmodload zsh/zprof
 
 TRAPUSR1() {
   if [ "$scheme" = "night" ];then
@@ -69,7 +70,7 @@ source $ZSH/oh-my-zsh.sh
 
 plugs=(
     "zap-zsh/supercharge"
-    "zap-zsh/nvm"
+    # "zap-zsh/nvm"
     "zsh-users/zsh-autosuggestions"
     "zsh-users/zsh-syntax-highlighting"
     # "zap-zsh/zap-prompt"
@@ -86,6 +87,7 @@ plugs=(
     # "chrishrb/zsh-kubectl"
     "hlissner/zsh-autopair"
     "MAHcodes/distro-prompt"
+    "MichaelAquilina/zsh-you-should-use"
     # "MichaelAquilina/zsh-autoswitch-virtualenv"
 
 
@@ -475,3 +477,4 @@ case ":$PATH:" in
   *) export PATH="$PNPM_HOME:$PATH" ;;
 esac
 # pnpm end
+# zprof
