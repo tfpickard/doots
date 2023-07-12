@@ -464,12 +464,13 @@ which starship >/dev/null 2>&1 || \
 eval "$(starship init zsh)"
 
 
-
+fpath=(~/./zsh/completion $fpath)
 autoload -U compinit; compinit
 
 export USE_GKE_GCLOUD_AUTH_PLUGIN=True
 # [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-
+[[ -f ~/.config/netclient/completions.zsh ]] \
+    && source ~/.config/netclient/completions.zsh
 # pnpm
 export PNPM_HOME="/home/tom/.local/share/pnpm"
 case ":$PATH:" in
