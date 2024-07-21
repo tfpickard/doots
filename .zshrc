@@ -32,6 +32,7 @@ __Prompt[ITALIC_OFF]=$'\e[23m'
 export ZSH="$HOME/.oh-my-zsh"
 export ZSH_CUSTOM="$ZSH/custom"
 
+export PATH="/opt/homebrew/bin/:$PATH"
 export PATH="$HOME/.local/bin:$PATH"
 export PATH="$HOME/.cargo/bin:$PATH"
 export EDITOR=nvim
@@ -45,15 +46,17 @@ ZSH_TMUX_DEFAULT_SESSION_NAME=${ZSH_TMUX_DEFAULT_SESSION_NAME:-"tmux-$ts"}
 ZSH_TMUX_UNICODE=true
 # Plugins 
 plugins=(
-    autoswitch_virtualenv
-    archlinux
+    # autoswitch_virtualenv
+#    archlinux
     # autoenv 
     # azure 
     # gh
     git 
-    #git-extras gitfast 
-    nmap sudo systemd
+    #git-extras 
+    gitfast 
+    nmap sudo #systemd
     tmux vi-mode
+macos
 )
 [[ -d $ZSH ]] || \
     sh -c "$(curl -fsSL \
@@ -74,19 +77,19 @@ plugs=(
     "zsh-users/zsh-autosuggestions"
     "zsh-users/zsh-syntax-highlighting"
     # "zap-zsh/zap-prompt"
-    # "zap-zsh/completions"
-    "esc/conda-zsh-completion"
+    "zap-zsh/completions"
+    # "esc/conda-zsh-completion"
     # "gerges/oh-my-zsh-jira-plus"
     "Freed-Wu/fzf-tab-source"
     "Aloxaf/fzf-tab"
-    "alexiszamanidis/zsh-git-fzf"
+    # "alexiszamanidis/zsh-git-fzf"
     # "ltj/gitgo"
     # "wintermi/zsh-gcloud"
     # "wintermi/zsh-starship"
     # "wintermi/zsh-rust"
     # "chrishrb/zsh-kubectl"
     "hlissner/zsh-autopair"
-    "MAHcodes/distro-prompt"
+    # "MAHcodes/distro-prompt"
     "MichaelAquilina/zsh-you-should-use"
     # "MichaelAquilina/zsh-autoswitch-virtualenv"
 
