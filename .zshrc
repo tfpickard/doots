@@ -48,7 +48,7 @@ znap install aureliojargas/clitest \
     zsh-users/zsh-completions \
     zsh-users/zsh-history-substring-search \
     hlissner/zsh-autopair \
-    MichaelAquilina/zsh-autoswitch-virtualenv 
+    # MichaelAquilina/zsh-autoswitch-virtualenv 
     # Freed-Wu/fzf-tab-source \
     # Aloxaf/fzf-tab \
     
@@ -148,9 +148,15 @@ znap eval   marlonrichert/zcolors "zcolors ${(q)LS_COLORS}"
 # For each of the examples below, the `eval` statement on the right is not
 # executed until you try to execute the associated command or try to use
 # completion on it.
+export pyenv_root="$home/.pyenv"
+export pyenv_virtualenvwrapper_prefer_pyvenv="true"
+export project_home=$home/src
+command -v pyenv >/dev/null || export PATH="$PATH:$pyenv_root/bin"
+eval "$(pyenv init -)"
+source ~/.pyenv/completions/pyenv.zsh
 
-znap function _pyenv pyenv              'eval "$( pyenv init - --no-rehash )"'
-compctl -K    _pyenv pyenv
+# znap function _pyenv pyenv              'eval "$( pyenv init - --no-rehash )"'
+# compctl -K    _pyenv pyenv
 
 znap function _pip_completion pip       'eval "$( pip completion --zsh )"'
 compctl -K    _pip_completion pip
@@ -163,7 +169,6 @@ znap function _pipenv pipenv            'eval "$( pipenv --completion )"'
 compdef       _pipenv pipenv
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
-[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 [[ -f ~/.aliases ]] && source ~/.aliases
 [[ -f ~/.functions ]] && source ~/.functions
@@ -174,3 +179,4 @@ compdef       _pipenv pipenv
 export NVM_DIR="$HOME/.config/nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
