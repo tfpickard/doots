@@ -59,7 +59,7 @@ znap eval iterm2 'curl -fsSL https://iterm2.com/shell_integration/zsh'
 # You can also choose to load one or more files specifically:
     
 ZSH_TMUX_AUTOSTART=${ZSH_TMUX_AUTOSTART:-true}
-ZSH_TMUX_AUTOSTART=${ZSH_TMUX_AUTOCONNECT:-true}
+ZSH_TMUX_AUTOCONNECT=${ZSH_TMUX_AUTOCONNECT:-true}
 ts=$(date +"%m-%d-%yT%H:%M:%S")
 ZSH_TMUX_DEFAULT_SESSION_NAME=${ZSH_TMUX_DEFAULT_SESSION_NAME:-"tmux-$ts"}
 ZSH_TMUX_UNICODE=true
@@ -145,18 +145,16 @@ znap eval   marlonrichert/zcolors "zcolors ${(q)LS_COLORS}"
 # `znap function`.
 #
 
+
+
+
+
+# export WORKON_HOME="$HOME/.virtualenvs"
+
 # For each of the examples below, the `eval` statement on the right is not
 # executed until you try to execute the associated command or try to use
 # completion on it.
-export pyenv_root="$home/.pyenv"
-export pyenv_virtualenvwrapper_prefer_pyvenv="true"
-export project_home=$home/src
-command -v pyenv >/dev/null || export PATH="$PATH:$pyenv_root/bin"
-eval "$(pyenv init -)"
-source ~/.pyenv/completions/pyenv.zsh
 
-# znap function _pyenv pyenv              'eval "$( pyenv init - --no-rehash )"'
-# compctl -K    _pyenv pyenv
 
 znap function _pip_completion pip       'eval "$( pip completion --zsh )"'
 compctl -K    _pip_completion pip
@@ -180,3 +178,18 @@ export NVM_DIR="$HOME/.config/nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+
+# pnpm
+export PNPM_HOME="/home/tom/.local/share/pnpm"
+case ":$PATH:" in
+  *":$PNPM_HOME:"*) ;;
+  *) export PATH="$PNPM_HOME:$PATH" ;;
+esac
+# pnpm endw
+
+export PYENV_ROOT="$HOME/.pyenv"
+export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init -)"
+export WORKON_HOME="$HOME/.virtualenvs"
+export PIP_VIRTUALENV_BASE="$WORKON_HOME"
+pyenv virtualenvwrapper_lazy
