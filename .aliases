@@ -1,0 +1,10 @@
+alias bfm="idf.py build flash monitor"
+alias b="idf.py build"
+alias m="idf.py monitor"
+
+alias less="less -R"
+alias cvim="nvim --clean"
+
+alias gcap="git commit -a \
+    && for i in 5 4 3 2 1; do printf \"\rpushing in %s...\" $i; sleep .5; done \
+    && git push"
