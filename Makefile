@@ -23,5 +23,5 @@ links:
 		echo ls -la $$HOME/$$f; \
 	done
 	ln -sf $$PWD/.config/nvim $$HOME/.config/nvim
-	# ln -s $$PWD/.zshrc $$HOME/.zshrc
+	ln -s $$PWD/.zshrc $$HOME/.zshrc
 all: nvim links
