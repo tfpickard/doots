@@ -29,6 +29,12 @@ local opts = {
 	silent = true,
 }
 
+-- Custom Key Mappings
+keymap.set("i", "kj", "<Esc>", opts)
+keymap.set("i", "jk", "<Esc>", opts)
+keymap.set("n", "<C-s>", ":w<CR>", opts)
+keymap.set("n", "<C-q>", ":q<CR>", opts)
+
 -- Window Navigation
 keymap.set("n", "<C-h>", "<C-w>h", opts) -- Left
 keymap.set("n", "<C-j>", "<C-w>j", opts) -- Down
