@@ -1,4 +1,3 @@
-return {
 	{
 		"williamboman/mason.nvim",
 		opts = {
@@ -235,3 +234,5 @@ vim.api.nvim_create_autocmd("LspAttach", {
 		})
 	end,
 })
+
+return {
