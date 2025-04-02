@@ -59,6 +59,7 @@ znap eval iterm2 'curl -fsSL https://iterm2.com/shell_integration/zsh'
 # You can also choose to load one or more files specifically:
     
 ZSH_TMUX_AUTOSTART=${ZSH_TMUX_AUTOSTART:-true}
+ZSH_TMUX_AUTOSTART=true
 ZSH_TMUX_AUTOCONNECT=${ZSH_TMUX_AUTOCONNECT:-true}
 ts=$(date +"%m-%d-%yT%H:%M:%S")
 ZSH_TMUX_DEFAULT_SESSION_NAME=${ZSH_TMUX_DEFAULT_SESSION_NAME:-"tmux-$ts"}
@@ -193,3 +194,22 @@ eval "$(pyenv init -)"
 export WORKON_HOME="$HOME/.virtualenvs"
 export PIP_VIRTUALENV_BASE="$WORKON_HOME"
 pyenv virtualenvwrapper_lazy
+
+which lsd 2>&1 >/dev/null && alias ls=lsd
+
+# >>> conda initialize >>>
+# !! Contents within this block are managed by 'conda init' !!
+__conda_setup="$('/opt/homebrew/Caskroom/miniconda/base/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
+if [ $? -eq 0 ]; then
+    eval "$__conda_setup"
+else
+    if [ -f "/opt/homebrew/Caskroom/miniconda/base/etc/profile.d/conda.sh" ]; then
+        . "/opt/homebrew/Caskroom/miniconda/base/etc/profile.d/conda.sh"
+    else
+        export PATH="/opt/homebrew/Caskroom/miniconda/base/bin:$PATH"
+    fi
+fi
+unset __conda_setup
+# <<< conda initialize <<<
+
+[[ -z $TMUX ]] && exec tmux

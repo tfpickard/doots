@@ -1,3 +1,56 @@
+-- Function to toggle diagnostics visibility
+local diagnostics_visible = true
+function ToggleDiagnostics()
+	diagnostics_visible = not diagnostics_visible
+	if diagnostics_visible then
+		vim.diagnostic.show()
+	else
+		vim.diagnostic.hide()
+	end
+end
+
+-- Function to display LSP status in the status line
+function LspStatus()
+	local clients = vim.lsp.get_active_clients()
+	if next(clients) == nil then
+		return "No LSP"
+	end
+	local buf_ft = vim.api.nvim_buf_get_option(0, "filetype")
+	for _, client in ipairs(clients) do
+		local filetypes = client.config.filetypes
+		if filetypes and vim.fn.index(filetypes, buf_ft) ~= -1 then
+			return client.name
+		end
+	end
+	return "No LSP"
+end
+
+vim.api.nvim_create_autocmd("LspAttach", {
+	group = vim.api.nvim_create_augroup("UserLspConfig", {}),
+	callback = function()
+		local wk = require("which-key")
+
+		wk.add({
+			{ "<leader>l", group = "+LSP" },
+			{ "<leader>ld", vim.lsp.buf.definition, desc = "Definition" },
+			{ "<leader>lD", vim.lsp.buf.declaration, desc = "Declaration" },
+			{ "<leader>lR", vim.lsp.buf.references, desc = "References" },
+			{ "<leader>li", vim.lsp.buf.implementation, desc = "Implementations" },
+			{ "<leader>lt", vim.lsp.buf.type_definition, desc = "Type Definition" },
+			{ "<leader>ls", vim.lsp.buf.signature_help, desc = "Signature Help" },
+			{ "<leader>lh", vim.lsp.buf.hover, desc = "Hover Documentation" },
+			{ "<leader>la", vim.lsp.buf.code_action, desc = "Code Action" },
+			{ "<leader>lf", vim.lsp.buf.format, desc = "Format" },
+			{ "<leader>lj", vim.diagnostic.goto_next, desc = "Next Diagnostic" },
+			{ "<leader>lk", vim.diagnostic.goto_prev, desc = "Prev Diagnostic" },
+			{ "<leader>lF", vim.diagnostic.open_float, desc = "Float Diagnostic" },
+			{ "<leader>lr", vim.lsp.buf.rename, desc = "Rename" },
+			{ "<leader>lt", ToggleDiagnostics, desc = "Toggle Diagnostics" },
+		})
+	end,
+})
+
+return {
 	{
 		"williamboman/mason.nvim",
 		opts = {
@@ -182,57 +235,3 @@
 		end,
 	},
 }
-
--- Function to toggle diagnostics visibility
-local diagnostics_visible = true
-function ToggleDiagnostics()
-	diagnostics_visible = not diagnostics_visible
-	if diagnostics_visible then
-		vim.diagnostic.show()
-	else
-		vim.diagnostic.hide()
-	end
-end
-
--- Function to display LSP status in the status line
-function LspStatus()
-	local clients = vim.lsp.get_active_clients()
-	if next(clients) == nil then
-		return "No LSP"
-	end
-	local buf_ft = vim.api.nvim_buf_get_option(0, "filetype")
-	for _, client in ipairs(clients) do
-		local filetypes = client.config.filetypes
-		if filetypes and vim.fn.index(filetypes, buf_ft) ~= -1 then
-			return client.name
-		end
-	end
-	return "No LSP"
-end
-
-vim.api.nvim_create_autocmd("LspAttach", {
-	group = vim.api.nvim_create_augroup("UserLspConfig", {}),
-	callback = function()
-		local wk = require("which-key")
-
-		wk.add({
-			{ "<leader>l", group = "+LSP" },
-			{ "<leader>ld", vim.lsp.buf.definition, desc = "Definition" },
-			{ "<leader>lD", vim.lsp.buf.declaration, desc = "Declaration" },
-			{ "<leader>lR", vim.lsp.buf.references, desc = "References" },
-			{ "<leader>li", vim.lsp.buf.implementation, desc = "Implementations" },
-			{ "<leader>lt", vim.lsp.buf.type_definition, desc = "Type Definition" },
-			{ "<leader>ls", vim.lsp.buf.signature_help, desc = "Signature Help" },
-			{ "<leader>lh", vim.lsp.buf.hover, desc = "Hover Documentation" },
-			{ "<leader>la", vim.lsp.buf.code_action, desc = "Code Action" },
-			{ "<leader>lf", vim.lsp.buf.format, desc = "Format" },
-			{ "<leader>lj", vim.diagnostic.goto_next, desc = "Next Diagnostic" },
-			{ "<leader>lk", vim.diagnostic.goto_prev, desc = "Prev Diagnostic" },
-			{ "<leader>lF", vim.diagnostic.open_float, desc = "Float Diagnostic" },
-			{ "<leader>lr", vim.lsp.buf.rename, desc = "Rename" },
-			{ "<leader>lt", ToggleDiagnostics, desc = "Toggle Diagnostics" },
-		})
-	end,
-})
-
-return {

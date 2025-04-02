@@ -24,4 +24,26 @@ links:
 	done
 	ln -sf $$PWD/.config/nvim $$HOME/.config/nvim
 	ln -s $$PWD/.zshrc $$HOME/.zshrc
+PYTHON_VERSION ?= 3.12.2
+VENV_NAME ?= myenv
+PROJECT_DIR ?= $(CURDIR)/$(VENV_NAME)
+
+pyenv-setup:
+	@echo "🔧 Setting up Python $(PYTHON_VERSION) via pyenv"
+	pyenv install -s $(PYTHON_VERSION)
+	pyenv virtualenv $(PYTHON_VERSION) $(VENV_NAME)
+	@echo "📁 Creating project directory: $(PROJECT_DIR)"
+	mkdir -p $(PROJECT_DIR)
+	@echo "⚙️  Initializing virtualenv in project dir"
+	echo "pyenv activate $(VENV_NAME)" > $(PROJECT_DIR)/.venv-activate
+	@echo "✅ Done! To activate, run: 'pyenv activate $(VENV_NAME)'"
+
+pyenv-wrapper-setup:
+	@echo "🔌 Configuring pyenv-virtualenvwrapper plugin"
+	@echo 'export PYENV_VIRTUALENVWRAPPER_PREFER_PYVENV="true"' >> ~/.bashrc
+	@echo 'eval "$$(pyenv init -)"' >> ~/.bashrc
+	@echo 'eval "$$(pyenv virtualenv-init -)"' >> ~/.bashrc
+	@echo 'export WORKON_HOME="$$HOME/.virtualenvs"' >> ~/.bashrc
+	@echo 'source "$$(pyenv root)/plugins/pyenv-virtualenvwrapper/etc/bashrc"' >> ~/.bashrc
+	@echo "💡 Restart your shell or run 'source ~/.bashrc'"
 all: nvim links

@@ -1,0 +1,67 @@
+# Synthwave Outrun Edition – Ghostty Config
+# By Dirty Mutha Mustard’s request.
+
+confirm-close-surface = false
+copy-on-select = true
+bold-is-bright = true
+minimum-contrast = 4.5
+
+# Theme — override colors below if this is set
+# theme = tokyonight_night
+theme = starlight
+
+# Font & visuals
+# font-family = FiraCode Nerd Font
+# font-family = JetBrainsMono Nerd Font
+font-family = SF Mono Nerd Font
+
+font-size = 13
+
+# Background + Foreground
+background = #0b0618
+foreground = #eaeaea
+
+# Cursor vibes
+cursor-color = #ff5c8a
+cursor-text = #0b0618
+cursor-invert-fg-bg = true
+# cursor-shape = beam
+cursor-opacity = 0.85
+
+# Selection
+selection-background = #5c1a72
+selection-foreground = #ffffff
+
+# Palette (neon city lights)
+palette = 0=#1c1c1c  
+palette = 1=#ff005f  
+palette = 2=#00ff9c  
+palette = 3=#faff00  
+palette = 4=#00bfff  
+palette = 5=#ff2d95  
+palette = 6=#00ffee  
+palette = 7=#eaeaea  
+palette = 8=#505050  
+palette = 9=#ff2d95  
+palette = 10=#00ffaa 
+palette = 11=#ffff66 
+palette = 12=#5fd7ff 
+palette = 13=#ff6ec7 
+palette = 14=#5fffff  
+palette = 15=#ffffff  
+
+# Behavior Tweaks
+mouse-hide-while-typing = true
+focus-follows-mouse = true
+
+# Auto updates — keep it fresh
+auto-update = download
+auto-update-channel = tip
+
+# Transparency
+background-opacity = 0.93
+
+# Start in tmux
+command = zsh --login -c "if command -v tmux >/dev/null 2>&1; then tmux attach || tmux; else zsh; fi"
+window-padding-x = 4,2
+window-padding-y = 6,0
