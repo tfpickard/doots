@@ -43,21 +43,21 @@ This project is highly configurable. In fact, it's so configurable that you migh
 
 ## Neovim Configuration
 
-The Neovim setup is a delightful concoction of plugins and custom settings designed to make your coding experience as smooth as a freshly buttered slide. Here's a breakdown of the key components:
+The Neovim setup is a dope concoction of plugins and custom settings designed to make your coding experience as smooth as a freshly buttered slide. Here's a breakdown of the key components:
 
-- **Plugin Management**: Managed by `lazy.nvim`, ensuring that all plugins are loaded efficiently. The configuration is modular, with each plugin having its own setup file in `.config/nvim/lua/plugins/`.
+- **Plugin Management**: Managed by `lazy.nvim`, ensuring that all plugins are loaded in a sick way. The configuration is modular, with each plugin having its own setup file in `.config/nvim/lua/plugins/`.
 
-- **Syntax Highlighting**: Powered by `nvim-treesitter`, which provides advanced syntax highlighting and code understanding. This is configured in `treesitter.lua` to ensure all necessary languages are supported.
+- **Syntax Highlighting**: Powered by `nvim-treesitter`, which provides sick syntax highlighting and code understanding. This is configured in `treesitter.lua` to ensure all necessary languages are supported.
 
-- **Autocompletion**: Handled by `nvim-cmp`, with sources configured for LSP, buffer, and path completions. The setup in `completion.lua` ensures a seamless typing experience with intelligent suggestions.
+- **Autocompletion**: Handled by `nvim-cmp`, with sources configured for LSP, buffer, and path completions. The setup in `completion.lua` ensures a seamless typing experience with dope suggestions.
 
-- **Status Line**: `lualine.nvim` is used for a customizable and informative status line. The configuration in `lualine.lua` includes sections for mode, diagnostics, and more, all styled with the `fluoromachine` theme.
+- **Status Line**: `lualine.nvim` is used for a customizable and informative status line. The configuration in `lualine.lua` includes sections for mode, diagnostics, and more, all styled with the sick `fluoromachine` theme.
 
-- **File Explorer**: `nvim-tree.lua` provides a sidebar file explorer, configured to integrate smoothly with the rest of the setup.
+- **File Explorer**: `nvim-tree.lua` provides a sidebar file explorer, configured to integrate in a dope way with the rest of the setup.
 
-- **LSP Configuration**: Managed by `mason.nvim` and `mason-lspconfig.nvim`, which automate the installation and configuration of language servers. The `lspconfig.lua` file includes custom keybindings for LSP actions.
+- **LSP Configuration**: Managed by `mason.nvim` and `mason-lspconfig.nvim`, which automate the installation and configuration of language servers. The `lspconfig.lua` file includes custom keybindings for sick LSP actions.
 
-- **Additional Features**: Includes `which-key.nvim` for keybinding hints, `telescope.nvim` for fuzzy finding, and `gitsigns.nvim` for Git integration.
+- **Additional Features**: Includes `which-key.nvim` for keybinding hints, `telescope.nvim` for fuzzy finding, and `gitsigns.nvim` for dope Git integration.
 
 The configuration files are located in `.config/nvim/lua/plugins/` and are organized by functionality, such as `completion.lua` for autocompletion settings and `lualine.lua` for status line customization. Each file is meticulously crafted to ensure a cohesive and efficient development environment.
 
