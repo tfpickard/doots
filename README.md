@@ -8,8 +8,12 @@ Welcome to the most fascinating project you'll ever encounter. This repository i
 2. [Installation](#installation)
 3. [Usage](#usage)
 4. [Configuration](#configuration)
-5. [Contributing](#contributing)
-6. [License](#license)
+5. [Neovim Configuration](#neovim-configuration)
+6. [Hyprland Configuration](#hyprland-configuration)
+7. [Zsh Configuration](#zsh-configuration)
+8. [Tmux Configuration](#tmux-configuration)
+9. [Contributing](#contributing)
+10. [License](#license)
 
 ## Introduction
 
@@ -36,6 +40,22 @@ Once installed, you can use this project to do... things. Important things. Thin
 ## Configuration
 
 This project is highly configurable. In fact, it's so configurable that you might spend more time configuring it than actually using it. But that's part of the fun, right?
+
+## Neovim Configuration
+
+The Neovim setup is a delightful concoction of plugins and custom settings designed to make your coding experience as smooth as a freshly buttered slide. Key plugins include `nvim-treesitter` for syntax highlighting, `nvim-cmp` for autocompletion, and `lualine.nvim` for a sleek status line. The configuration files are located in `.config/nvim/lua/plugins/` and are organized by functionality, such as `completion.lua` for autocompletion settings and `lualine.lua` for status line customization.
+
+## Hyprland Configuration
+
+Hyprland is configured to provide a visually appealing and efficient window management experience. The configuration files are located in `.config/hypr/conf/` and include settings for window decorations, animations, and keybindings. The `autostart.conf` file ensures that essential services and applications are launched at startup, while `keybindings/default.conf` defines the keyboard shortcuts for window management and application launching.
+
+## Zsh Configuration
+
+The Zsh setup is powered by `oh-my-zsh` and `powerlevel10k`, providing a visually stunning and highly functional command line interface. The configuration is defined in `.zshrc`, which includes plugin management via `znap` and custom keybindings for efficient navigation. The `p10k.zsh` file contains the theme settings for `powerlevel10k`, allowing you to customize the appearance of your prompt to your heart's content.
+
+## Tmux Configuration
+
+Tmux is configured to enhance your terminal multiplexing experience with a vibrant color scheme and intuitive keybindings. The configuration file `.tmux.conf` includes settings for window and pane management, as well as plugins for additional functionality. The `tpm` (Tmux Plugin Manager) is used to manage plugins, ensuring that your Tmux setup is both powerful and easy to maintain.
 
 ## Contributing
 
