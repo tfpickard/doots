@@ -13,9 +13,10 @@ theme = starlight
 # Font & visuals
 # font-family = FiraCode Nerd Font
 # font-family = JetBrainsMono Nerd Font
-font-family = SF Mono Nerd Font
+# font-family = SF Mono Nerd Font
+font-family = CaskaydiaCove Nerd Font Mono
 
-font-size = 13
+font-size = 16
 
 # Background + Foreground
 background = #0b0618
@@ -65,3 +66,266 @@ background-opacity = 0.93
 command = zsh --login -c "if command -v tmux >/dev/null 2>&1; then tmux attach || tmux; else zsh; fi"
 window-padding-x = 4,2
 window-padding-y = 6,0
+
+# Andale Mono
+#   Andale Mono
+#
+# CaskaydiaCove Nerd Font Mono
+#   CaskaydiaCove NFM Bold
+#   CaskaydiaCove NFM Bold Italic
+#   CaskaydiaCove NFM ExtraLight
+#   CaskaydiaCove NFM ExtraLight Italic
+#   CaskaydiaCove NFM Italic
+#   CaskaydiaCove NFM Light
+#   CaskaydiaCove NFM Light Italic
+#   CaskaydiaCove NFM Regular
+#   CaskaydiaCove NFM SemiBold
+#   CaskaydiaCove NFM SemiBold Italic
+#   CaskaydiaCove NFM SemiLight
+#   CaskaydiaCove NFM SemiLight Italic
+#
+# CaskaydiaMono Nerd Font Mono
+#   CaskaydiaMono NFM Bold
+#   CaskaydiaMono NFM Bold Italic
+#   CaskaydiaMono NFM ExtraLight
+#   CaskaydiaMono NFM ExtraLight Italic
+#   CaskaydiaMono NFM Italic
+#   CaskaydiaMono NFM Light
+#   CaskaydiaMono NFM Light Italic
+#   CaskaydiaMono NFM Regular
+#   CaskaydiaMono NFM SemiBold
+#   CaskaydiaMono NFM SemiBold Italic
+#   CaskaydiaMono NFM SemiLight
+#   CaskaydiaMono NFM SemiLight Italic
+#
+# Courier New
+#   Courier New
+#   Courier New Bold
+#   Courier New Bold Italic
+#   Courier New Italic
+#
+# FiraCode Nerd Font Mono
+#   FiraCode Nerd Font Mono Bold
+#   FiraCode Nerd Font Mono Light
+#   FiraCode Nerd Font Mono Med
+#   FiraCode Nerd Font Mono Reg
+#   FiraCode Nerd Font Mono Ret
+#   FiraCode Nerd Font Mono SemBd
+#
+# GoMono Nerd Font
+#   GoMono Nerd Font
+#   GoMono Nerd Font Bold
+#   GoMono Nerd Font Bold Italic
+#   GoMono Nerd Font Italic
+#
+# GoMono Nerd Font Mono
+#   GoMono Nerd Font Mono
+#   GoMono Nerd Font Mono Bold
+#   GoMono Nerd Font Mono Bold Italic
+#   GoMono Nerd Font Mono Italic
+#
+# Hasklug Nerd Font
+#   Hasklug Nerd Font
+#   Hasklug Nerd Font Black
+#   Hasklug Nerd Font Black Italic
+#   Hasklug Nerd Font Bold
+#   Hasklug Nerd Font ExtLt
+#   Hasklug Nerd Font ExtLt Italic
+#   Hasklug Nerd Font Light
+#   Hasklug Nerd Font Med
+#   Hasklug Nerd Font SemBd
+#
+# Hasklug Nerd Font Mono
+#   Hasklug Nerd Font Mono
+#   Hasklug Nerd Font Mono Black
+#   Hasklug Nerd Font Mono Black Italic
+#   Hasklug Nerd Font Mono Bold
+#   Hasklug Nerd Font Mono Bold Italic
+#   Hasklug Nerd Font Mono ExtLt
+#   Hasklug Nerd Font Mono ExtLt Italic
+#   Hasklug Nerd Font Mono Italic
+#   Hasklug Nerd Font Mono Light
+#   Hasklug Nerd Font Mono Light Italic
+#   Hasklug Nerd Font Mono Med
+#   Hasklug Nerd Font Mono Med Italic
+#   Hasklug Nerd Font Mono SemBd
+#   Hasklug Nerd Font Mono SemBd Italic
+#
+# Inconsolata Nerd Font Mono
+#   Inconsolata Nerd Font Mono Bold
+#   Inconsolata Nerd Font Mono Regular
+#
+# Iosevka Nerd Font Mono
+#   Iosevka NFM
+#   Iosevka NFM Bold
+#   Iosevka NFM Bold Italic
+#   Iosevka NFM Bold Oblique
+#   Iosevka NFM ExtraBold
+#   Iosevka NFM ExtraBold Italic
+#   Iosevka NFM ExtraBold Oblique
+#   Iosevka NFM ExtraLight
+#   Iosevka NFM ExtraLight Italic
+#   Iosevka NFM ExtraLight Oblique
+#   Iosevka NFM Heavy
+#   Iosevka NFM Heavy Italic
+#   Iosevka NFM Heavy Oblique
+#   Iosevka NFM Italic
+#   Iosevka NFM Light
+#   Iosevka NFM Light Italic
+#   Iosevka NFM Light Oblique
+#   Iosevka NFM Medium
+#   Iosevka NFM Medium Italic
+#   Iosevka NFM Medium Oblique
+#   Iosevka NFM Oblique
+#   Iosevka NFM SemiBold
+#   Iosevka NFM SemiBold Italic
+#   Iosevka NFM SemiBold Oblique
+#   Iosevka NFM Thin
+#   Iosevka NFM Thin Italic
+#   Iosevka NFM Thin Oblique
+#
+# JetBrainsMono Nerd Font Mono
+#   JetBrainsMono NFM Bold
+#   JetBrainsMono NFM Bold Italic
+#   JetBrainsMono NFM ExtraBold
+#   JetBrainsMono NFM ExtraBold Italic
+#   JetBrainsMono NFM ExtraLight
+#   JetBrainsMono NFM ExtraLight Italic
+#   JetBrainsMono NFM Italic
+#   JetBrainsMono NFM Light
+#   JetBrainsMono NFM Light Italic
+#   JetBrainsMono NFM Medium
+#   JetBrainsMono NFM Medium Italic
+#   JetBrainsMono NFM Regular
+#   JetBrainsMono NFM SemiBold
+#   JetBrainsMono NFM SemiBold Italic
+#   JetBrainsMono NFM Thin
+#   JetBrainsMono NFM Thin Italic
+#
+# JetBrainsMonoNL Nerd Font Mono
+#   JetBrainsMonoNL NFM Bold
+#   JetBrainsMonoNL NFM Bold Italic
+#   JetBrainsMonoNL NFM ExtraBold
+#   JetBrainsMonoNL NFM ExtraBold Italic
+#   JetBrainsMonoNL NFM ExtraLight
+#   JetBrainsMonoNL NFM ExtraLight Italic
+#   JetBrainsMonoNL NFM Italic
+#   JetBrainsMonoNL NFM Light
+#   JetBrainsMonoNL NFM Light Italic
+#   JetBrainsMonoNL NFM Medium
+#   JetBrainsMonoNL NFM Medium Italic
+#   JetBrainsMonoNL NFM Regular
+#   JetBrainsMonoNL NFM SemiBold
+#   JetBrainsMonoNL NFM SemiBold Italic
+#   JetBrainsMonoNL NFM Thin
+#   JetBrainsMonoNL NFM Thin Italic
+#
+# Lantinghei TC
+#   Lantinghei TC Demibold
+#   Lantinghei TC Extralight
+#   Lantinghei TC Heavy
+#
+# MartianMono Nerd Font
+#   MartianMono NF
+#   MartianMono NF Bold
+#   MartianMono NF Cond
+#   MartianMono NF Cond Bold
+#   MartianMono NF Cond Med
+#   MartianMono NF Med
+#
+# MartianMono Nerd Font Mono
+#   MartianMono NFM
+#   MartianMono NFM Bold
+#   MartianMono NFM Cond
+#   MartianMono NFM Cond Bold
+#   MartianMono NFM Cond Med
+#   MartianMono NFM Med
+#
+# Menlo
+#   Menlo Bold
+#   Menlo Bold Italic
+#   Menlo Italic
+#   Menlo Regular
+#
+# MesloLGL Nerd Font Mono
+#   MesloLGL Nerd Font Mono Bold
+#   MesloLGL Nerd Font Mono Bold Italic
+#   MesloLGL Nerd Font Mono Italic
+#   MesloLGL Nerd Font Mono Regular
+#
+# MesloLGLDZ Nerd Font Mono
+#   MesloLGLDZ Nerd Font Mono Bold
+#   MesloLGLDZ Nerd Font Mono Bold Italic
+#   MesloLGLDZ Nerd Font Mono Italic
+#   MesloLGLDZ Nerd Font Mono Regular
+#
+# MesloLGM Nerd Font Mono
+#   MesloLGM Nerd Font Mono Bold
+#   MesloLGM Nerd Font Mono Bold Italic
+#   MesloLGM Nerd Font Mono Italic
+#   MesloLGM Nerd Font Mono Regular
+#
+# MesloLGMDZ Nerd Font Mono
+#   MesloLGMDZ Nerd Font Mono Bold
+#   MesloLGMDZ Nerd Font Mono Bold Italic
+#   MesloLGMDZ Nerd Font Mono Italic
+#   MesloLGMDZ Nerd Font Mono Regular
+#
+# MesloLGS NF
+#   MesloLGS NF Bold
+#   MesloLGS NF Bold Italic
+#   MesloLGS NF Italic
+#   MesloLGS NF Regular
+#
+# MesloLGS Nerd Font Mono
+#   MesloLGS Nerd Font Mono Bold
+#   MesloLGS Nerd Font Mono Bold Italic
+#   MesloLGS Nerd Font Mono Italic
+#   MesloLGS Nerd Font Mono Regular
+#
+# MesloLGSDZ Nerd Font Mono
+#   MesloLGSDZ Nerd Font Mono Bold
+#   MesloLGSDZ Nerd Font Mono Bold Italic
+#   MesloLGSDZ Nerd Font Mono Italic
+#   MesloLGSDZ Nerd Font Mono Regular
+#
+# Monaco
+#   Monaco
+#
+# Monofur Nerd Font
+#   Monofur Nerd Font
+#   Monofur Nerd Font Italic
+#
+# Monofur Nerd Font Mono
+#   Monofur Nerd Font Mono
+#   Monofur Nerd Font Mono Bold
+#   Monofur Nerd Font Mono Italic
+#
+# Osaka
+#   Osaka-Mono
+#
+# OverpassM Nerd Font Mono
+#   OverpassM Nerd Font Mono Bold
+#   OverpassM Nerd Font Mono Light
+#   OverpassM Nerd Font Mono Reg
+#   OverpassM Nerd Font Mono SemBd
+#
+# PCMyungjo
+#   PCMyungjo Regular
+#
+# PT Mono
+#   PT Mono
+#   PT Mono Bold
+#
+# SpaceMono Nerd Font
+#   SpaceMono Nerd Font
+#   SpaceMono Nerd Font Bold
+#   SpaceMono Nerd Font Bold Italic
+#   SpaceMono Nerd Font Italic
+#
+# SpaceMono Nerd Font Mono
+#   SpaceMono Nerd Font Mono
+#   SpaceMono Nerd Font Mono Bold
+#   SpaceMono Nerd Font Mono Bold Italic
+#   SpaceMono Nerd Font Mono Italic
+
