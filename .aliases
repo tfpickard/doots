@@ -8,3 +8,8 @@ alias cvim="nvim --clean"
 alias gcap="git commit -a \
     && for i in 5 4 3 2 1; do printf \"\\rpushing in %s...\" $i; sleep .5; done \
     && git push"
+
+alias dcu="docker compose up -d"
+alias dcd="docker compose down"
+alias dcdu="docker compose down ; docker compose up -d"
+alias dcl="docker compose logs -f"
