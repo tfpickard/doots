@@ -24,15 +24,18 @@ You went over every file that was changed in it.
 For some of these files changes where too big and were omitted in the files diff summary.
 Determine the best label for the commit.
 
+Use plain and projessional language. Avoid subjective or self-congratulatory language.
+
+If the change is trivial or inconsequential, it is better to say so or omit it rather than to use vague language.
 Here are the labels you can choose from:
 
 - build: Changes that affect the build system or external dependencies (example scopes: gulp, broccoli, npm)
-- chore: Updating libraries, copyrights or other repo setting, includes updating dependencies.
+- cleanup: Updating libraries, copyrights or other repo setting, includes updating dependencies.
 - ci: Changes to our CI configuration files and scripts (example scopes: Travis, Circle, GitHub Actions)
 - docs: Non-code changes, such as fixing typos or adding new documentation
-- feat: a commit of the type feat introduces a new feature to the codebase
+- feature: a commit of the type feat introduces a new feature to the codebase
 - fix: A commit of the type fix patches a bug in your codebase
-- perf: A code change that improves performance
+- performance: A code change that improves performance
 - refactor: A code change that neither fixes a bug nor adds a feature
 - style: Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc)
 - test: Adding missing tests or correcting existing tests
@@ -55,6 +58,11 @@ Starting each bullet point with a `-`.
 Write a high level description. Do not repeat the commit summaries or the file summaries.
 Write the most important bullet points. The list should not be more than a few bullet points.
 
+Use plain and projessional language. Avoid subjective or self-congratulatory language.
+
+If the change is trivial or inconsequential, it is better to say so or omit it rather than to use vague language.
+Here are the labels you can choose from:
+
 THE FILE SUMMARIES:
 ```
 {{ summary_points }}
@@ -73,6 +81,11 @@ Write your response using the imperative tense following the kernel git commit s
 Write a high level title.
 Do not repeat the commit summaries or the file summaries.
 Do not list individual changes in the title.
+
+Use plain and projessional language. Avoid subjective or self-congratulatory language.
+
+If the change is trivial or inconsequential, it is better to say so or omit it rather than to use vague language.
+Here are the labels you can choose from:
 
 EXAMPLE SUMMARY COMMENTS:
 ```
@@ -116,6 +129,11 @@ The summary should not include comments copied from the code.
 The output should be easily readable. When in doubt, write fewer comments and not more. Do not output comments that
 simply repeat the contents of the file.
 Readability is top priority. Write only the most important comments about the diff.
+
+Use plain and projessional language. Avoid subjective or self-congratulatory language.
+
+If the change is trivial or inconsequential, it is better to say so or omit it rather than to use vague language.
+Here are the labels you can choose from:
 
 EXAMPLE SUMMARY COMMENTS:
 ```
