@@ -48,6 +48,11 @@ source ~/.p10k/powerlevel10k.zsh-theme
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 # =====================================================
+#   MY PLUGINS
+# =====================================================
+znap source tfpickard/zsh-command-histogram
+
+# =====================================================
 #   ESSENTIAL PLUGINS
 # =====================================================
 # Core prezto modules for basic environment setup
@@ -209,6 +214,7 @@ compdef _pipenv pipenv
 
 # iTerm2 integration
 znap eval iterm2 'curl -fsSL https://iterm2.com/shell_integration/zsh'
+
 
 # =====================================================
 #   ENVIRONMENT TOOLS

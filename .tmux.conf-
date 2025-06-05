@@ -1,0 +1,382 @@
+##############################
+#     ⚡ SYNTMUX ⚡     #
+##############################
+set -g default-terminal "tmux-256color"
+set -ga terminal-overrides ",xterm-256color:RGB"
+setenv -g COLORTERM truecolor
+set -g history-limit 99999
+set -g buffer-limit 42
+set -s escape-time 0
+set -g display-time 1337
+set -g display-panes-time 1337
+set -g repeat-time 500
+setw -g allow-rename on
+setw -g aggressive-resize on
+set -g base-index 1
+setw -g pane-base-index 1
+set-option -g renumber-windows on
+set -g focus-events on
+set -g visual-activity off
+
+unbind C-b
+set -g prefix C-a
+bind-key -n C-b send-prefix
+bind-key C-a resize-pane -Z
+
+set -g set-titles on
+set -g set-titles-string "🌆 #I:#W 🌃"
+
+set -g mouse on
+# Don't forget to wear sunglasses at night 😎
+# Because your terminal's gonna glow like a retro arcade in 1987
+##############################
+#        Key Bindings        #
+##############################
+
+# Unbind many default keys to make room for custom mappings
+unbind "\$"  # rename-session
+unbind ,     # rename-window
+unbind %     # split-window -h
+unbind '"'   # split-window
+unbind '}'   # swap-pane -D
+unbind '{'   # swap-pane -U
+unbind [     # paste-buffer
+unbind ]
+unbind "'"   # select-window
+unbind n     # next-window
+unbind p     # previous-window
+unbind l     # last-window
+unbind M-n   # next window with alert
+unbind M-p   # next window with alert
+unbind o     # focus through panes
+unbind &     # kill-window
+unbind "#"   # list-buffer
+unbind =     # choose-buffer
+unbind z     # zoom-pane
+unbind M-Up  # resize 5 rows up
+unbind M-Down  # resize 5 rows down
+unbind M-Right  # resize 5 cols right
+unbind M-Left   # resize 5 cols left
+unbind r
+unbind S
+
+# Window/pane navigation
+bind -r C-[ previous-window
+bind -r C-] next-window
+bind -r ` select-pane -t :.-  
+bind -r \~ select-pane -t :.+
+
+# Switch panes quickly
+bind C-n switchc -n
+bind C-p switchc -p
+
+# Reload config with C-r
+bind C-r display "sourcing..." \; \
+         source-file ~/.tmux.conf \; \
+         display "...sourced"
+
+# Open tmux config in a new window with C-e
+# set -g cfgfile "${HOME}/.tmux.conf"
+# bind C-e new-window -n 'tmux.conf' \; \
+#     display "Opening ${cfgfile} with ${EDITOR:-vim}..." \; \
+#     popup "echo Opening ${cfgfile}...; sleep 1;"
+
+# Install/update plugins and reload with C-t
+bind C-t display "installing/updating/sourcing..." \; \
+    run '~/.tmux/plugins/tpm/bin/install_plugins' \; \
+    run '~/.tmux/plugins/tpm/bin/update_plugins all' \; \
+    source-file ~/.tmux.conf \; \
+    display "...installed/updated/sourced" \; \
+    send-keys -R ENTER \; send-keys ENTER
+
+# Create new window preserving current directory
+bind c new-window -c "#{pane_current_path}"
+
+# Rename session with R
+bind R command-prompt -I "#{session_name}" "rename-session '%%'"
+
+# Popping a pane into a new window (with custom message)
+set -g @pop_msg "popped pane #{pane_index} from #I out to new window..."
+bind s break-pane \; display "$@pop_msg #I"
+
+# Zoom pane toggle
+bind + resize-pane -Z
+
+# Link window from another session
+bind L command-prompt -p "Link window from (session:window): " "link-window -s %% -a"
+
+# Kill pane/window/session shortcuts
+unbind x
+bind x kill-pane
+bind X kill-window
+bind C-x confirm-before -p "kill other windows? (y/n)" "kill-window -a"
+bind Q confirm-before -p "kill-session #S? (y/n)" kill-session
+
+# Merge session with another session
+bind C-u command-prompt -p "Session to merge with: " \
+   "run-shell 'yes | head -n #{session_windows} | xargs -I {} -n 1 tmux movew -t %%'"
+
+# Detach (with special handling for multi-client sessions)
+bind d detach
+bind D if -F '#{session_many_attached}' \
+    'confirm-before -p "Detach other clients? (y/n)" "detach -a"' \
+    'display "Session has only 1 client attached"'
+
+##############################
+#   Copy Mode & Scrolling    #
+##############################
+#
+# #############################
+#   Copy Mode & Scrolling    #
+##############################
+# Enable 24-bit color support
+set -g default-terminal "tmux-256color"
+set -ga terminal-overrides ",xterm-256color:RGB"
+
+# Blinking cursor
+set-option -g cursor-style blinking-block
+
+# Vim-mode copy/paste with enhanced visual mode
+set-window-option -g mode-keys vi
+
+# Make the visual select highlight more prominent
+set -g mode-style "fg=#ebdbb2,bg=#504945,bold"
+
+# Start copy mode with prefix+[
+bind C-\\ copy-mode
+
+# Visual mode bindings
+bind-key -T copy-mode-vi v send-keys -X begin-selection       # 'v' to begin selection
+bind-key -T copy-mode-vi V send-keys -X select-line           # 'V' for line selection
+
+bind-key -T copy-mode-vi C-v send-keys -X begin-selection \; send-keys -X rectangle-toggle
+# bind-key -T copy-mode-vi C-v send-keys -X rectangle-toggle    # Ctrl+v for block selection
+bind-key -T copy-mode-vi y send-keys -X copy-pipe-and-cancel "pbcopy"  # 'y' to yank
+bind-key -T copy-mode-vi Y send-keys -X copy-line \; run "tmux save-buffer - | pbcopy"  # 'Y' to yank line
+bind-key -T copy-mode-vi Escape send-keys -X cancel           # Escape to cancel
+
+# Enhanced visual feedback for selection
+bind-key -T copy-mode-vi a send-keys -X append-selection-and-cancel \; run "tmux save-buffer - | pbcopy"  # 'a' to append
+bind-key -T copy-mode-vi D send-keys -X copy-end-of-line \; run "tmux save-buffer - | pbcopy"  # 'D' to yank to end of line
+
+# Search in copy mode
+bind-key -T copy-mode-vi / command-prompt -i -p "search down:" "send -X search-forward \"%%%\""
+bind-key -T copy-mode-vi ? command-prompt -i -p "search up:" "send -X search-backward \"%%%\""
+bind-key -T copy-mode-vi n send-keys -X search-again
+bind-key -T copy-mode-vi N send-keys -X search-reverse
+
+# Don't reset scroll buffer after releasing mouse
+unbind -T copy-mode-vi MouseDragEnd1Pane
+bind-key -T copy-mode-vi MouseDragEnd1Pane send-keys -X copy-pipe "pbcopy"
+
+# Scrolling commands in copy mode - including mouse wheel enhancements
+bind -T copy-mode-vi C-Up       send-keys -X scroll-up
+bind -T copy-mode-vi C-Down     send-keys -X scroll-down
+bind -T copy-mode-vi C-PageUp   send-keys -X halfpage-up
+bind -T copy-mode-vi C-PageDown send-keys -X halfpage-down
+bind -T copy-mode-vi PageDown   send-keys -X page-down
+bind -T copy-mode-vi PageUp     send-keys -X page-up
+
+# Enhanced mouse scrolling in copy mode
+bind -T copy-mode-vi WheelUpPane   select-pane \; send-keys -X -N 3 scroll-up
+bind -T copy-mode-vi WheelDownPane select-pane \; send-keys -X -N 3 scroll-down
+
+# Selection management
+bind-key -T copy-mode-vi MouseDown1Pane select-pane \; send-keys -X clear-selection
+bind-key -T copy-mode-vi 0 send-keys -X start-of-line
+bind-key -T copy-mode-vi $ send-keys -X end-of-line
+bind-key -T copy-mode-vi C-h send-keys -X cursor-left
+bind-key -T copy-mode-vi C-j send-keys -X cursor-down
+bind-key -T copy-mode-vi C-k send-keys -X cursor-up
+bind-key -T copy-mode-vi C-l send-keys -X cursor-right
+
+# Visual indicators during selection
+set-hook -g pane-mode-changed 'if -F "#{pane_in_mode}" "set status-style bg=colour166" "set -u status-style"'
+
+# Add a status line indicator when in copy mode
+set-hook -g pane-mode-changed 'if -F "#{pane_in_mode}" "set status-right \"#[fg=yellow,bold]COPY MODE#[default] | %a %Y-%m-%d %H:%M\"" "set -u status-right"'
+
+# Smart copy behavior - for cross-platform compatibility
+if-shell "uname | grep -q Darwin" {
+    # macOS pbcopy support
+    bind-key -T copy-mode-vi y send-keys -X copy-pipe-and-cancel 'pbcopy'
+    bind-key -T copy-mode-vi Enter send-keys -X copy-pipe-and-cancel 'pbcopy'
+} {
+    # Linux xclip support (if available)
+    if-shell "command -v xclip > /dev/null" {
+        bind-key -T copy-mode-vi y send-keys -X copy-pipe-and-cancel 'xclip -selection clipboard -in'
+        bind-key -T copy-mode-vi Enter send-keys -X copy-pipe-and-cancel 'xclip -selection clipboard -in'
+    } {
+        # Fallback if no clipboard tools available
+        bind-key -T copy-mode-vi y send-keys -X copy-selection-and-cancel
+        bind-key -T copy-mode-vi Enter send-keys -X copy-selection-and-cancel
+    }
+}
+#
+# # blinking cursor
+# set-option -g cursor-style blinking-block
+#
+# # vim-mode copy/paste
+# set-window-option -g mode-keys vi
+# bind-key -T copy-mode-vi v send-keys -X begin-selection
+# bind-key -T copy-mode-vi r send-keys -X rectangle-toggle
+# bind-key -T copy-mode-vi y send-keys -X copy-pipe-and-cancel 'pbcopy'
+# unbind -T copy-mode-vi MouseDragEnd1Pane # do not reset scroll buffer after releasing mouse
+# set -g mode-style "fg=#83a598,bg=#3c3836" # colorize the visual selection
+#
+# setw -g mode-keys vi
+# bind C-\\ copy-mode
+#
+# # Scrolling commands in copy mode
+# bind -T copy-mode-vi C-Up       send-keys -X scroll-up
+# bind -T copy-mode-vi C-Down     send-keys -X scroll-down
+# bind -T copy-mode-vi C-PageUp   send-keys -X halfpage-up
+# bind -T copy-mode-vi C-PageDown send-keys -X halfpage-down
+# bind -T copy-mode-vi PageDown   send-keys -X page-down
+# bind -T copy-mode-vi PageUp     send-keys -X page-up
+#
+# # Mouse wheel scrolling in copy mode
+# bind -T copy-mode-vi WheelUpPane   select-pane \; send-keys -X -N 2 scroll-up
+# bind -T copy-mode-vi WheelDownPane select-pane \; send-keys -X -N 2 scroll-down
+#
+# bind -T copy-mode-vi MouseDown1Pane select-pane \; send-keys -X clear-selection
+#
+# Update environment variables
+set -g update-environment "DISPLAY SSH_ASKPASS SSH_AUTH_SOCK SSH_AGENT_PID SSH_CONNECTION SSH_TTY WINDOWID XAUTHORITY"
+
+##############################
+#         Themes             #
+##############################
+# Base16 colors (unused here, but kept for reference)
+# base00="#00002a"  ... base0f="#e95321"
+#
+# # Custom theme variables
+# set -g @sw_bg "#191f1d"
+# set -g @sw_fg "#d9e6f2"
+# set -g @thm_red "#a83971"
+# set -g @thm_pink "#e01b86"
+# set -g @thm_blue "#3b76b0"
+# set -g @thm_gray "#8a8a8a"
+# set -g @thm_aqua "#3bb076"
+# set -g @thm_green "#71a839"
+# set -g @thm_brightgreen "#76b03b"
+# set -g @thm_brightpurple "#763bb0"
+# set -g @thm_orange "#ff4e6a"
+# set -g @thm_black4 "#303030"
+# set -g @thm_white "#cfcfcf"
+#
+##############################
+#       Synthwave Colors     #
+##############################
+# Vapour in hex
+sw_bg="#1A1A40"
+sw_fg="#F8F8F2"
+sw_gray="#303030"
+sw_cyan="#00FFFF"
+sw_magenta="#FF00FF"
+sw_blue="#8BE9FD"
+sw_purple="#BD93F9"
+sw_orange="#FFB86C"
+sw_red="#FF5555"
+sw_green="#50FA7B"
+sw_yellow="#F1FA8C"
+sw_acid="#39FF14"
+sw_fuchsia="#FF77FF"
+
+set-option -g status-style "fg=$sw_fg,bg=$sw_bg,bold"
+set-window-option -g window-status-style "fg=$sw_fg,bg=$sw_blue"
+set-window-option -g window-status-current-style "fg=$sw_magenta,bg=$sw_bg,bold"
+set-option -g pane-border-style "fg=$sw_purple"
+set-option -g pane-active-border-style "fg=$sw_fuchsia"
+set-option -g message-style "fg=$sw_yellow,bg=$sw_bg,bold"
+set-option -g display-panes-active-colour $sw_green
+set-option -g display-panes-colour $sw_purple
+set-window-option -g clock-mode-colour $sw_orange
+setw -g mode-style "fg=$sw_cyan bg=$sw_bg bold"
+set-window-option -g window-status-bell-style "fg=$sw_fg,bg=$sw_red"
+set -g status-interval 1
+
+
+##############################
+#       🚀 Turbo Mode        #
+##############################
+
+# ASCII art on launch (requires figlet and lolcat)
+run-shell "figlet -f slant 'SYNTMUX' | lolcat"
+# Status line contents
+set -g status-left ""
+set -g status-right "#[fg=$sw_fuchsia,bg=$sw_bg,nobold,nounderscore,noitalics]#[fg=$sw_fg,bg=$sw_magenta,nobold,nounderscore,noitalics]#W #[fg=$sw_orange,bg=$sw_gray] #I #{?client_prefix,#[fg=$sw_red],#[fg=$sw_acid]}#[bg=$sw_gray]#{?client_prefix,#[bg=$sw_red] ||,#[fg=$sw_orange,bg=$sw_acid]} #[fg=$sw_acid,bg=$sw_gray] #S "
+
+setw -g window-status-format "#[fg=$sw_fg,bg=$sw_blue] ✦ #I #[fg=$sw_bg,bg=$sw_blue] #{b:pane_current_path} "
+setw -g window-status-current-format "#[fg=$sw_bg,bg=$sw_magenta] ★ #I #[fg=$sw_fg,bg=$sw_magenta] #{b:pane_current_path} "
+# setw -g window-status-format "#[fg=$sw_bg,bg=$sw_blue] #I #[fg=$sw_fg,bg=$sw_gray] #{b:pane_current_path} "
+# setw -g window-status-current-format "#[fg=$sw_bg,bg=$sw_orange] #I #[fg=$sw_fg,bg=$sw_bg] #{b:pane_current_path} "
+
+# Update environment for direnv
+set-option -g update-environment "DIRENV_DIFF DIRENV_DIR DIRENV_WATCHES"
+set-environment -gu DIRENV_DIFF
+set-environment -gu DIRENV_DIR
+set-environment -gu DIRENV_WATCHES
+set-environment -gu DIRENV_LAYOUT
+
+##############################
+#         Plugins            #
+##############################
+run -b '[[ -d ~/.tmux/plugins/tpm ]] || git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm'
+
+set -g @plugin 'tmux-plugins/tpm'
+set -g @plugin 'tmux-plugins/tmux-sensible'
+set -g @plugin 'tmux-plugins/tmux-prefix-highlight'
+set -g @prefix_highlight_bg "black"
+set -g @prefix_highlight_fg "red"
+set -g @prefix_highlight_prefix_prompt "ꗁ"
+set -g @prefix_highlight_show_copy_mode "on"
+set -g @prefix_highlight_copy_prompt "𖠂_𖠂"
+set -g @prefix_highlight_copy_mode_attr "fg=red,bg=black,bold"
+set -g @prefix_highlight_output_prefix ""
+set -g @prefix_highlight_output_suffix ""
+
+# set -g @plugin 'tmux-plugins/tmux-yank'
+set -g @plugin 'tmux-plugins/tmux-pain-control'
+
+# set -g @plugin 'laktak/extrakto'
+# set -g @extrakto_split_direction "a"
+# set -g @extrakto_split_size "15"
+# set -g @extrakto_clip_tool "pbcopy"
+# set -g @extrakto_default_opt "lines"
+#
+# set -g @plugin 'CrispyConductor/tmux-copy-toolkit'
+# set -g @plugin 'tmux-plugins/tmux-resurrect'
+# set -g @resurrect-save "M-S"
+# set -g @resurrect-restore "M-R"
+# set -g @continuum-restore "off"
+#
+set -g @plugin 'tmux-plugins/tmux-continuum'
+set -g @continuum-boot "off"
+
+set -g @plugin 'roosta/tmux-fuzzback'
+set -g @fuzzback-popup 1
+set -g @fuzzback-bind s
+
+set -g @plugin 'tfpickard/tmux-dotbar'
+# set -g @tmux-dotbar-fg "#0B0E14"
+# set -g @tmux-dotbar-bg "#475266"
+# set -g @tmux-dotbar-fg-current "#BFBDB6"
+# set -g @tmux-dotbar-fg-session "#565B66"
+# set -g @tmux-dotbar-fg-prefix "#95E6CB"
+# set -g @tmux-dotbar-position "bottom"
+# set -g @tmux-dotbar-justify "absolute-centre"
+# set -g @tmux-dotbar-left "true"
+# set -g @tmux-dotbar-status-left "#S  ⋮  #I" # see code
+# set -g @tmux-dotbar-right "true"
+# # set -g @tmux-dotbar-status-right '#(echo $SSH_CONNECTION | awk "{print \$1}") #[default]'
+# # set -g @tmux-dotbar-status-right "%H:%M  " # see code
+# set -g @tmux-dotbar-window-status-format " #W "
+# set -g @tmux-dotbar-window-status-separator " • "
+# set -g @tmux-dotbar-maximized-icon "󰊓"
+# set -g @tmux-dotbar-show-maximized-icon-for-all-tabs true
+# # set -g status-style "bg=#{?client_remote_host,colour235,colour22},fg=white"
+# set -g @tmux-dotbar-bg "#{?client_remote_host,colour235,colour22}"
+# # set -g status-left "#{?client_remote_host,SSH 🔐,LOCAL} | "
+run $HOME/.tmux/plugins/tpm/tpm
+

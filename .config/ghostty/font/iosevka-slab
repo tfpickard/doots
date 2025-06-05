@@ -1,0 +1,10 @@
+font-family = IosevkaTermSlab Nerd Font
+font-style = Regular
+font-style-italic = Italic
+font-style-bold = ExtraBold
+font-style-bold-italic = ExtraBold Italic
+
+adjust-cell-height = 0
+adjust-cursor-height = 0
+
+# vim: ft=config

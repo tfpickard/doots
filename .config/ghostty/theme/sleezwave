@@ -1,0 +1,64 @@
+# Sleezwave Dark - Ghostty Terminal Colorscheme
+# A synthwave-inspired colorscheme that's easy on the eyes
+
+# Background and foreground
+background = 1a0d2e
+foreground = c9a9dd
+
+# Cursor
+cursor-color = ff6bcb
+cursor-text = 1a0d2e
+
+# Selection
+selection-background = 2d1b3d
+selection-foreground = c9a9dd
+
+# Normal colors (0-7)
+# black (background)
+palette = 0=#1a0d2e   
+
+# red (hot pink)
+palette = 1=#ff6b9d   
+
+# green (electric green)
+palette = 2=#69ff94   
+
+# yellow (neon yellow)
+palette = 3=#ffeb3b   
+
+# blue (electric blue)
+palette = 4=#3d5afe   
+
+# magenta (purple)
+palette = 5=#ab47bc   
+
+# cyan (electric cyan)
+palette = 6=#00e5ff   
+
+# white (foreground)
+palette = 7=#c9a9dd   
+
+# Bright colors (8-15)
+# bright black (dark purple)
+palette = 8=#352040    
+
+# bright red (lighter hot pink)
+palette = 9=#ff8fab
+
+# bright green (lighter electric green)
+palette = 10=#7dffb3   
+
+# bright yellow (lighter neon yellow)
+palette = 11=#fff176   
+
+# bright blue (lighter electric blue)
+palette = 12=#5c6bc0   
+
+# bright magenta (lighter purple)
+palette = 13=#ce93d8   
+
+# bright cyan (lighter electric cyan)
+palette = 14=#4dd0e1   
+
+# bright white (light purple)
+palette = 15=#e1c4f7   
