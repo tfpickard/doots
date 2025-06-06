@@ -5,9 +5,9 @@
 # Initialization code that may require console input (password prompts, [y/n]
 # confirmations, etc.) must go above this block; everything else may go below.
 if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
-  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+    source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
-
+# zmodload zsh/zprof  # Add at the top
 # =====================================================
 #   CORE ZSH OPTIONS
 # =====================================================
@@ -32,9 +32,9 @@ setopt magicequalsubst
 # =====================================================
 # Initialize znap (lazy plugin manager for zsh)
 [[ -r ~/Repos/znap/znap.zsh ]] || {
-  echo "Installing znap plugin manager..."
-  mkdir -p ~/Repos
-  git clone --depth 1 -- https://github.com/marlonrichert/zsh-snap.git ~/Repos/znap
+    echo "Installing znap plugin manager..."
+    mkdir -p ~/Repos
+    git clone --depth 1 -- https://github.com/marlonrichert/zsh-snap.git ~/Repos/znap
 }
 source ~/Repos/znap/znap.zsh
 
@@ -77,8 +77,6 @@ znap source Aloxaf/fzf-tab                 # Tab completion with fzf
 # =====================================================
 #   SYNTAX AND BEHAVIOR PLUGINS
 # =====================================================
-# Syntax highlighting (must be sourced after completion plugins)
-znap source zsh-users/zsh-syntax-highlighting
 
 # History improvements
 znap source marlonrichert/zsh-hist         # Better history command with alt-h
@@ -114,10 +112,10 @@ znap source ohmyzsh/ohmyzsh plugins/{git,gitfast,git-extras}
 
 # OS-specific plugins
 if [[ $(uname) == "Darwin" ]]; then
-  znap source ohmyzsh/ohmyzsh plugins/{macos,brew}
+    znap source ohmyzsh/ohmyzsh plugins/{macos,brew}
 else
-  # Linux-specific plugins
-  znap source ohmyzsh/ohmyzsh plugins/sudo
+    # Linux-specific plugins
+    znap source ohmyzsh/ohmyzsh plugins/sudo
 fi
 
 # =====================================================
@@ -126,7 +124,8 @@ fi
 # Shows when you should use an existing alias
 znap source MichaelAquilina/zsh-you-should-use
 # Configure YSU behavior
-export YSU_MESSAGE_FORMAT="💡 $(tput bold)You should use:%B$(tput sgr0) %alias $(tput dim)instead of %command$(tput sgr0)"
+# export YSU_MESSAGE_FORMAT="💡 $(tput bold)You should use:%B$(tput sgr0) %alias $(tput dim)instead of %command$(tput sgr0)"
+# export YSU_MESSAGE_FORMAT="💡 $(tput bold)You should use:%B$(tput sgr0) %alias $(tput dim)instead of %command$(tput sgr0)"
 export YSU_MODE=ALL  # Show suggestions for global and git aliases
 
 # Shows ZSH tips and tricks in your terminal
@@ -156,14 +155,14 @@ bindkey "$terminfo[kcud1]" history-substring-search-down
 # =====================================================
 # Install fzf if not already installed
 if ! command -v fzf &>/dev/null; then
-  echo "Installing fzf for enhanced history search..."
-  if [[ $(uname) == "Darwin" ]]; then
-    brew install fzf
-    $(brew --prefix)/opt/fzf/install --key-bindings --completion --no-update-rc
-  else
-    git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
-    ~/.fzf/install --key-bindings --completion --no-update-rc
-  fi
+    echo "Installing fzf for enhanced history search..."
+    if [[ $(uname) == "Darwin" ]]; then
+        brew install fzf
+        $(brew --prefix)/opt/fzf/install --key-bindings --completion --no-update-rc
+    else
+        git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
+        ~/.fzf/install --key-bindings --completion --no-update-rc
+    fi
 fi
 
 # Load fzf key bindings and completion
@@ -173,20 +172,20 @@ fi
 # This will allow up-arrow to show a multi-line view of matching history
 # Based on what you've already typed
 function fzf-history-widget() {
-  local selected num
-  setopt localoptions noglobsubst noposixbuiltins pipefail no_aliases 2> /dev/null
-  selected=( $(fc -rl 1 | 
-    awk '{ cmd=$0; sub(/^[ \t]*[0-9]+\**[ \t]+/, "", cmd); if (!seen[cmd]++) print $0 }' |
-    FZF_DEFAULT_OPTS="--height ${FZF_TMUX_HEIGHT:-40%} $FZF_DEFAULT_OPTS -n2..,.. --scheme=history --bind=ctrl-r:toggle-sort,ctrl-z:ignore --query=${(qqq)LBUFFER} +m" $(__fzfcmd)) )
-  local ret=$?
-  if [ -n "$selected" ]; then
-    num=$selected[1]
-    if [ -n "$num" ]; then
-      zle vi-fetch-history -n $num
+    local selected num
+    setopt localoptions noglobsubst noposixbuiltins pipefail no_aliases 2> /dev/null
+    selected=( $(fc -rl 1 | 
+        awk '{ cmd=$0; sub(/^[ \t]*[0-9]+\**[ \t]+/, "", cmd); if (!seen[cmd]++) print $0 }' |
+        FZF_DEFAULT_OPTS="--height ${FZF_TMUX_HEIGHT:-40%} $FZF_DEFAULT_OPTS -n2..,.. --scheme=history --bind=ctrl-r:toggle-sort,ctrl-z:ignore --query=${(qqq)LBUFFER} +m" $(__fzfcmd)) )
+    local ret=$?
+    if [ -n "$selected" ]; then
+        num=$selected[1]
+        if [ -n "$num" ]; then
+            zle vi-fetch-history -n $num
+        fi
     fi
-  fi
-  zle reset-prompt
-  set +x
+    zle reset-prompt
+    set +x
 }
 zle -N fzf-history-widget
 bindkey '^R' fzf-history-widget
@@ -215,6 +214,39 @@ compdef _pipenv pipenv
 # iTerm2 integration
 znap eval iterm2 'curl -fsSL https://iterm2.com/shell_integration/zsh'
 
+# =====================================================
+#   PERFORMANCE OPTIMIZATIONS
+# =====================================================
+znap source romkatv/zsh-defer
+znap source mroth/evalcache
+
+# Cache slow evaluations
+_evalcache pyenv init -
+_evalcache direnv hook zsh
+
+# =====================================================
+#   ENHANCED VI MODE AND EDITING
+# =====================================================
+znap source jeffreytse/zsh-vi-mode
+znap source kutsan/zsh-system-clipboard
+znap source olets/zsh-abbr
+
+# =====================================================
+#   ADVANCED NAVIGATION AND COMPLETION
+# =====================================================
+znap eval zoxide 'zoxide init zsh'
+znap source zdharma-continuum/fast-syntax-highlighting  # Replace existing
+znap source psprint/zsh-navigation-tools
+
+# =====================================================
+#   DEVELOPMENT WORKFLOW
+# =====================================================
+znap source MichaelAquilina/zsh-auto-notify
+export AUTO_NOTIFY_THRESHOLD=15  # Notify for long compilations
+
+
+# Syntax highlighting (must be sourced after completion plugins)
+znap source zsh-users/zsh-syntax-highlighting
 
 # =====================================================
 #   ENVIRONMENT TOOLS
@@ -223,10 +255,10 @@ znap eval iterm2 'curl -fsSL https://iterm2.com/shell_integration/zsh'
 export PYENV_ROOT="$HOME/.pyenv"
 export PATH="$PYENV_ROOT/bin:$PATH"
 if command -v pyenv >/dev/null; then
-  eval "$(pyenv init -)"
-  export WORKON_HOME="$HOME/.virtualenvs"
-  export PIP_VIRTUALENV_BASE="$WORKON_HOME"
-  pyenv virtualenvwrapper_lazy
+    eval "$(pyenv init -)"
+    export WORKON_HOME="$HOME/.virtualenvs"
+    export PIP_VIRTUALENV_BASE="$WORKON_HOME"
+    pyenv virtualenvwrapper_lazy
 fi
 
 # Node.js environment setup
@@ -237,25 +269,25 @@ export NVM_DIR="$HOME/.config/nvm"
 # pnpm
 export PNPM_HOME="$HOME/.local/share/pnpm"
 if [ -d "$PNPM_HOME" ]; then
-  case ":$PATH:" in
-    *":$PNPM_HOME:"*) ;;
-    *) export PATH="$PNPM_HOME:$PATH" ;;
-  esac
+    case ":$PATH:" in
+        *":$PNPM_HOME:"*) ;;
+        *) export PATH="$PNPM_HOME:$PATH" ;;
+    esac
 fi
 
 # Conda initialization (if installed)
 if [ -f "/opt/homebrew/Caskroom/miniconda/base/bin/conda" ]; then
-  __conda_setup="$('/opt/homebrew/Caskroom/miniconda/base/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
-  if [ $? -eq 0 ]; then
-    eval "$__conda_setup"
-  else
-    if [ -f "/opt/homebrew/Caskroom/miniconda/base/etc/profile.d/conda.sh" ]; then
-      . "/opt/homebrew/Caskroom/miniconda/base/etc/profile.d/conda.sh"
+    __conda_setup="$('/opt/homebrew/Caskroom/miniconda/base/bin/conda' 'shell.zsh' 'hook' 2> /dev/null)"
+    if [ $? -eq 0 ]; then
+        eval "$__conda_setup"
     else
-      export PATH="/opt/homebrew/Caskroom/miniconda/base/bin:$PATH"
+        if [ -f "/opt/homebrew/Caskroom/miniconda/base/etc/profile.d/conda.sh" ]; then
+            . "/opt/homebrew/Caskroom/miniconda/base/etc/profile.d/conda.sh"
+        else
+            export PATH="/opt/homebrew/Caskroom/miniconda/base/bin:$PATH"
+        fi
     fi
-  fi
-  unset __conda_setup
+    unset __conda_setup
 fi
 
 # =====================================================
@@ -276,18 +308,34 @@ export PATH="$HOME/.local/bin:$HOME/.local/share/nvim/bin:$PATH"
 [[ -f ~/.path ]] && source ~/.path
 [[ -f ~/.extra ]] && source ~/.extra
 
+# Modern CLI tool aliases (add to your .aliases file)
+alias cat='bat --paging=never'
+# alias find='fd'
+# alias grep='rg'
+
 # Enhanced ls command with lsd if available
 if command -v lsd &>/dev/null; then
-  alias ls="eza"
-  alias ll="eza -l"
-  alias la="eza -la"
-  alias lt="eza --tree"
+    export  EZA_ICONS_AUTO=true
+    alias ls="eza"
+    alias ll="eza -la"
+    alias lh="eza -lah"
+    alias la="eza -las newest"
+    alias lls="eza -lahs size"
+    alias lt="eza --tree"
 fi
 
+# Install via brew/paru first, then:
+# znap eval zoxide 'zoxide init zsh'
+eval "$(zoxide init zsh)"
+# Provides 'z' command for intelligent directory jumping
 # Improved cd with auto-ls
 function cd() {
-  builtin cd "$@" && ls
+    command -v z >/dev/null && z "$@" || (echo "install zoxide!"; builtin cd "$@")
+    eza
+    # z "$@" && ls
 }
+# zprof  # Add at the bottom (comment out after testing)
+
 # Auto-start tmux if not already in tmux
 [[ -z $TMUX ]] && exec tmux
 
