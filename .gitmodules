@@ -1,3 +1,3 @@
 [submodule ".config/nvim"]
 	path = .config/nvim
-	url = git@github.com:tfpickard/dotenvim
+	url = https://github.com/tfpickard/dotenvim

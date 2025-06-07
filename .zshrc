@@ -298,6 +298,8 @@ export PATH="/opt/homebrew/bin:$PATH"
 
 # Add local bin directories
 export PATH="$HOME/.local/bin:$HOME/.local/share/nvim/bin:$PATH"
+
+export LLM_USER_PATH=$HOME/.config/llm
 # =====================================================
 #   ALIASES AND FUNCTIONS
 # =====================================================
