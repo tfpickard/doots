@@ -274,6 +274,10 @@ if [ -d "$PNPM_HOME" ]; then
         *) export PATH="$PNPM_HOME:$PATH" ;;
     esac
 fi
+
+# Go environment setup
+export GOPATH="$HOME/go"
+export PATH="$GOPATH/bin:$PATH"
 #
 # # Conda initialization (if installed)
 # if [ -f "/opt/homebrew/Caskroom/miniconda/base/bin/conda" ]; then
@@ -338,6 +342,8 @@ function cd() {
 }
 # zprof  # Add at the bottom (comment out after testing)
 
+[[ -d "$HOME/Library/bin" ]] && export PATH="$HOME"/Library/bin:$PATH
+export PATH="$HOME"/.local/bin:$PATH
 # Auto-start tmux if not already in tmux
 [[ -z $TMUX ]] && exec tmux
 
