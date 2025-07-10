@@ -27,7 +27,6 @@ HOME_FILES := .zshrc .tmux.conf .aliases .functions .gitignore .p10k.zsh \
 
 # Directories to symlink to .config
 CONFIG_DIRS := nvim hypr ghostty waybar dunst rofi alacritty
-please alphabetize this list
 all: deps backup symlinks nvim
 	@echo "🎉 Dotfiles installation complete!"
 	@echo "💡 You may need to:"

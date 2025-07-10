@@ -3,7 +3,7 @@ adjust-underline-thickness = 2
 auto-update-channel = "tip"
 cursor-invert-fg-bg = true
 custom-shader-animation = "always"
-keybind = "global:super+ctrl+.=toggle_quick_terminal"
+keybind = "global:super+ctrl+enter=toggle_quick_terminal"
 macos-icon = "custom-style"
 macos-icon-frame = "aluminum"
 macos-icon-ghost-color = "86e1fc"

@@ -344,6 +344,19 @@ function cd() {
 
 [[ -d "$HOME/Library/bin" ]] && export PATH="$HOME"/Library/bin:$PATH
 export PATH="$HOME"/.local/bin:$PATH
+
+if [[ -d ~/.p ]]; then
+    pushd $HOME/.p >/dev/null 
+    for f in *; do 
+        [[ -x $f ]] && source $f
+    done
+fi
+
 # Auto-start tmux if not already in tmux
 [[ -z $TMUX ]] && exec tmux
 
+# The following lines have been added by Docker Desktop to enable Docker CLI completions.
+fpath=(/Users/tom/.docker/completions $fpath)
+autoload -Uz compinit
+compinit
+# End of Docker CLI completions
