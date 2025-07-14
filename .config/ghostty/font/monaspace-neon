@@ -1,8 +1,43 @@
-font-family = 0xProto
-font-feature = ss01
-adjust-cell-height = 8
-adjust-cursor-height = 8
+# Primary font - GitHub's revolutionary Monaspace
+font-family = "Monaspace Neon"
 
+# Nerd Font fallback for icons
+font-family-fallback = [
+    "JetBrainsMono Nerd Font",
+    "FiraCode Nerd Font",
+    "Hack Nerd Font",
+    "Symbols Nerd Font"
+]
 
+# Modern font settings
+font-size = 14
+font-thicken = false
+font-feature = [
+    "calt",  # Contextual alternates
+    "liga",  # Ligatures  
+    "ss01",  # Stylistic set 1
+    "ss02",  # Stylistic set 2
+    "ss03",  # Stylistic set 3
+]
+
+adjust-cell-width = 0
+adjust-cell-height = 0
+adjust-font-baseline = 0
+
+# 🔹 INSTALL COMMANDS
+# bash
+# # Install Monaspace
+# brew install font-monaspace
+#
+# # Install Nerd Font fallback
+# brew install font-jetbrains-mono-nerd-font
+#
+# # Restart Ghostty
+# 🔹 MONASPACE VARIANTS TO TRY
+# Monaspace Neon - Clean, modern (recommended)
+# Monaspace Argon - Wider, more relaxed
+# Monaspace Xenon - Serif touches
+# Monaspace Radon - Handwriting style
+# Monaspace Krypton - Mechanical precision
 
 # vim: ft=config
