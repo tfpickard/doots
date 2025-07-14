@@ -10,16 +10,24 @@
 
 format = """
 [╭┄](bright-black)\
-$os\
+$os \
+┄\
 $directory\
+┄┄ \
+ ⟨ \
 $git_branch\
 $git_status\
 $git_metrics\
+ ⟩ \
 $fill\
 $cmd_duration\
+┄\
 $jobs\
+┄ \
 $battery\
+┄\
 $memory_usage\
+┄\
 $time\
 $line_break\
 [╰┄➤](bright-black) """
@@ -43,12 +51,12 @@ add_newline = true
 # ═══════════════════════════════════════════════════════════════════
 
 [character]
-success_symbol = "[➤](cyan)"
-error_symbol = "[⤿](bright-magenta)"
+success_symbol = "[➤](bright-blue)"
+error_symbol = "[⤿](bright-red)"
 vimcmd_symbol = "[◂](purple)"
 vimcmd_replace_one_symbol = "[▶](magenta)"
 vimcmd_replace_symbol = "[▷](magenta)"
-vimcmd_visual_symbol = "[◉](bright-cyan)"
+vimcmd_visual_symbol = "[󰈈](bright-cyan)"
 
 # ═══════════════════════════════════════════════════════════════════
 # NAVIGATION SYSTEMS
@@ -59,10 +67,10 @@ format = " [$path]($style)[$read_only]($read_only_style) "
 style = "cyan"
 read_only = ""
 read_only_style = "bright-magenta"
-truncation_length = 3
+truncation_length = 8
 truncate_to_repo = true
-truncation_symbol = "⸱⸱⸱/"
-home_symbol = "~"
+truncation_symbol = "/"
+home_symbol = ""
 
 [directory.substitutions]
 "Documents" = "docs"
@@ -76,7 +84,7 @@ home_symbol = "~"
 # ═══════════════════════════════════════════════════════════════════
 
 [git_branch]
-format = "⟨[$symbol$branch]($style) "
+format = "[$symbol$branch]($style) "
 symbol = ""
 style = "magenta"
 truncation_length = 20
@@ -97,7 +105,7 @@ untracked = "⊘${count}"
 stashed = "⧆${count}"
 
 [git_metrics]
-format = '([$added]($added_style))([$deleted]($deleted_style)⟩ )'
+format = '([$added]($added_style))([$deleted]($deleted_style) )'
 added_style = "green"
 deleted_style = "bright-magenta"
 only_nonzero_diffs = true
@@ -120,7 +128,7 @@ style = "yellow"
 number_threshold = 1
 
 [battery]
-format = "[$symbol$percentage]($style) "
+format = "[$symbol $percentage]($style) "
 charging_symbol = "󰂄"
 discharging_symbol = "󱧦"
 unknown_symbol = "󰂑"
