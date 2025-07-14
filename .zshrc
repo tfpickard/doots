@@ -1,12 +1,22 @@
-# =====================================================
-#   POWERLEVEL10K INSTANT PROMPT
-# =====================================================
-# Enable Powerlevel10k instant prompt. Should stay close to the top.
-# Initialization code that may require console input (password prompts, [y/n]
-# confirmations, etc.) must go above this block; everything else may go below.
-if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
-    source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
-fi
+
+[[ -d "$HOME/Library/bin" ]] && export PATH="$HOME"/Library/bin:$PATH
+export PATH="$HOME"/.local/bin:$PATH
+# # =====================================================
+# #   POWERLEVEL10K INSTANT PROMPT
+# # =====================================================
+# # Enable Powerlevel10k instant prompt. Should stay close to the top.
+# # Initialization code that may require console input (password prompts, [y/n]
+# # confirmations, etc.) must go above this block; everything else may go below.
+# if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+#     source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+# fi
+
+[[ -f ~/.local/bin/starship ]] || (\
+    curl -sS https://starship.rs/install.sh -o /tmp/s.sh && \
+    chmod +x /tmp/s.sh && \
+    /tmp/s.sh -b ~/.local/bin \
+    )
+eval "$(starship init zsh)"
 # zmodload zsh/zprof  # Add at the top
 # =====================================================
 #   CORE ZSH OPTIONS
@@ -42,10 +52,10 @@ source ~/Repos/znap/znap.zsh
 #   THEME SETUP - POWERLEVEL10K
 # =====================================================
 # Set up Powerlevel10k theme
-[[ -d ~/.p10k ]] || git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/.p10k
-source ~/.p10k/powerlevel10k.zsh-theme
-# Load p10k config file (if it exists)
-[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+# [[ -d ~/.p10k ]] || git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/.p10k
+# source ~/.p10k/powerlevel10k.zsh-theme
+#Load p10k config file (if it exists)
+# [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 # =====================================================
 #   MY PLUGINS
@@ -342,14 +352,13 @@ function cd() {
 }
 # zprof  # Add at the bottom (comment out after testing)
 
-[[ -d "$HOME/Library/bin" ]] && export PATH="$HOME"/Library/bin:$PATH
-export PATH="$HOME"/.local/bin:$PATH
 
 if [[ -d ~/.p ]]; then
     pushd $HOME/.p >/dev/null 
     for f in *; do 
         [[ -x $f ]] && source $f
     done
+    popd
 fi
 
 # Auto-start tmux if not already in tmux
