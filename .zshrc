@@ -315,7 +315,8 @@ export PATH="$GOPATH/bin:$PATH"
 #   PATH CONFIGURATION
 # =====================================================
 # Add Homebrew to PATH
-export PATH="/opt/homebrew/bin:$PATH"
+[[ -d /opt/homebrew/bin ]] && \
+    export PATH="/opt/homebrew/bin:/opt/homebrew/opt/gnu-getopt/bin:$PATH"
 
 # Add local bin directories
 export PATH="$HOME/.local/bin:$HOME/.local/share/nvim/bin:$PATH"
