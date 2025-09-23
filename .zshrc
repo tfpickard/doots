@@ -211,6 +211,7 @@ bindkey '^K' fzf-history-widget  # Alternative Up arrow code
 # =====================================================
 [[ -d ~/.config/zsh/completions ]] || mkdir -p ~/.config/zsh/completions
 for x in ~/.config/zsh/completions/*; do
+    [[ "$x" =~ ".zwc" ]] && continue
     if [[ -f $x ]]; then
         source $x
     fi
