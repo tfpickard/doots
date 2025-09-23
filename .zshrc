@@ -209,6 +209,13 @@ bindkey '^K' fzf-history-widget  # Alternative Up arrow code
 # =====================================================
 #   TOOL INTEGRATIONS AND COMPLETIONS
 # =====================================================
+[[ -d ~/.config/zsh/completions ]] || mkdir -p ~/.config/zsh/completions
+for x in ~/.config/zsh/completions/*; do
+    if [[ -f $x ]]; then
+        source $x
+    fi
+done
+
 # Pip completion
 znap function _pip_completion pip 'eval "$( pip completion --zsh )"'
 compctl -K _pip_completion pip

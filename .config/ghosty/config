@@ -3,7 +3,7 @@ adjust-underline-thickness = 2
 auto-update-channel = "tip"
 cursor-invert-fg-bg = true
 custom-shader-animation = "always"
-keybind = "global:super+enter=toggle_quick_terminal"
+keybind = "global:super+ctrl+.=toggle_quick_terminal"
 macos-icon = "custom-style"
 macos-icon-frame = "aluminum"
 macos-icon-ghost-color = "86e1fc"
@@ -33,11 +33,11 @@ alpha-blending = linear-corrected
 #       --bind="enter:become:$CMD"
 #   }
 
-config-file = font/monaspace-neon
+config-file = font/geist-mono
 config-file = leading/default
-config-file = theme/vague
+config-file = theme/sleezwave
 config-file = opacity/100%
-config-file = shader/none
+config-file = shader/underwater
 
 
 

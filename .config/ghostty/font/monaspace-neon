@@ -2,24 +2,24 @@
 font-family = "Monaspace Neon"
 
 # Nerd Font fallback for icons
-font-family-fallback = [
-    "JetBrainsMono Nerd Font",
-    "FiraCode Nerd Font",
-    "Hack Nerd Font",
-    "Symbols Nerd Font"
-]
+# font-family-fallback = [
+#     "JetBrainsMono Nerd Font",
+#     "FiraCode Nerd Font",
+#     "Hack Nerd Font",
+#     "Symbols Nerd Font"
+# ]
 
 # Modern font settings
 font-size = 14
 font-thicken = false
-font-feature = [
-    "calt",  # Contextual alternates
-    "liga",  # Ligatures  
-    "ss01",  # Stylistic set 1
-    "ss02",  # Stylistic set 2
-    "ss03",  # Stylistic set 3
-]
-
+# font-feature = [
+#     "calt",  # Contextual alternates
+#     "liga",  # Ligatures  
+#     "ss01",  # Stylistic set 1
+#     "ss02",  # Stylistic set 2
+#     "ss03",  # Stylistic set 3
+# ]
+#
 adjust-cell-width = 0
 adjust-cell-height = 0
 adjust-font-baseline = 0
