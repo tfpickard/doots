@@ -211,6 +211,7 @@ bindkey '^K' fzf-history-widget  # Alternative Up arrow code
 # =====================================================
 [[ -d ~/.config/zsh/completions ]] || mkdir -p ~/.config/zsh/completions
 for x in ~/.config/zsh/completions/*; do
+    [[ "$x" =~ ".zwc" ]] && continue
     if [[ -f $x ]]; then
         source $x
     fi
@@ -315,7 +316,8 @@ export PATH="$GOPATH/bin:$PATH"
 #   PATH CONFIGURATION
 # =====================================================
 # Add Homebrew to PATH
-export PATH="/opt/homebrew/bin:$PATH"
+[[ -d /opt/homebrew/bin ]] && \
+    export PATH="/opt/homebrew/bin:/opt/homebrew/opt/gnu-getopt/bin:$PATH"
 
 # Add local bin directories
 export PATH="$HOME/.local/bin:$HOME/.local/share/nvim/bin:$PATH"
