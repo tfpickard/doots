@@ -1,44 +1,40 @@
 adjust-underline-position = 8
 adjust-underline-thickness = 2
-auto-update-channel = "tip"
+# auto-update = "stable"  # was "tip" - removed as this option doesn't exist
 cursor-invert-fg-bg = true
 custom-shader-animation = "always"
-keybind = "global:super+enter=toggle_quick_terminal"
+
 macos-icon = "custom-style"
 macos-icon-frame = "aluminum"
 macos-icon-ghost-color = "86e1fc"
 macos-icon-screen-color = "222436"
-macos-option-as-alt = "true"
-mouse-hide-while-typing = "true"
+
+# macos-option-as-alt = "both"  # values: left|right|both|none
+mouse-hide-while-typing = true
 font-thicken = true
 alpha-blending = linear-corrected
 
-# The following function is in my .zshrc, which allows me to use fzf to
-# execute Ghostty configuration snippets. I use this to quickly switch
-# between fonts for example instead of having to edit my config file
-# constantly. See write up in this Github issue:
-# https://github.com/ghostty-org/ghostty/discussions/3527
-#
-#   function gc {
-#     local GHOSTTY_DIR="$HOME/.config/ghostty"
-#     local CMD="sed -i '' 's:\(config-file = {1}\)/.*:\1/{2}:' $GHOSTTY_DIR/config && osascript -so -e 'tell application \"Ghostty\" to activate' -e 'tell application \"System Events\" to keystroke \",\" using {command down, shift down}'"
-#     fd \
-#       --type f \
-#       --exclude 'config' \
-#       --base-directory $GHOSTTY_DIR \
-#     | fzf \
-#       --header="<ctrl-y> :: enable, don't exit" \
-#       --preview "cat $GHOSTTY_DIR/{}" \
-#       --delimiter=/ \
-#       --bind="enter:become:$CMD"
-#   }
+# Performance & Visual Improvements
+# background-opacity = 0.98           # Removed - not supported in current version
+# background-blur-radius = 8          # Removed - not supported in current version
+# window-decoration = false           # Removed - not supported
+
+# Window Management  
+# window-save-state = "always"        # Removed - not supported
+macos-window-shadow = true
+# macos-titlebar-proxy-icon = "visible" # Removed - not supported
+
+# quick-terminal = true                 # Removed - not supported
+# quick-terminal-position = "top"        # Removed - not supported  
+# quick-terminal-size = 45%            # Removed - not supported
+# quick-terminal-screen = "main"       # Removed - not supported, use default
+keybind = "global:super+enter=toggle_quick_terminal"
 
 config-file = font/monaspace-neon
 config-file = leading/default
-config-file = theme/vague
-config-file = opacity/100%
-config-file = shader/none
-
-
+# c1onfig-file = theme/vague
+config-file = theme/catppuccin-mocha
+config-file = opacity/85%
+config-file = shader/underwater
 
 # vim: ft=config
