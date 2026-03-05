@@ -342,9 +342,9 @@ fi
 # Improved cd with auto-ls
 function cd() {
     if command -v z >/dev/null; then
-        z "$@" && eza
+        z "$@" && ls
     else
-        echo "install zoxide!" && builtin cd "$@" && eza
+        echo "install zoxide!" && builtin cd "$@" && ls
     fi
 }
 # zprof  # Add at the bottom (comment out after testing)
