@@ -101,7 +101,6 @@ znap eval marlonrichert/zcolors "zcolors ${(q)LS_COLORS}"
 
 # Load direnv for automatic environment loading
 znap source ptavares/zsh-direnv
-eval "$(direnv hook zsh)"
 
 # =====================================================
 #   PROJECT MANAGEMENT PLUGINS
@@ -135,7 +134,6 @@ fi
 znap source MichaelAquilina/zsh-you-should-use
 # Configure YSU behavior
 # export YSU_MESSAGE_FORMAT="💡 $(tput bold)You should use:%B$(tput sgr0) %alias $(tput dim)instead of %command$(tput sgr0)"
-# export YSU_MESSAGE_FORMAT="💡 $(tput bold)You should use:%B$(tput sgr0) %alias $(tput dim)instead of %command$(tput sgr0)"
 export YSU_MODE=ALL  # Show suggestions for global and git aliases
 
 # Shows ZSH tips and tricks in your terminal
@@ -147,18 +145,13 @@ export TIPZ_TEXT="💡 ZSH Tip: "
 # =====================================================
 #   KEYBINDINGS AND SHORTCUTS
 # =====================================================
-# Enable vi mode
-znap source ohmyzsh/ohmyzsh plugins/vi-mode
-
 # Push line for editing
 bindkey '^[q' push-line-or-edit
 bindkey -r '^Q' '^[Q'
 
-# History search with up/down arrows
+# History search handled by fzf-history-widget below
 # bindkey '^[[A' history-substring-search-up
 # bindkey '^[[B' history-substring-search-down
-bindkey "$terminfo[kcuu1]" history-substring-search-up
-bindkey "$terminfo[kcud1]" history-substring-search-down
 
 # =====================================================
 #   HISTORY AND SEARCH ENHANCEMENT
@@ -263,9 +256,6 @@ znap source MichaelAquilina/zsh-auto-notify
 export AUTO_NOTIFY_THRESHOLD=15  # Notify for long compilations
 
 
-# Syntax highlighting (must be sourced after completion plugins)
-znap source zsh-users/zsh-syntax-highlighting
-
 # =====================================================
 #   ENVIRONMENT TOOLS
 # =====================================================
@@ -273,7 +263,6 @@ znap source zsh-users/zsh-syntax-highlighting
 export PYENV_ROOT="$HOME/.pyenv"
 export PATH="$PYENV_ROOT/bin:$PATH"
 if command -v pyenv >/dev/null; then
-    eval "$(pyenv init -)"
     export WORKON_HOME="$HOME/.virtualenvs"
     export PIP_VIRTUALENV_BASE="$WORKON_HOME"
     pyenv virtualenvwrapper_lazy
@@ -320,7 +309,7 @@ export PATH="$GOPATH/bin:$PATH"
     export PATH="/opt/homebrew/bin:/opt/homebrew/opt/gnu-getopt/bin:$PATH"
 
 # Add local bin directories
-export PATH="$HOME/.local/bin:$HOME/.local/share/nvim/bin:$PATH"
+export PATH="$HOME/.local/share/nvim/bin:$PATH"
 
 export LLM_USER_PATH=$HOME/.config/llm
 # =====================================================
@@ -338,9 +327,9 @@ alias cat='bat --paging=never'
 # alias find='fd'
 # alias grep='rg'
 
-# Enhanced ls command with lsd if available
-if command -v lsd &>/dev/null; then
-    export  EZA_ICONS_AUTO=true
+# Enhanced ls command with eza if available
+if command -v eza &>/dev/null; then
+    export EZA_ICONS_AUTO=true
     alias ls="eza"
     alias ll="eza -la"
     alias lh="eza -lah"
@@ -349,15 +338,14 @@ if command -v lsd &>/dev/null; then
     alias lt="eza --tree"
 fi
 
-# Install via brew/paru first, then:
-# znap eval zoxide 'zoxide init zsh'
-eval "$(zoxide init zsh)"
 # Provides 'z' command for intelligent directory jumping
 # Improved cd with auto-ls
 function cd() {
-    command -v z >/dev/null && z "$@" || (echo "install zoxide!"; builtin cd "$@")
-    eza
-    # z "$@" && ls
+    if command -v z >/dev/null; then
+        z "$@" && eza
+    else
+        echo "install zoxide!" && builtin cd "$@" && eza
+    fi
 }
 # zprof  # Add at the bottom (comment out after testing)
 
@@ -370,8 +358,8 @@ if [[ -d ~/.p ]]; then
     popd
 fi
 
-# Auto-start tmux if not already in tmux
-[[ -z $TMUX ]] && exec tmux
+# Auto-start tmux if not already in tmux (only in interactive terminals)
+[[ -z $TMUX && -t 1 ]] && exec tmux
 
 # The following lines have been added by Docker Desktop to enable Docker CLI completions.
 fpath=(/Users/tom/.docker/completions $fpath)
