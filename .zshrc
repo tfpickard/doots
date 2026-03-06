@@ -235,7 +235,7 @@ function zvm_after_init() {
     znap source marlonrichert/zsh-edit          # must come first: sets ZSH_AUTOSUGGEST_PARTIAL_ACCEPT_WIDGETS
     znap source zsh-users/zsh-autosuggestions   # reads the partial-accept list set by zsh-edit
     znap source zsh-users/zsh-history-substring-search
-    znap source zdharma-continuum/fast-syntax-highlighting
+    znap source zsh-users/zsh-syntax-highlighting
 
     # fzf keybindings (depend on widgets set up above)
     zle -N fzf-history-widget
@@ -251,7 +251,7 @@ znap source jeffreytse/zsh-vi-mode
 #   ADVANCED NAVIGATION AND COMPLETION
 # =====================================================
 znap eval zoxide 'zoxide init zsh'
-# fast-syntax-highlighting loaded after zsh-vi-mode via zvm_after_init (see above)
+# zsh-syntax-highlighting loaded after zsh-vi-mode via zvm_after_init (see above)
 znap source psprint/zsh-navigation-tools
 
 # =====================================================
