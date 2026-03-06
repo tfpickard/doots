@@ -77,7 +77,8 @@ znap source ohmyzsh/ohmyzsh lib/{cli,git,theme-and-appearance,directories,functi
 # Enhanced completion with auto-suggestions
 znap source zsh-users/zsh-completions      # Additional completion definitions
 # znap source marlonrichert/zsh-autocomplete # Real-time type-ahead completion (loaded first for compatibility)
-# zsh-autosuggestions loaded after zsh-vi-mode via zvm_after_init (see below)
+znap source marlonrichert/zsh-edit
+znap source zsh-users/zsh-autosuggestions  # Fish-like suggestions based on history
 
 # Fuzzy completion plugins
 znap source Freed-Wu/fzf-tab-source        # Source for fzf-tab 
@@ -89,7 +90,7 @@ znap source Aloxaf/fzf-tab                 # Tab completion with fzf
 
 # History improvements
 znap source marlonrichert/zsh-hist         # Better history command with alt-h
-# zsh-history-substring-search loaded after zsh-vi-mode via zvm_after_init (see below)
+znap source zsh-users/zsh-history-substring-search  # Fish-like up/down for history
 
 # Auto-pairing of brackets, quotes, etc.
 znap source hlissner/zsh-autopair
@@ -144,6 +145,9 @@ export TIPZ_TEXT="💡 ZSH Tip: "
 # =====================================================
 #   KEYBINDINGS AND SHORTCUTS
 # =====================================================
+# Enable vi mode
+znap source ohmyzsh/ohmyzsh plugins/vi-mode
+
 # Push line for editing
 bindkey '^[q' push-line-or-edit
 bindkey -r '^Q' '^[Q'
@@ -189,7 +193,13 @@ function fzf-history-widget() {
     zle reset-prompt
     set +x
 }
-# fzf keybindings registered in zvm_after_init (see ENHANCED VI MODE below)
+zle -N fzf-history-widget
+bindkey -M viins '^R' fzf-history-widget
+bindkey -M vicmd '^R' fzf-history-widget
+bindkey -M viins '^[[1;2A' fzf-history-widget
+bindkey -M vicmd '^[[1;2A' fzf-history-widget
+bindkey -M viins '^K' fzf-history-widget
+bindkey -M vicmd '^K' fzf-history-widget
 # =====================================================
 #   TOOL INTEGRATIONS AND COMPLETIONS
 # =====================================================
@@ -226,32 +236,12 @@ znap source mroth/evalcache
 _evalcache pyenv init -
 _evalcache direnv hook zsh
 
-# =====================================================
-#   ENHANCED VI MODE AND EDITING
-# =====================================================
-# zsh-vi-mode must load first; ZLE plugins that hook zle-line-finish
-# must load after it via zvm_after_init to avoid FUNCNEST nesting errors.
-function zvm_after_init() {
-    znap source marlonrichert/zsh-edit          # must come first: sets ZSH_AUTOSUGGEST_PARTIAL_ACCEPT_WIDGETS
-    znap source zsh-users/zsh-autosuggestions   # reads the partial-accept list set by zsh-edit
-    znap source zsh-users/zsh-history-substring-search
-    znap source zdharma-continuum/fast-syntax-highlighting
-
-    # fzf keybindings (depend on widgets set up above)
-    zle -N fzf-history-widget
-    bindkey '^R' fzf-history-widget
-    bindkey '^[[1;2A' fzf-history-widget
-    bindkey '^K' fzf-history-widget
-}
-
-znap source jeffreytse/zsh-vi-mode
 # znap source olets/zsh-abbr
 
 # =====================================================
 #   ADVANCED NAVIGATION AND COMPLETION
 # =====================================================
 znap eval zoxide 'zoxide init zsh'
-# fast-syntax-highlighting loaded after zsh-vi-mode via zvm_after_init (see above)
 znap source psprint/zsh-navigation-tools
 
 # =====================================================
@@ -370,4 +360,6 @@ fi
 fpath=(/Users/tom/.docker/completions $fpath)
 autoload -Uz compinit
 compinit
+znap source zsh-users/zsh-syntax-highlighting
+
 # End of Docker CLI completions
