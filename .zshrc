@@ -77,6 +77,7 @@ znap source ohmyzsh/ohmyzsh lib/{cli,git,theme-and-appearance,directories,functi
 # Enhanced completion with auto-suggestions
 znap source zsh-users/zsh-completions      # Additional completion definitions
 # znap source marlonrichert/zsh-autocomplete # Real-time type-ahead completion (loaded first for compatibility)
+znap source marlonrichert/zsh-edit
 znap source zsh-users/zsh-autosuggestions  # Fish-like suggestions based on history
 
 # Fuzzy completion plugins
@@ -241,7 +242,6 @@ _evalcache direnv hook zsh
 #   ADVANCED NAVIGATION AND COMPLETION
 # =====================================================
 znap eval zoxide 'zoxide init zsh'
-znap source zsh-users/zsh-syntax-highlighting
 znap source psprint/zsh-navigation-tools
 
 # =====================================================
@@ -360,4 +360,6 @@ fi
 fpath=(/Users/tom/.docker/completions $fpath)
 autoload -Uz compinit
 compinit
+znap source zsh-users/zsh-syntax-highlighting
+
 # End of Docker CLI completions
