@@ -193,9 +193,12 @@ function fzf-history-widget() {
     set +x
 }
 zle -N fzf-history-widget
-bindkey '^R' fzf-history-widget
-bindkey '^[[1;2A' fzf-history-widget
-bindkey '^K' fzf-history-widget
+bindkey -M viins '^R' fzf-history-widget
+bindkey -M vicmd '^R' fzf-history-widget
+bindkey -M viins '^[[1;2A' fzf-history-widget
+bindkey -M vicmd '^[[1;2A' fzf-history-widget
+bindkey -M viins '^K' fzf-history-widget
+bindkey -M vicmd '^K' fzf-history-widget
 # =====================================================
 #   TOOL INTEGRATIONS AND COMPLETIONS
 # =====================================================
