@@ -75,7 +75,6 @@ znap source ohmyzsh/ohmyzsh lib/{cli,git,theme-and-appearance,directories,functi
 #   COMPLETION PLUGINS
 # =====================================================
 # Enhanced completion with auto-suggestions
-znap source marlonrichert/zsh-edit         # Better line editing
 znap source zsh-users/zsh-completions      # Additional completion definitions
 # znap source marlonrichert/zsh-autocomplete # Real-time type-ahead completion (loaded first for compatibility)
 # zsh-autosuggestions loaded after zsh-vi-mode via zvm_after_init (see below)
@@ -233,7 +232,8 @@ _evalcache direnv hook zsh
 # zsh-vi-mode must load first; ZLE plugins that hook zle-line-finish
 # must load after it via zvm_after_init to avoid FUNCNEST nesting errors.
 function zvm_after_init() {
-    znap source zsh-users/zsh-autosuggestions
+    znap source marlonrichert/zsh-edit          # must come first: sets ZSH_AUTOSUGGEST_PARTIAL_ACCEPT_WIDGETS
+    znap source zsh-users/zsh-autosuggestions   # reads the partial-accept list set by zsh-edit
     znap source zsh-users/zsh-history-substring-search
     znap source zdharma-continuum/fast-syntax-highlighting
 
