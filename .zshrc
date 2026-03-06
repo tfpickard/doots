@@ -76,9 +76,9 @@ znap source ohmyzsh/ohmyzsh lib/{cli,git,theme-and-appearance,directories,functi
 # =====================================================
 # Enhanced completion with auto-suggestions
 znap source marlonrichert/zsh-edit         # Better line editing
-znap source zsh-users/zsh-completions      # Additional completion definitions 
+znap source zsh-users/zsh-completions      # Additional completion definitions
 # znap source marlonrichert/zsh-autocomplete # Real-time type-ahead completion (loaded first for compatibility)
-znap source zsh-users/zsh-autosuggestions  # Fish-like suggestions based on history
+# zsh-autosuggestions loaded after zsh-vi-mode via zvm_after_init (see below)
 
 # Fuzzy completion plugins
 znap source Freed-Wu/fzf-tab-source        # Source for fzf-tab 
@@ -90,7 +90,7 @@ znap source Aloxaf/fzf-tab                 # Tab completion with fzf
 
 # History improvements
 znap source marlonrichert/zsh-hist         # Better history command with alt-h
-znap source zsh-users/zsh-history-substring-search  # Fish-like up/down for history
+# zsh-history-substring-search loaded after zsh-vi-mode via zvm_after_init (see below)
 
 # Auto-pairing of brackets, quotes, etc.
 znap source hlissner/zsh-autopair
@@ -190,15 +190,7 @@ function fzf-history-widget() {
     zle reset-prompt
     set +x
 }
-zle -N fzf-history-widget
-bindkey '^R' fzf-history-widget
-# bindkey '^[[A' fzf-history-widget  # Up arrow for history search
-# bindkey '^[OA' fzf-history-widget  # Alternative Up arrow code
-bindkey '^[[1;2A' fzf-history-widget  # Up arrow for history search
-bindkey '^K' fzf-history-widget  # Alternative Up arrow code
-
-# Don't bind standard up/down keys to history-substring-search
-# since we're using fzf-history-widget instead
+# fzf keybindings registered in zvm_after_init (see ENHANCED VI MODE below)
 # =====================================================
 #   TOOL INTEGRATIONS AND COMPLETIONS
 # =====================================================
@@ -238,15 +230,28 @@ _evalcache direnv hook zsh
 # =====================================================
 #   ENHANCED VI MODE AND EDITING
 # =====================================================
+# zsh-vi-mode must load first; ZLE plugins that hook zle-line-finish
+# must load after it via zvm_after_init to avoid FUNCNEST nesting errors.
+function zvm_after_init() {
+    znap source zsh-users/zsh-autosuggestions
+    znap source zsh-users/zsh-history-substring-search
+    znap source zdharma-continuum/fast-syntax-highlighting
+
+    # fzf keybindings (depend on widgets set up above)
+    zle -N fzf-history-widget
+    bindkey '^R' fzf-history-widget
+    bindkey '^[[1;2A' fzf-history-widget
+    bindkey '^K' fzf-history-widget
+}
+
 znap source jeffreytse/zsh-vi-mode
-znap source kutsan/zsh-system-clipboard
 # znap source olets/zsh-abbr
 
 # =====================================================
 #   ADVANCED NAVIGATION AND COMPLETION
 # =====================================================
 znap eval zoxide 'zoxide init zsh'
-znap source zdharma-continuum/fast-syntax-highlighting  # Replace existing
+# fast-syntax-highlighting loaded after zsh-vi-mode via zvm_after_init (see above)
 znap source psprint/zsh-navigation-tools
 
 # =====================================================
