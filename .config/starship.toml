@@ -1,91 +1,43 @@
-# ╔═══════════════════════════════════════════════════════════════════╗
-# ║                    STARSHIP COMMAND CONSOLE                      ║
-# ║                   Synthwave Edition v4.0                         ║
-# ║                  Neon Dreams Configuration                       ║
-# ╚═══════════════════════════════════════════════════════════════════╝
-
-# ═══════════════════════════════════════════════════════════════════
-# CORE ARCHITECTURE - SIMPLIFIED & WORKING
-# ═══════════════════════════════════════════════════════════════════
+add_newline = true
+command_timeout = 1200
+scan_timeout = 30
+palette = "shellwave"
 
 format = """
-[╭┄](bright-black)\
-$os \
-┄\
-$directory\
-┄┄ \
- ⟨ \
-$git_branch\
-$git_status\
-$git_metrics\
- ⟩ \
-$fill\
-$cmd_duration\
-┄\
-$jobs\
-┄ \
-$battery\
-┄\
-$memory_usage\
-┄\
-$time\
-$line_break\
-[╰┄➤](bright-black) """
+$os$hostname$directory$git_branch$git_status$python$nodejs$bun$package$docker_context$aws$fill$cmd_duration$time
+$character"""
 
-right_format = """
-$python\
-$rust\
-$nodejs\
-$go\
-$c\
-$java\
-$docker_context\
-"""
+[palettes.shellwave]
+base = "#c0caf5"
+blue = "#7aa2f7"
+cyan = "#7dcfff"
+green = "#9ece6a"
+orange = "#ff9e64"
+pink = "#f7768e"
+purple = "#bb9af7"
+yellow = "#e0af68"
+muted = "#565f89"
 
-continuation_prompt = "[┄┄➜](bright-black) "
-scan_timeout = 30
-add_newline = true
+[os]
+disabled = false
+style = "bold blue"
+format = "[$symbol]($style)"
 
-# ═══════════════════════════════════════════════════════════════════
-# COMMAND CHARACTER - CLEAN MISSILES
-# ═══════════════════════════════════════════════════════════════════
-
-[character]
-success_symbol = "[➤](bright-blue)"
-error_symbol = "[⤿](bright-red)"
-vimcmd_symbol = "[◂](purple)"
-vimcmd_replace_one_symbol = "[▶](magenta)"
-vimcmd_replace_symbol = "[▷](magenta)"
-vimcmd_visual_symbol = "[󰈈](bright-cyan)"
-
-# ═══════════════════════════════════════════════════════════════════
-# NAVIGATION SYSTEMS
-# ═══════════════════════════════════════════════════════════════════
+[hostname]
+ssh_symbol = " "
+ssh_only = false
+style = "bold cyan"
+format = "[$ssh_symbol($hostname)]($style) in "
 
 [directory]
-format = " [$path]($style)[$read_only]($read_only_style) "
-style = "cyan"
-read_only = ""
-read_only_style = "bright-magenta"
-truncation_length = 8
-truncate_to_repo = true
-truncation_symbol = "/"
-home_symbol = ""
-
-[directory.substitutions]
-"Documents" = "docs"
-"Downloads" = "dl"
-"src" = "src"
-"work" = "work"
-"projects" = "proj"
-
-# ═══════════════════════════════════════════════════════════════════
-# VERSION CONTROL INTELLIGENCE
-# ═══════════════════════════════════════════════════════════════════
+style = "bold yellow"
+read_only = " 󰌾"
+truncation_length = 4
+truncate_to_repo = false
 
 [git_branch]
 format = "[$symbol$branch]($style) "
-symbol = ""
+symbol = " "
 style = "magenta"
 truncation_length = 20
 truncation_symbol = "⸱⸱⸱"
@@ -111,203 +63,248 @@ deleted_style = "bright-magenta"
 only_nonzero_diffs = true
 disabled = false
 
-# ═══════════════════════════════════════════════════════════════════
-# SYSTEM MONITORING - BUILT-IN MODULES ONLY
-# ═══════════════════════════════════════════════════════════════════
 
-[cmd_duration]
-format = "󰔟 [$duration]($style) "
-style = "bright-cyan"
-min_time = 2000
-show_milliseconds = false
-
-[jobs]
-format = "[$symbol$number]($style) "
-symbol = ""
-style = "yellow"
-number_threshold = 1
-
-[battery]
-format = "[$symbol $percentage]($style) "
-charging_symbol = "󰂄"
-discharging_symbol = "󱧦"
-unknown_symbol = "󰂑"
-empty_symbol = "󱃍"
-
-[[battery.display]]
-threshold = 20
-style = "bright-magenta"
-charging_symbol = "▲ "
-discharging_symbol = "▼ "
-
-[[battery.display]]
-threshold = 50
-style = "magenta"
-
-[[battery.display]]
-threshold = 100
-style = "purple"
-
-[memory_usage]
-format = "󰍛 [$ram]($style) "
-style = "bright-cyan"
-threshold = 0
-disabled = false
-
-[time]
-format = " [$time]($style)"
-style = "bright-black"
-time_format = "%H·%M·%S"
-disabled = false
-
-# ═══════════════════════════════════════════════════════════════════
-# DEVELOPMENT ENVIRONMENTS - SIMPLIFIED
-# ═══════════════════════════════════════════════════════════════════
-
-[c]
-format = " [$symbol$version]($style) "
-symbol = "ℂ "
-style = "bright-cyan"
-detect_extensions = ["c", "h"]
-detect_files = ["Makefile", "CMakeLists.txt"]
-
+# [git_branch]
+# symbol = "git:"
+# style = "bold green"
+# format = "[$symbol$branch ]($style)"
+#
+# [git_status]
+# style = "bold green"
+# format = "([($all_status$ahead_behind )]($style))"
+#
 [python]
-format = ' [$symbol$version]($style) '
-symbol = "󱔎"
-style = "green"
-detect_extensions = ["py"]
-detect_files = ["requirements.txt", "pyproject.toml", "setup.py"]
-
-[rust]
-format = " [$symbol$version]($style) "
-symbol = " "
-style = "bright-magenta"
-detect_extensions = ["rs"]
-detect_files = ["Cargo.toml"]
+symbol = " "
+style = "bold #9ece6a"
+format = "[${symbol}${pyenv_prefix}(${version})(\\($virtualenv\\)) ]($style)"
 
 [nodejs]
-format = " [$symbol$version]($style) "
-symbol = ""
-style = "green"
-detect_extensions = ["js", "mjs", "cjs", "ts"]
-detect_files = ["package.json"]
+symbol = " "
+style = "bold #7aa2f7"
+format = "[$symbol($version )]($style)"
 
-[go]
-format = " [$symbol$version]($style) "
-symbol = ""
-style = "cyan"
-detect_extensions = ["go"]
-detect_files = ["go.mod"]
+[bun]
+symbol = " "
+style = "bold #ff9e64"
+format = "[$symbol($version )]($style)"
 
-[java]
-format = " [$symbol$version]($style) "
-symbol = ""
-style = "purple"
-detect_extensions = ["java", "class", "jar"]
-detect_files = ["pom.xml", "build.gradle"]
+[package]
+symbol = "󰏗 "
+style = "bold #565f89"
+format = "[$symbol$version ]($style)"
 
 [docker_context]
-format = " [$symbol$context]($style) "
-symbol = ""
-style = "magenta"
-only_with_files = true
-detect_files = ["docker-compose.yml", "Dockerfile"]
-
-# ═══════════════════════════════════════════════════════════════════
-# OS SYMBOLS - CRYPTIC STYLE
-# ═══════════════════════════════════════════════════════════════════
-
-[os]
-format = "[$symbol]($style) "
-style = "bright-magenta"
-disabled = false
-
-[os.symbols]
-Linux = ""
-Macos = ""
-Windows = ""
-Ubuntu = ""
-Debian = ""
-Fedora = ""
-Arch = ""
-Unknown = "◦"
-#
-# ═══════════════════════════════════════════════════════════════════
-# FILL CHARACTER
-# ═══════════════════════════════════════════════════════════════════
-
-[fill]
-symbol = "┄"
-style = "purple"
-
-# ═══════════════════════════════════════════════════════════════════
-# DISABLED MODULES - PERFORMANCE OPTIMIZATION
-# ═══════════════════════════════════════════════════════════════════
-
-[hostname]
-disabled = false
-
-[username]
-disabled = false
+symbol = " "
+style = "bold #7dcfff"
+format = "[$symbol$context ]($style)"
 
 [aws]
+style = "bold #ff9e64"
+format = "[$symbol$profile($region) ]($style)"
+symbol = " "
+
+[cmd_duration]
+min_time = 500
+style = "bold #bb9af7"
+format = "[t:$duration ]($style)"
+
+[time]
 disabled = false
+time_format = "%H:%M"
+style = "dimmed white"
+format = "[$time ]($style)"
 
-[azure]
-disabled = true
+[fill]
+symbol = " "
 
-[gcloud]
-disabled = true
+[character]
+success_symbol = "[>](bold #9ece6a)"
+error_symbol = "[>](bold #f7768e)"
+vimcmd_symbol = "[<](bold #e0af68)"
+vimcmd_visual_symbol = "[<](bold #bb9af7)"
+vimcmd_replace_symbol = "[<](bold #7dcfff)"
 
-[kubernetes]
-disabled = true
 
-[terraform]
-disabled = true
+[buf]
+symbol = " "
 
-[vagrant]
-disabled = true
 
-[nix_shell]
-disabled = true
+[c]
+symbol = " "
+
+[cpp]
+symbol = " "
+
+[cmake]
+symbol = " "
 
 [conda]
-disabled = false
+symbol = " "
 
-[env_var]
-disabled = false
+[crystal]
+symbol = " "
 
-# ═══════════════════════════════════════════════════════════════════
-# END CONFIGURATION
-# ═══════════════════════════════════════════════════════════════════
+[dart]
+symbol = " "
 
-# Synthwave Engineering Edition - Mathematical Glyph Configuration
-# Features smooth curved connectors: ╭┄ and ╰┄➤
-# 
-# Mathematical/Logical Unicode Glyphs:
-#  = composition (replaces "at" and "via") ∈ = element of (replaces "on") 
-# ⟨⟩ = angle brackets (replaces [])        ° = degree (replaces %)
-# ⌬ = memory symbol (replaces "mem")       · = dots (replaces ":")
-# ⧖ = duration (replaces "took")           ℂ = stylized C (C language)
-#  = official Python logo (Nerd Font)
-# 
-# All arrows are engineering/mechanical drawing style:
-# ➤ ▶ ◂ ▲ ▼ ◆ ⤞ ↷ ▷ - Clean, precise, technical
-# 
-# Installation:
-# 1. Save as ~/.config/starship.toml
-# 2. Restart terminal
-#
-# ╰┄➤ Ready for mathematical symbol excellence.
+[deno]
+symbol = " "
 
-# ═══════════════════════════════════════════════════════════════════
-# CORRECTED GHOSTTY CONFIG
-# ═══════════════════════════════════════════════════════════════════
-# Save to ~/.config/ghostty/config:
-#
-# font-family = Monaspace Neon
-# font-size = 14
-# 
-# Note: Ghostty uses system font fallback automatically.
-# Install Nerd Fonts and they'll be used for missing glyphs:
-# brew install font-jetbrains-mono-nerd-font
+
+[elixir]
+symbol = " "
+
+[elm]
+symbol = " "
+
+[fennel]
+symbol = " "
+
+# [fortran]
+# symbol = " "
+
+[fossil_branch]
+symbol = " "
+
+[gcloud]
+symbol = " "
+
+
+[git_commit]
+tag_symbol = '  '
+
+[golang]
+symbol = " "
+
+[gradle]
+symbol = " "
+
+[guix_shell]
+symbol = " "
+
+[haskell]
+symbol = " "
+
+[haxe]
+symbol = " "
+
+[hg_branch]
+symbol = " "
+
+
+[java]
+symbol = " "
+
+[julia]
+symbol = " "
+
+[kotlin]
+symbol = " "
+
+[lua]
+symbol = " "
+
+[memory_usage]
+symbol = "󰍛 "
+
+[meson]
+symbol = "󰔷 "
+
+[nim]
+symbol = "󰆥 "
+
+[nix_shell]
+symbol = " "
+
+
+[ocaml]
+symbol = " "
+
+[os.symbols]
+Alpaquita = " "
+Alpine = " "
+AlmaLinux = " "
+Amazon = " "
+Android = " "
+# AOSC = " "
+Arch = " "
+Artix = " "
+CachyOS = " "
+CentOS = " "
+Debian = " "
+DragonFly = " "
+# Elementary = " "
+Emscripten = " "
+EndeavourOS = " "
+Fedora = " "
+FreeBSD = " "
+Garuda = "󰛓 "
+Gentoo = " "
+HardenedBSD = "󰞌 "
+Illumos = "󰈸 "
+# Ios = "󰀷 "
+Kali = " "
+Linux = " "
+Mabox = " "
+Macos = " "
+Manjaro = " "
+Mariner = " "
+MidnightBSD = " "
+Mint = " "
+NetBSD = " "
+NixOS = " "
+Nobara = " "
+OpenBSD = "󰈺 "
+openSUSE = " "
+OracleLinux = "󰌷 "
+Pop = " "
+Raspbian = " "
+Redhat = " "
+RedHatEnterprise = " "
+RockyLinux = " "
+Redox = "󰀘 "
+Solus = "󰠳 "
+SUSE = " "
+Ubuntu = " "
+Unknown = " "
+Void = " "
+Windows = "󰍲 "
+# Zorin = " "
+
+
+[perl]
+symbol = " "
+
+[php]
+symbol = " "
+
+[pijul_channel]
+symbol = " "
+
+[pixi]
+symbol = "󰏗 "
+
+
+[rlang]
+symbol = "󰟔 "
+
+[ruby]
+symbol = " "
+
+[rust]
+symbol = "󱘗 "
+
+[scala]
+symbol = " "
+
+[status]
+symbol = " "
+
+[swift]
+symbol = " "
+
+# [xmake]
+# symbol = " "
+
+[zig]
+symbol = " "

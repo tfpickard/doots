@@ -363,3 +363,6 @@ compinit
 znap source zsh-users/zsh-syntax-highlighting
 
 # End of Docker CLI completions
+
+# OpenClaw Completion
+source "/Users/tom/.openclaw/completions/openclaw.zsh"
