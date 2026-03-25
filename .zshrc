@@ -80,8 +80,21 @@ znap source zsh-users/zsh-completions      # Additional completion definitions
 znap source marlonrichert/zsh-edit
 znap source zsh-users/zsh-autosuggestions  # Fish-like suggestions based on history
 
-# Fuzzy completion plugins
-znap source Freed-Wu/fzf-tab-source        # Source for fzf-tab 
+# Load fzf shell integration before fzf plugins (defines __fzfcmd)
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+# Fallback if ~/.fzf.zsh isn't present (e.g. fzf installed via brew without running install script)
+(( ${+functions[__fzfcmd]} )) || __fzfcmd() {
+  [ -n "$TMUX_PANE" ] && { [ "${FZF_TMUX:-0}" != 0 ] || [ -n "$FZF_TMUX_OPTS" ]; } &&
+    echo "fzf-tmux ${FZF_TMUX_OPTS:--d${FZF_TMUX_HEIGHT:-40%}} -- " || echo "fzf"
+}
+
+# Initialize completion system (must happen before fzf-tab)
+fpath=(/Users/tom/.docker/completions $fpath)
+autoload -Uz compinit
+compinit
+
+# Fuzzy completion plugins (must load after compinit)
+znap source Freed-Wu/fzf-tab-source        # Source for fzf-tab
 znap source Aloxaf/fzf-tab                 # Tab completion with fzf
 
 # =====================================================
@@ -171,8 +184,6 @@ if ! command -v fzf &>/dev/null; then
     fi
 fi
 
-# Load fzf key bindings and completion
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
 # Enhanced history search with fzf
 # This will allow up-arrow to show a multi-line view of matching history
@@ -356,13 +367,7 @@ fi
 # Auto-start tmux if not already in tmux (only in interactive terminals)
 [[ -z $TMUX && -t 1 ]] && exec tmux
 
-# The following lines have been added by Docker Desktop to enable Docker CLI completions.
-fpath=(/Users/tom/.docker/completions $fpath)
-autoload -Uz compinit
-compinit
 znap source zsh-users/zsh-syntax-highlighting
-
-# End of Docker CLI completions
 
 # OpenClaw Completion
 source "/Users/tom/.openclaw/completions/openclaw.zsh"
