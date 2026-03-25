@@ -78,7 +78,6 @@ znap source ohmyzsh/ohmyzsh lib/{cli,git,theme-and-appearance,directories,functi
 znap source zsh-users/zsh-completions      # Additional completion definitions
 # znap source marlonrichert/zsh-autocomplete # Real-time type-ahead completion (loaded first for compatibility)
 znap source marlonrichert/zsh-edit
-znap source zsh-users/zsh-autosuggestions  # Fish-like suggestions based on history
 
 # Load fzf shell integration before fzf plugins (defines __fzfcmd)
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
@@ -93,9 +92,11 @@ fpath=(/Users/tom/.docker/completions $fpath)
 autoload -Uz compinit
 compinit
 
-# Fuzzy completion plugins (must load after compinit)
+# Fuzzy completion plugins: after compinit, before widget-wrapping plugins
 znap source Freed-Wu/fzf-tab-source        # Source for fzf-tab
 znap source Aloxaf/fzf-tab                 # Tab completion with fzf
+
+znap source zsh-users/zsh-autosuggestions  # Fish-like suggestions (must come after fzf-tab)
 
 # =====================================================
 #   SYNTAX AND BEHAVIOR PLUGINS
