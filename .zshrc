@@ -1,4 +1,3 @@
-
 [[ -d "$HOME/Library/bin" ]] && export PATH="$HOME"/Library/bin:$PATH
 export PATH="$HOME"/.local/bin:$PATH
 # # =====================================================
@@ -166,9 +165,14 @@ znap source ohmyzsh/ohmyzsh plugins/vi-mode
 bindkey '^[q' push-line-or-edit
 bindkey -r '^Q' '^[Q'
 
-# History search handled by fzf-history-widget below
-# bindkey '^[[A' history-substring-search-up
-# bindkey '^[[B' history-substring-search-down
+# Use substring history search on plain Up/Down when a prefix is already typed.
+# Bind both common arrow escape sequences across the active keymaps.
+for keymap in emacs viins vicmd; do
+    bindkey -M "$keymap" '^[[A' history-substring-search-up
+    bindkey -M "$keymap" '^[[B' history-substring-search-down
+    bindkey -M "$keymap" '^[OA' history-substring-search-up
+    bindkey -M "$keymap" '^[OB' history-substring-search-down
+done
 
 # =====================================================
 #   HISTORY AND SEARCH ENHANCEMENT
@@ -372,3 +376,7 @@ znap source zsh-users/zsh-syntax-highlighting
 
 # OpenClaw Completion
 source "/Users/tom/.openclaw/completions/openclaw.zsh"
+
+fpath+=~/.zfunc; autoload -Uz compinit; compinit
+
+zstyle ':completion:*' menu select
