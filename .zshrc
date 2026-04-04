@@ -76,6 +76,7 @@ znap source ohmyzsh/ohmyzsh lib/{cli,git,theme-and-appearance,directories,functi
 # Enhanced completion with auto-suggestions
 znap source zsh-users/zsh-completions      # Additional completion definitions
 # znap source marlonrichert/zsh-autocomplete # Real-time type-ahead completion (loaded first for compatibility)
+znap source wbingli/zsh-claudecode-completion  # Claude Code CLI completions
 znap source marlonrichert/zsh-edit
 
 # Load fzf shell integration before fzf plugins (defines __fzfcmd)
@@ -257,7 +258,6 @@ _evalcache direnv hook zsh
 # =====================================================
 #   ADVANCED NAVIGATION AND COMPLETION
 # =====================================================
-znap eval zoxide 'zoxide init zsh'
 znap source psprint/zsh-navigation-tools
 
 # =====================================================
@@ -372,6 +372,7 @@ fi
 # Auto-start tmux if not already in tmux (only in interactive terminals)
 [[ -z $TMUX && -t 1 ]] && exec tmux
 
+znap eval zoxide 'zoxide init zsh'
 znap source zsh-users/zsh-syntax-highlighting
 
 # OpenClaw Completion
