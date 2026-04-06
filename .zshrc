@@ -372,7 +372,6 @@ fi
 # Auto-start tmux if not already in tmux (only in interactive terminals)
 [[ -z $TMUX && -t 1 ]] && exec tmux
 
-znap eval zoxide 'zoxide init zsh'
 znap source zsh-users/zsh-syntax-highlighting
 
 # OpenClaw Completion
@@ -381,3 +380,7 @@ source "/Users/tom/.openclaw/completions/openclaw.zsh"
 fpath+=~/.zfunc; autoload -Uz compinit; compinit
 
 zstyle ':completion:*' menu select
+
+export PATH="$PATH:$HOME/.local/bin"
+
+znap eval zoxide 'zoxide init zsh'
