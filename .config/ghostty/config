@@ -1,7 +1,9 @@
 adjust-underline-position = 8
 adjust-underline-thickness = 2
 # auto-update = "stable"  # was "tip" - removed as this option doesn't exist
-cursor-invert-fg-bg = true
+# cursor-invert-fg-bg = true  # deprecated -> migrated to cursor-color/cursor-text below
+cursor-color = cell-foreground
+cursor-text = cell-background
 custom-shader-animation = "always"
 
 macos-icon = "custom-style"
@@ -28,13 +30,20 @@ macos-window-shadow = true
 # quick-terminal-position = "top"        # Removed - not supported  
 # quick-terminal-size = 45%            # Removed - not supported
 # quick-terminal-screen = "main"       # Removed - not supported, use default
-keybind = "global:super+enter=toggle_quick_terminal"
+
+# OS-specific settings (e.g. the quick-terminal keybind, which only works on
+# macOS) live in os/macos.conf and os/linux.conf. `make ghostty` creates the
+# os/active symlink pointing at the right one for this machine. The leading `?`
+# makes the include optional, so a machine without the symlink still loads clean.
+config-file = ?os/active
 
 config-file = font/monaspace-neon
 config-file = leading/default
 # c1onfig-file = theme/vague
 config-file = theme/catppuccin-mocha
 config-file = opacity/85%
-config-file = shader/underwater
+# config-file = shader/starfield
+# config-file = shader/matrix-hallway
+config-file = shader/none
 
 # vim: ft=config

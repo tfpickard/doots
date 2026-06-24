@@ -27,7 +27,7 @@ HOME_FILES := .zshrc .tmux.conf .aliases .functions .gitignore .p10k.zsh \
 
 # Directories to symlink to .config
 CONFIG_DIRS := nvim hypr ghostty waybar dunst rofi alacritty
-all: deps backup symlinks nvim
+all: deps backup symlinks ghostty nvim
 	@echo "🎉 Dotfiles installation complete!"
 	@echo "💡 You may need to:"
 	@echo "   - Restart your shell: exec zsh"
@@ -195,6 +195,12 @@ ghostty:
 		echo "👻 Ghostty configuration linked!"; \
 	else \
 		echo "❌ Ghostty config not found"; \
+	fi
+	@# Select the per-OS Ghostty include: os/active -> macos.conf | linux.conf
+	@if [ -d $(DOTFILES_DIR)/.config/ghostty/os ]; then \
+		if [ "$(UNAME_S)" = "Darwin" ]; then osfile=macos.conf; else osfile=linux.conf; fi; \
+		ln -sfn $$osfile $(DOTFILES_DIR)/.config/ghostty/os/active; \
+		echo "👻 Ghostty OS profile: os/active -> $$osfile"; \
 	fi
 
 shell:

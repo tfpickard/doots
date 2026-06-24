@@ -1,4 +1,4 @@
-theme = /Users/kaz/repos/tokyonight.nvim/extras/ghostty/tokyonight_moon
+theme = TokyoNight Moon
 
 
 # vim: ft=config

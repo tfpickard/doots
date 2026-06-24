@@ -1,4 +1,4 @@
-custom-shader = /Users/kaz/repos/ghostty-shaders/tft.glsl
+custom-shader = ~/.config/ghostty/shaders/tft.glsl
 
 
 

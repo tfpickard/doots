@@ -1,5 +1,5 @@
 
-custom-shader = /Users/kaz/repos/ghostty-shaders/inside-the-matrix.glsl
+custom-shader = ~/.config/ghostty/shaders/inside-the-matrix.glsl
 
 
 

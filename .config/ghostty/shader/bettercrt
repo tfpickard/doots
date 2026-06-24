@@ -1,4 +1,4 @@
-custom-shader = /Users/kaz/repos/ghostty-shaders/bettercrt.glsl
+custom-shader = ~/.config/ghostty/shaders/bettercrt.glsl
 
 
 

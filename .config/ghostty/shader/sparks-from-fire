@@ -1,4 +1,4 @@
-custom-shader = /Users/kaz/repos/ghostty-shaders/sparks-from-fire.glsl
+custom-shader = ~/.config/ghostty/shaders/sparks-from-fire.glsl
 
 
 

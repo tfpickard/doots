@@ -1,5 +1,5 @@
 
-custom-shader = /Users/kaz/repos/ghostty-shaders/matrix-hallway.glsl
+custom-shader = ~/.config/ghostty/shaders/matrix-hallway.glsl
 
 
 
