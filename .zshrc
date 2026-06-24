@@ -277,7 +277,9 @@ bindkey -M vicmd '^K' fzf-history-widget
 #   TOOL INTEGRATIONS AND COMPLETIONS
 # =====================================================
 [[ -d ~/.config/zsh/completions ]] || mkdir -p ~/.config/zsh/completions
-for x in ~/.config/zsh/completions/*; do
+# (N) = nullglob: expand to nothing (not a "no matches found" error) when the
+# completions dir is empty.
+for x in ~/.config/zsh/completions/*(N); do
     [[ "$x" =~ ".zwc" ]] && continue
     if [[ -f $x ]]; then
         source $x
