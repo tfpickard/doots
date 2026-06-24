@@ -407,13 +407,15 @@ if command -v eza &>/dev/null; then
     alias lt="eza --tree"
 fi
 
-# Provides 'z' command for intelligent directory jumping
-# Improved cd with auto-ls
+# cd with auto-ls. Prefer zoxide's `z` jump, but check for the FUNCTION precisely
+# (`command -v z` can match a stale hashed `z` and then fail at runtime with
+# "command not found: z"). zoxide is initialized near the bottom of this file, so
+# during early startup `z` may not exist yet — fall back to the builtin then.
 function cd() {
-    if command -v z >/dev/null; then
+    if (( $+functions[z] )); then
         z "$@" && ls
     else
-        echo "install zoxide!" && builtin cd "$@" && ls
+        builtin cd "$@" && ls
     fi
 }
 # zprof  # Add at the bottom (comment out after testing)
@@ -427,13 +429,17 @@ if [[ -d ~/.p ]]; then
     popd
 fi
 
-# Auto-start tmux if not already in tmux (only in interactive terminals)
-[[ -z $TMUX && -t 1 ]] && exec tmux
+# tmux autostart is handled earlier by _tmux_project_autostart (per-project
+# sessions, and it intentionally skips VS Code). This old unconditional
+# `exec tmux` was redundant AND re-enabled tmux inside VS Code, defeating that
+# logic, so it's disabled.
+# [[ -z $TMUX && -t 1 ]] && exec tmux
 
 znap source zsh-users/zsh-syntax-highlighting
 
-# OpenClaw Completion
-source "/Users/tom/.openclaw/completions/openclaw.zsh"
+# OpenClaw Completion (guarded: path differs per machine and may be absent;
+# the old line hardcoded a /Users/tom macOS path and errored on Linux)
+[[ -f ~/.openclaw/completions/openclaw.zsh ]] && source ~/.openclaw/completions/openclaw.zsh
 
 fpath+=~/.zfunc; autoload -Uz compinit; compinit
 
