@@ -122,13 +122,69 @@ znap source ptavares/zsh-direnv
 # Auto-switch Python virtualenvs when entering directories
 znap source MichaelAquilina/zsh-autoswitch-virtualenv
 
-# tmux configuration and auto-start
-ZSH_TMUX_AUTOSTART=${ZSH_TMUX_AUTOSTART:-true}
-ZSH_TMUX_AUTOCONNECT=${ZSH_TMUX_AUTOCONNECT:-true}
-ts=$(date +"%m-%d-%yT%H:%M:%S")
-ZSH_TMUX_DEFAULT_SESSION_NAME=${ZSH_TMUX_DEFAULT_SESSION_NAME:-"tmux-$ts"}
+# =====================================================
+#   TMUX: one session PER PROJECT, independent views
+# =====================================================
+# The old config named every session tmux-<timestamp>, so AUTOCONNECT could never
+# match an existing one and each shell spawned a brand-new session (=> 7+ orphan
+# sessions of sprawl). Instead: one session per PROJECT (git root, else $PWD).
+# Every terminal opened in the same project rejoins that session; each terminal/tab
+# gets its own self-destroying *grouped* view, so panes don't mirror or fight over
+# size, and the view disappears when the tab closes (no session sprawl) while your
+# windows and running work persist in the project session.
+#
+# Keep the oh-my-zsh tmux plugin for its aliases, but disable its own autostart;
+# we roll our own below.
+#
+# Autostart policy:
+#   - An explicit ZSH_TMUX_AUTOSTART in the environment ALWAYS wins (true or false).
+#   - Otherwise default OFF inside VS Code's integrated terminal (TERM_PROGRAM=vscode):
+#     tmux's alternate screen breaks VS Code shell integration and the Copilot agent's
+#     command-output capture. Use the "zsh (tmux)" terminal profile to opt back in.
+#   - Otherwise default ON (Ghostty and every other terminal) — the usual workflow.
+if [[ -n "${ZSH_TMUX_AUTOSTART+set}" ]]; then
+  _TMUX_AUTOSTART_WANT="$ZSH_TMUX_AUTOSTART"
+elif [[ "$TERM_PROGRAM" == vscode ]]; then
+  _TMUX_AUTOSTART_WANT=false
+else
+  _TMUX_AUTOSTART_WANT=true
+fi
+ZSH_TMUX_AUTOSTART=false
 ZSH_TMUX_UNICODE=true
 znap source ohmyzsh/ohmyzsh plugins/tmux
+
+_tmux_project_autostart() {
+  # Interactive TTYs only; bail if already in tmux or tmux is unavailable.
+  [[ -o interactive && -t 1 ]] || return
+  [[ -n "$TMUX" ]] && return
+  [[ "$TERM" == dumb ]] && return
+  command -v tmux >/dev/null || return
+  [[ "$_TMUX_AUTOSTART_WANT" == true ]] || return
+
+  # Project name: git superproject (so submodules map to the parent) -> toplevel
+  # -> current dir. A manual ZSH_TMUX_DEFAULT_SESSION_NAME always wins.
+  local root name view
+  if [[ -n "$ZSH_TMUX_DEFAULT_SESSION_NAME" ]]; then
+    name="$ZSH_TMUX_DEFAULT_SESSION_NAME"
+  else
+    root="$(command git rev-parse --show-superproject-working-tree 2>/dev/null)"
+    [[ -z "$root" ]] && root="$(command git rev-parse --show-toplevel 2>/dev/null)"
+    [[ -z "$root" ]] && root="$PWD"
+    name="${root:t}"
+  fi
+  name="${name//[^A-Za-z0-9_-]/-}"   # tmux dislikes '.'/':'/spaces in names
+  [[ -z "$name" ]] && name="main"
+
+  # Persistent per-project session that owns the windows/work.
+  command tmux has-session -t "=$name" 2>/dev/null || command tmux new-session -d -s "$name"
+
+  # Attach through a private grouped session (independent current-window pointer =>
+  # no mirroring/resize lock) that self-destroys on detach (=> no sprawl). Created
+  # and attached in one call so it never gets reaped before we attach.
+  view="${name}-$$"
+  exec command tmux new-session -t "$name" -s "$view" \; set-option -t "$view" destroy-unattached on
+}
+_tmux_project_autostart
 
 # Git-related plugins
 znap source ohmyzsh/ohmyzsh plugins/{git,gitfast,git-extras}
