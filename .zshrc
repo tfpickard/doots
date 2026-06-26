@@ -97,6 +97,11 @@ fpath=(~/.zfunc $fpath)
 autoload -Uz compinit
 compinit
 
+# Completion menu style must be set BEFORE fzf-tab loads (and not re-applied after),
+# so fzf-tab can take over the menu. If set AFTER fzf-tab, Tab falls back to zsh's
+# default menu: first Tab prints a newline, second Tab shows the list.
+zstyle ':completion:*' menu select
+
 # Fuzzy completion plugins: after compinit, before widget-wrapping plugins
 znap source Freed-Wu/fzf-tab-source        # Source for fzf-tab
 znap source Aloxaf/fzf-tab                 # Tab completion with fzf
@@ -454,13 +459,12 @@ znap source zsh-users/zsh-syntax-highlighting
 # the old line hardcoded a /Users/tom macOS path and errored on Linux)
 [[ -f ~/.openclaw/completions/openclaw.zsh ]] && source ~/.openclaw/completions/openclaw.zsh
 
-fpath+=~/.zfunc; autoload -Uz compinit; compinit
-# eza ships no zsh completion and `ls` is aliased to eza. NOTE: znap wraps `compdef`
-# to DEFER it (queues into _znap_compdef), and this runs after the last `znap
-# source`, so a normal `compdef _eza eza` never flushes. Register _eza directly.
+# Register the vendored ~/.zfunc/_eza completion. ~/.zfunc is already on fpath
+# before the FIRST compinit above, so DON'T run compinit again here: a second
+# compinit after fzf-tab + the widget-wrapping plugins breaks fzf-tab (Tab prints
+# a newline and needs a second press). znap also wraps `compdef` to DEFER it
+# (queues into _znap_compdef) and never flushes this late, so register directly.
 autoload -Uz _eza 2>/dev/null && _comps[eza]=_eza
-
-zstyle ':completion:*' menu select
 
 export PATH="$PATH:$HOME/.local/bin"
 
