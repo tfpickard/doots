@@ -308,7 +308,11 @@ znap source romkatv/zsh-defer
 znap source mroth/evalcache
 
 # Cache slow evaluations
-_evalcache pyenv init -
+# pyenv must be on PATH *before* its init is evaluated, so set PYENV_ROOT/PATH
+# here. Guarded so an absent pyenv stays silent (no more evalcache error).
+export PYENV_ROOT="$HOME/.pyenv"
+[[ -d "$PYENV_ROOT/bin" ]] && export PATH="$PYENV_ROOT/bin:$PATH"
+command -v pyenv >/dev/null && _evalcache pyenv init -
 _evalcache direnv hook zsh
 
 # znap source olets/zsh-abbr
@@ -328,9 +332,8 @@ export AUTO_NOTIFY_THRESHOLD=15  # Notify for long compilations
 # =====================================================
 #   ENVIRONMENT TOOLS
 # =====================================================
-# Python environment setup
-export PYENV_ROOT="$HOME/.pyenv"
-export PATH="$PYENV_ROOT/bin:$PATH"
+# Python environment setup (PYENV_ROOT/PATH already exported above, before the
+# pyenv init call). virtualenvwrapper_lazy needs the pyenv-virtualenvwrapper plugin.
 if command -v pyenv >/dev/null; then
     export WORKON_HOME="$HOME/.virtualenvs"
     export PIP_VIRTUALENV_BASE="$WORKON_HOME"
