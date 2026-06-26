@@ -87,8 +87,13 @@ znap source marlonrichert/zsh-edit
     echo "fzf-tmux ${FZF_TMUX_OPTS:--d${FZF_TMUX_HEIGHT:-40%}} -- " || echo "fzf"
 }
 
-# Initialize completion system (must happen before fzf-tab)
-fpath=(/Users/tom/.docker/completions $fpath)
+# Initialize completion system (must happen before fzf-tab).
+# fpath additions must come BEFORE compinit so it processes their #compdef tags.
+# ~/.zfunc holds vendored completions (e.g. _eza, so `ls`/`eza` tab-complete since
+# ls is aliased to eza). Docker's dir is added only if present (was a hardcoded
+# /Users/tom macOS path that doesn't exist on Linux).
+fpath=(~/.zfunc $fpath)
+[[ -d ~/.docker/completions ]] && fpath=(~/.docker/completions $fpath)
 autoload -Uz compinit
 compinit
 
@@ -445,6 +450,10 @@ znap source zsh-users/zsh-syntax-highlighting
 [[ -f ~/.openclaw/completions/openclaw.zsh ]] && source ~/.openclaw/completions/openclaw.zsh
 
 fpath+=~/.zfunc; autoload -Uz compinit; compinit
+# eza ships no zsh completion and `ls` is aliased to eza. NOTE: znap wraps `compdef`
+# to DEFER it (queues into _znap_compdef), and this runs after the last `znap
+# source`, so a normal `compdef _eza eza` never flushes. Register _eza directly.
+autoload -Uz _eza 2>/dev/null && _comps[eza]=_eza
 
 zstyle ':completion:*' menu select
 
