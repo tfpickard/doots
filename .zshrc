@@ -342,7 +342,12 @@ export AUTO_NOTIFY_THRESHOLD=15  # Notify for long compilations
 if command -v pyenv >/dev/null; then
     export WORKON_HOME="$HOME/.virtualenvs"
     export PIP_VIRTUALENV_BASE="$WORKON_HOME"
-    pyenv virtualenvwrapper_lazy
+    # Only init virtualenvwrapper when its scripts are actually on PATH. Otherwise
+    # `pyenv virtualenvwrapper_lazy` spams errors every startup AND attempts a
+    # PEP 668-blocked pip install. To enable: `pipx install virtualenvwrapper`.
+    if command -v virtualenvwrapper_lazy.sh >/dev/null 2>&1 || command -v virtualenvwrapper.sh >/dev/null 2>&1; then
+        pyenv virtualenvwrapper_lazy
+    fi
 fi
 
 # Node.js environment setup
