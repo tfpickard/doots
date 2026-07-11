@@ -1,19 +1,18 @@
 /* ============================================================
    "dope" — niri waybar theme.
-   Floating rounded pills, JetBrainsMono Nerd Font.
-   Colors come from the global theme system: colors.css is a
-   symlink to ~/.config/themes/active/waybar.css (flipped by
-   `theme-set`). Reload with SIGUSR2 or theme-set does it for you.
+   Grouped floating "islands" (cards) with JetBrainsMono NF Propo.
+   Colors come from the global theme system: colors.css is a symlink
+   to ~/.config/themes/active/waybar.css (flipped by `theme-set`).
+   Reload style with SIGUSR2; theme-set does it for you.
    ============================================================ */
 
 @import "colors.css";
 
 * {
-    font-family: "JetBrainsMono Nerd Font", "Symbols Nerd Font", "FontAwesome", sans-serif;
+    font-family: "JetBrainsMono Nerd Font Propo", "Symbols Nerd Font", sans-serif;
     font-size: 13px;
     font-weight: 600;
     min-height: 0;
-    /* kill the default focus box around modules */
     border: none;
     border-radius: 0;
 }
@@ -25,85 +24,115 @@ window#waybar {
 
 tooltip {
     background: @bg_dark;
-    border: 2px solid @surface;
-    border-radius: 10px;
+    border: 2px solid alpha(@surface, 0.9);
+    border-radius: 12px;
 }
 tooltip label {
     color: @text;
-    padding: 4px;
+    padding: 6px;
+    font-family: "JetBrainsMono Nerd Font", monospace;
 }
 
-/* shared pill look ------------------------------------------------ */
+/* ---- group "islands" ------------------------------------------------- */
+#left,
+#info,
+#sys,
+#session {
+    background: alpha(@bg, 0.92);
+    border: 1px solid alpha(@surface, 0.55);
+    border-radius: 16px;
+    padding: 0 4px;
+    margin: 0 3px;
+    box-shadow: 0 2px 6px alpha(@bg_dark, 0.55);
+}
+
+/* center clock — accent island of its own */
+#clock {
+    background: alpha(@surface, 0.95);
+    color: @accent2;
+    border: 1px solid alpha(@accent2, 0.25);
+    border-radius: 16px;
+    padding: 0 16px;
+    margin: 0 3px;
+    box-shadow: 0 2px 6px alpha(@bg_dark, 0.55);
+    transition: background 0.2s ease-in-out;
+}
+#clock:hover { background: @surface; }
+
+/* ---- modules inside islands: transparent, just colored glyphs -------- */
 #custom-logo,
 #custom-niriws,
 #custom-niriwindow,
-#custom-clipboard,
-#custom-ai,
-#custom-power,
-#idle_inhibitor,
+#custom-weather,
 #mpris,
-#clock,
+#pulseaudio,
+#backlight,
+#network,
+#bluetooth,
 #cpu,
 #temperature,
 #memory,
 #disk,
-#backlight,
-#battery,
 #power-profiles-daemon,
-#network,
-#bluetooth,
-#pulseaudio,
-#tray {
-    background: @bg;
-    padding: 0 12px;
-    margin: 0 2px;
-    border-radius: 14px;
-    color: @text;
-    transition: background 0.2s ease-in-out;
+#battery,
+#idle_inhibitor,
+#custom-clipboard,
+#custom-ai,
+#tray,
+#custom-power {
+    background: transparent;
+    padding: 0 8px;
+    margin: 0;
+    transition: background 0.15s ease-in-out, color 0.15s ease-in-out;
 }
 
-/* subtle hover feedback on the clickable pills */
+/* subtle rounded highlight on hover for clickable modules */
 #custom-logo:hover,
+#custom-weather:hover,
 #custom-clipboard:hover,
 #custom-ai:hover,
 #custom-power:hover,
 #idle_inhibitor:hover,
-#clock:hover,
 #network:hover,
-#pulseaudio:hover {
-    background: @surface;
+#bluetooth:hover,
+#pulseaudio:hover,
+#cpu:hover,
+#memory:hover,
+#power-profiles-daemon:hover {
+    background: alpha(@surface, 0.8);
+    border-radius: 11px;
 }
 
 /* left: logo doubles as theme switcher */
 #custom-logo {
-    color: @blue;
-    font-size: 16px;
-    background: @surface;
-    padding: 0 12px;
+    color: @accent;
+    font-size: 15px;
+    padding: 0 10px 0 12px;
 }
 
-/* workspaces (pango markup comes from the script) */
+/* workspaces (pango markup / colors come from the script) */
 #custom-niriws {
-    background: @bg_dark;
-    padding: 0 6px;
+    padding: 0 4px;
 }
 
 /* focused window title */
 #custom-niriwindow {
     color: @subtext;
-    font-weight: 400;
-}
-
-/* center clock — accent pill */
-#clock {
-    color: @accent2;
-    background: @surface;
-    padding: 0 16px;
+    font-weight: 500;
+    padding-right: 12px;
 }
 
 /* media player */
-#mpris          { color: @pink; font-weight: 400; }
-#mpris.paused   { color: @overlay; }
+#mpris        { color: @pink; font-weight: 500; }
+#mpris.paused { color: @overlay; }
+
+/* weather — colored by condition class from the script */
+#custom-weather              { color: @yellow; }
+#custom-weather.night        { color: @subtext; }
+#custom-weather.rain         { color: @blue; }
+#custom-weather.snow         { color: @text; }
+#custom-weather.storm        { color: @accent; }
+#custom-weather.error        { color: @overlay; }
 
 /* right-side accents */
 #idle_inhibitor           { color: @overlay; }
@@ -117,30 +146,26 @@ tooltip label {
 #disk                     { color: @subtext; }
 #backlight                { color: @yellow; }
 #network                  { color: @blue; }
+#network.disconnected     { color: @red; }
 #bluetooth                { color: @accent2; }
 #bluetooth.disabled       { color: @overlay; }
-#pulseaudio              { color: @accent; }
+#pulseaudio               { color: @accent; }
+#pulseaudio.muted         { color: @overlay; }
 #power-profiles-daemon    { color: @subtext; }
 #power-profiles-daemon.performance { color: @red; }
 #power-profiles-daemon.power-saver { color: @green; }
 #battery                  { color: @green; }
+#battery.warning          { color: @yellow; }
+#battery.critical         { color: @red; }
+#battery.charging         { color: @green; }
 #custom-power             { color: @red; }
 
-#battery.warning  { color: @yellow; }
-#battery.critical { color: @red; }
 @keyframes blink {
     to { color: @bg; background: @red; }
 }
 #battery.critical:not(.charging) {
     animation: blink 1s steps(2) infinite alternate;
 }
-#battery.charging { color: @green; }
 
-#pulseaudio.muted { color: @overlay; }
-#network.disconnected { color: @red; }
-
-#tray {
-    background: @bg;
-}
 #tray > .passive { -gtk-icon-effect: dim; }
 #tray > .needs-attention { -gtk-icon-effect: highlight; }

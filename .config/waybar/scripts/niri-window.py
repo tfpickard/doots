@@ -7,10 +7,49 @@ Hyprland -> niri migration.
 """
 import html
 import json
+import os
 import subprocess
 import sys
+import threading
+import time
 
 MAX_LEN = 60
+
+
+def exit_when_orphaned():
+    """Exit if our waybar parent dies (see niri-workspaces.py for rationale)."""
+    def ppid(pid):
+        try:
+            with open(f"/proc/{pid}/stat") as f:
+                d = f.read()
+            return int(d[d.rfind(")") + 2:].split()[1])
+        except Exception:
+            return 0
+
+    def comm(pid):
+        try:
+            with open(f"/proc/{pid}/comm") as f:
+                return f.read().strip()
+        except Exception:
+            return ""
+
+    target, pid = 0, os.getpid()
+    for _ in range(8):
+        pid = ppid(pid)
+        if pid <= 1:
+            break
+        target = pid
+        if comm(pid) == "waybar":
+            break
+    if not target:
+        return
+
+    def loop():
+        while os.path.exists(f"/proc/{target}"):
+            time.sleep(4)
+        os._exit(0)
+
+    threading.Thread(target=loop, daemon=True).start()
 
 
 def emit(windows, focused_id, last):
@@ -27,6 +66,7 @@ def emit(windows, focused_id, last):
 
 
 def main():
+    exit_when_orphaned()
     last = [None]
     proc = subprocess.Popen(
         ["niri", "msg", "-j", "event-stream"],

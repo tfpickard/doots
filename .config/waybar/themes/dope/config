@@ -1,40 +1,65 @@
 {
     "layer": "top",
     "position": "top",
-    "height": 30,
+    "height": 34,
     "margin-top": 8,
     "margin-left": 12,
     "margin-right": 12,
-    "spacing": 6,
+    "spacing": 8,
     "reload_style_on_change": true,
     "modules-left": [
-        "custom/logo",
-        "custom/niriws",
-        "custom/niriwindow"
+        "group/left"
     ],
     "modules-center": [
         "clock"
     ],
     "modules-right": [
-        "mpris",
-        "tray",
-        "idle_inhibitor",
-        "custom/clipboard",
-        "custom/ai",
-        "pulseaudio",
-        "backlight",
-        "network",
-        "bluetooth",
-        "cpu",
-        "temperature",
-        "memory",
-        "disk",
-        "power-profiles-daemon",
-        "battery",
-        "custom/power"
+        "group/info",
+        "group/sys",
+        "group/session"
     ],
+    "group/left": {
+        "orientation": "horizontal",
+        "modules": [
+            "custom/logo",
+            "custom/niriws",
+            "custom/niriwindow"
+        ]
+    },
+    "group/info": {
+        "orientation": "horizontal",
+        "modules": [
+            "custom/weather",
+            "mpris"
+        ]
+    },
+    "group/sys": {
+        "orientation": "horizontal",
+        "modules": [
+            "pulseaudio",
+            "backlight",
+            "network",
+            "bluetooth",
+            "cpu",
+            "temperature",
+            "memory",
+            "disk",
+            "power-profiles-daemon",
+            "battery"
+        ]
+    },
+    "group/session": {
+        "orientation": "horizontal",
+        "modules": [
+            "idle_inhibitor",
+            "custom/clipboard",
+            "custom/ai",
+            "tray",
+            "custom/power"
+        ]
+    },
     "custom/logo": {
-        "format": "",
+        "format": "󰏘",
         "on-click": "~/.config/themes/theme-set",
         "tooltip-format": "Switch global theme"
     },
@@ -51,8 +76,8 @@
         "tooltip": false
     },
     "clock": {
-        "format": "  {:%a %d %b   %H:%M}",
-        "format-alt": "  {:%Y-%m-%d   %H:%M:%S}",
+        "format": "󰃭  {:%a %d %b   %H:%M}",
+        "format-alt": "󰃭  {:%Y-%m-%d   %H:%M:%S}",
         "interval": 1,
         "tooltip-format": "<tt><small>{calendar}</small></tt>",
         "calendar": {
@@ -64,37 +89,92 @@
             }
         }
     },
+    "custom/weather": {
+        "exec": "~/.config/scripts/weather.py",
+        "return-type": "json",
+        "interval": 900,
+        "on-click": "ghostty -e bash -c 'curl -s wttr.in | less -R'",
+        "tooltip": true
+    },
     "mpris": {
-        "format": "{status_icon} {artist} − {title}",
-        "format-paused": "{status_icon} <i>{artist} − {title}</i>",
-        "status-icons": { "playing": "", "paused": "", "stopped": "" },
+        "format": "{status_icon} {artist} — {title}",
+        "format-paused": "{status_icon} <i>{artist} — {title}</i>",
+        "status-icons": {
+            "playing": "󰐊",
+            "paused": "󰏤",
+            "stopped": "󰓛"
+        },
         "artist-len": 16,
         "title-len": 24,
         "on-click": "playerctl play-pause",
         "on-scroll-up": "playerctl next",
         "on-scroll-down": "playerctl previous",
-        "tooltip-format": "{player}: {artist} − {title}"
+        "tooltip-format": "{player}: {artist} — {title}"
     },
     "idle_inhibitor": {
         "format": "{icon}",
-        "format-icons": { "activated": "", "deactivated": "" },
-        "tooltip-format-activated": "Idle inhibitor: screen stays awake",
-        "tooltip-format-deactivated": "Idle inhibitor off"
+        "format-icons": {
+            "activated": "󰛨",
+            "deactivated": "󰖔"
+        },
+        "tooltip-format-activated": "Caffeine on — screen stays awake",
+        "tooltip-format-deactivated": "Caffeine off"
     },
     "custom/clipboard": {
-        "format": "",
+        "format": "󰆒",
         "on-click": "~/.config/scripts/cliphist-fuzzel.sh",
         "on-click-right": "~/.config/scripts/cliphist-fuzzel.sh d",
         "on-click-middle": "~/.config/scripts/cliphist-fuzzel.sh w",
         "tooltip-format": "Clipboard history\nLeft: pick · Right: delete · Middle: wipe"
     },
     "custom/ai": {
-        "format": "",
+        "format": "󰚩",
         "on-click": "~/.config/scripts/ask-ai.sh",
         "tooltip-format": "Ask AI (Mod+Shift+A)"
     },
+    "pulseaudio": {
+        "format": "{icon}  {volume}%",
+        "format-muted": "󰖁  muted",
+        "format-icons": {
+            "default": [
+                "󰕿",
+                "󰖀",
+                "󰕾"
+            ],
+            "headphone": "󰋋",
+            "headset": "󰋍"
+        },
+        "on-click": "pavucontrol",
+        "on-click-right": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
+        "on-scroll-up": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.02+ -l 1.0",
+        "on-scroll-down": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.02-",
+        "tooltip": false
+    },
+    "backlight": {
+        "device": "nvidia_wmi_ec_backlight",
+        "format": "󰃠  {percent}%",
+        "on-scroll-up": "brightnessctl set +5%",
+        "on-scroll-down": "brightnessctl set 5%-",
+        "tooltip": false
+    },
+    "network": {
+        "format-wifi": "󰖩  {signalStrength}%",
+        "format-ethernet": "󰈀  {ifname}",
+        "format-disconnected": "󰤯  off",
+        "on-click": "ghostty -e nmtui",
+        "tooltip-format": "{ifname}: {ipaddr}\ngw {gwaddr} · ↑{bandwidthUpBits} ↓{bandwidthDownBits}",
+        "tooltip-format-disconnected": "disconnected"
+    },
+    "bluetooth": {
+        "format": "󰂯",
+        "format-connected": "󰂱 {num_connections}",
+        "format-disabled": "󰂲",
+        "on-click": "ghostty -e bluetoothctl",
+        "tooltip-format": "{controller_alias}\t{controller_address}",
+        "tooltip-format-connected": "{device_enumerate}"
+    },
     "cpu": {
-        "format": "  {usage}%",
+        "format": "  {usage}%",
         "interval": 2,
         "on-click": "ghostty -e btm",
         "tooltip": false
@@ -103,79 +183,65 @@
         "thermal-zone": 12,
         "critical-threshold": 90,
         "format": "{icon} {temperatureC}°",
-        "format-icons": ["", "", ""],
+        "format-icons": [
+            "󱃃",
+            "󰔏",
+            "󱃂"
+        ],
         "tooltip": false
     },
     "memory": {
-        "format": "  {percentage}%",
+        "format": "  {percentage}%",
         "interval": 5,
         "on-click": "ghostty -e btm",
         "tooltip-format": "{used:0.1f}G / {total:0.1f}G"
     },
     "disk": {
-        "format": "  {percentage_used}%",
+        "format": "󰋊  {percentage_used}%",
         "path": "/",
         "interval": 60,
         "tooltip-format": "{used} / {total} on {path}"
     },
-    "backlight": {
-        "device": "nvidia_wmi_ec_backlight",
-        "format": "{icon}  {percent}%",
-        "format-icons": [""],
-        "on-scroll-up": "brightnessctl set +5%",
-        "on-scroll-down": "brightnessctl set 5%-",
-        "tooltip": false
-    },
     "power-profiles-daemon": {
         "format": "{icon}",
         "format-icons": {
-            "default": "",
-            "performance": "",
-            "balanced": "",
-            "power-saver": ""
+            "default": "󰗑",
+            "performance": "󰉁",
+            "balanced": "󰗑",
+            "power-saver": "󰌪"
         },
         "tooltip-format": "Power profile: {profile}\nClick to cycle"
     },
     "battery": {
-        "states": { "good": 80, "warning": 25, "critical": 10 },
+        "states": {
+            "good": 80,
+            "warning": 25,
+            "critical": 10
+        },
         "format": "{icon}  {capacity}%",
-        "format-charging": "  {capacity}%",
-        "format-plugged": "  {capacity}%",
-        "format-icons": ["", "", "", "", ""],
+        "format-charging": "󰂄  {capacity}%",
+        "format-plugged": "󰚥  {capacity}%",
+        "format-icons": [
+            "󰂎",
+            "󰁺",
+            "󰁻",
+            "󰁼",
+            "󰁽",
+            "󰁾",
+            "󰁿",
+            "󰂀",
+            "󰂁",
+            "󰂂",
+            "󰁹"
+        ],
         "tooltip-format": "{timeTo} ({power}W)"
-    },
-    "network": {
-        "format-wifi": "  {signalStrength}%",
-        "format-ethernet": "  {ifname}",
-        "format-disconnected": "  off",
-        "on-click": "ghostty -e nmtui",
-        "tooltip-format": "{ifname}: {ipaddr}\ngw {gwaddr} · ↑{bandwidthUpBits} ↓{bandwidthDownBits}",
-        "tooltip-format-disconnected": "disconnected"
-    },
-    "bluetooth": {
-        "format": "",
-        "format-connected": " {num_connections}",
-        "format-disabled": "",
-        "on-click": "ghostty -e bluetoothctl",
-        "tooltip-format": "{controller_alias}\t{controller_address}",
-        "tooltip-format-connected": "{device_enumerate}"
-    },
-    "pulseaudio": {
-        "format": "{icon}  {volume}%",
-        "format-muted": "  muted",
-        "format-icons": { "default": ["", "", ""] },
-        "on-click": "pavucontrol",
-        "on-click-right": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
-        "on-scroll-up": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.02+ -l 1.0",
-        "on-scroll-down": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.02-",
-        "tooltip": false
     },
     "tray": {
         "icon-size": 16,
         "spacing": 10
     },
     "custom/power": {
-        "format": "",
+        "format": "󰐥",
         "on-click": "~/.config/scripts/fuzzel-powermenu.sh",
         "tooltip-format": "Power menu (Mod+X)"
     }
