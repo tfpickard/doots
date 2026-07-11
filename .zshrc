@@ -411,6 +411,7 @@ export LLM_USER_PATH=$HOME/.config/llm
 
 # Modern CLI tool aliases (add to your .aliases file)
 alias cat='bat --paging=never'
+alias neofetch='fastfetch'  # neofetch is archived upstream; fastfetch replaces it
 # alias find='fd'
 # alias grep='rg'
 

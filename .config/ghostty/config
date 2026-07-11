@@ -39,8 +39,13 @@ config-file = ?os/active
 
 config-file = font/monaspace-neon
 config-file = leading/default
-# c1onfig-file = theme/vague
-config-file = theme/catppuccin-mocha
+# Theme comes from the global theme system: ~/.config/themes/active is a
+# symlink flipped by `theme-set` (see ~/.config/themes/theme-set). The
+# theme/active symlink below points into it. Old static picks kept for
+# reference:
+# config-file = theme/vague
+# config-file = theme/catppuccin-mocha
+config-file = ?theme/active
 config-file = opacity/85%
 # config-file = shader/starfield
 # config-file = shader/matrix-hallway

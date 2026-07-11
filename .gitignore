@@ -3,3 +3,4 @@
 
 # Ghostty per-machine OS include, created by `make ghostty` (uname-selected)
 .config/ghostty/os/active
+__pycache__/

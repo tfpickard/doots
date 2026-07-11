@@ -1,0 +1,146 @@
+/* ============================================================
+   "dope" — niri waybar theme.
+   Floating rounded pills, JetBrainsMono Nerd Font.
+   Colors come from the global theme system: colors.css is a
+   symlink to ~/.config/themes/active/waybar.css (flipped by
+   `theme-set`). Reload with SIGUSR2 or theme-set does it for you.
+   ============================================================ */
+
+@import "colors.css";
+
+* {
+    font-family: "JetBrainsMono Nerd Font", "Symbols Nerd Font", "FontAwesome", sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    min-height: 0;
+    /* kill the default focus box around modules */
+    border: none;
+    border-radius: 0;
+}
+
+window#waybar {
+    background: transparent;
+    color: @text;
+}
+
+tooltip {
+    background: @bg_dark;
+    border: 2px solid @surface;
+    border-radius: 10px;
+}
+tooltip label {
+    color: @text;
+    padding: 4px;
+}
+
+/* shared pill look ------------------------------------------------ */
+#custom-logo,
+#custom-niriws,
+#custom-niriwindow,
+#custom-clipboard,
+#custom-ai,
+#custom-power,
+#idle_inhibitor,
+#mpris,
+#clock,
+#cpu,
+#temperature,
+#memory,
+#disk,
+#backlight,
+#battery,
+#power-profiles-daemon,
+#network,
+#bluetooth,
+#pulseaudio,
+#tray {
+    background: @bg;
+    padding: 0 12px;
+    margin: 0 2px;
+    border-radius: 14px;
+    color: @text;
+    transition: background 0.2s ease-in-out;
+}
+
+/* subtle hover feedback on the clickable pills */
+#custom-logo:hover,
+#custom-clipboard:hover,
+#custom-ai:hover,
+#custom-power:hover,
+#idle_inhibitor:hover,
+#clock:hover,
+#network:hover,
+#pulseaudio:hover {
+    background: @surface;
+}
+
+/* left: logo doubles as theme switcher */
+#custom-logo {
+    color: @blue;
+    font-size: 16px;
+    background: @surface;
+    padding: 0 12px;
+}
+
+/* workspaces (pango markup comes from the script) */
+#custom-niriws {
+    background: @bg_dark;
+    padding: 0 6px;
+}
+
+/* focused window title */
+#custom-niriwindow {
+    color: @subtext;
+    font-weight: 400;
+}
+
+/* center clock — accent pill */
+#clock {
+    color: @accent2;
+    background: @surface;
+    padding: 0 16px;
+}
+
+/* media player */
+#mpris          { color: @pink; font-weight: 400; }
+#mpris.paused   { color: @overlay; }
+
+/* right-side accents */
+#idle_inhibitor           { color: @overlay; }
+#idle_inhibitor.activated { color: @yellow; }
+#custom-clipboard         { color: @accent2; }
+#custom-ai                { color: @accent; }
+#cpu                      { color: @orange; }
+#temperature              { color: @subtext; }
+#temperature.critical     { color: @red; }
+#memory                   { color: @blue; }
+#disk                     { color: @subtext; }
+#backlight                { color: @yellow; }
+#network                  { color: @blue; }
+#bluetooth                { color: @accent2; }
+#bluetooth.disabled       { color: @overlay; }
+#pulseaudio              { color: @accent; }
+#power-profiles-daemon    { color: @subtext; }
+#power-profiles-daemon.performance { color: @red; }
+#power-profiles-daemon.power-saver { color: @green; }
+#battery                  { color: @green; }
+#custom-power             { color: @red; }
+
+#battery.warning  { color: @yellow; }
+#battery.critical { color: @red; }
+@keyframes blink {
+    to { color: @bg; background: @red; }
+}
+#battery.critical:not(.charging) {
+    animation: blink 1s steps(2) infinite alternate;
+}
+#battery.charging { color: @green; }
+
+#pulseaudio.muted { color: @overlay; }
+#network.disconnected { color: @red; }
+
+#tray {
+    background: @bg;
+}
+#tray > .passive { -gtk-icon-effect: dim; }
+#tray > .needs-attention { -gtk-icon-effect: highlight; }

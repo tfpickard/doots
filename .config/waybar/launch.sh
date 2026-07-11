@@ -1,61 +1,46 @@
-#!/bin/bash
-#  ____  _             _    __        __          _                 
-# / ___|| |_ __ _ _ __| |_  \ \      / /_ _ _   _| |__   __ _ _ __  
-# \___ \| __/ _` | '__| __|  \ \ /\ / / _` | | | | '_ \ / _` | '__| 
-#  ___) | || (_| | |  | |_    \ V  V / (_| | |_| | |_) | (_| | |    
-# |____/ \__\__,_|_|   \__|    \_/\_/ \__,_|\__, |_.__/ \__,_|_|    
-#                                           |___/                   
-# by Stephan Raabe (2023) 
-# ----------------------------------------------------- 
+#!/usr/bin/env bash
+# Launch (or relaunch) waybar with the selected theme.
+#
+# Theme selection lives in ~/.cache/.themestyle.sh as "/THEME;/VARIATION"
+# (kept for compatibility with themeswitcher.sh). Colors inside a theme come
+# from the global theme system (~/.config/themes/active) — switch palettes
+# with `theme-set`, switch bar layouts with themeswitcher.sh.
+set -u
 
-# Check if waybar-disabled file exists
-if [ -f $HOME/.cache/waybar-disabled ] ;then 
-    killall waybar
-    pkill waybar
-    exit 1 
+WAYBAR_DIR="$HOME/.config/waybar"
+LOG=/tmp/waybar.log
+
+# Respect the toggle.sh kill switch.
+if [ -f "$HOME/.cache/waybar-disabled" ]; then
+    pkill -x waybar
+    exit 0
 fi
 
-# ----------------------------------------------------- 
-# Quit all running waybar instances
-# ----------------------------------------------------- 
-# killall waybar
-# pkill waybar
-# sleep 0.2
+# Restart cleanly if already running.
+pkill -x waybar && sleep 0.2
 
-# ----------------------------------------------------- 
-# Default theme: /THEMEFOLDER;/VARIATION
-# ----------------------------------------------------- 
-themestyle="/ml4w-blur;/ml4w-blur/white"
-
-# ----------------------------------------------------- 
-# Get current theme information from .cache/.themestyle.sh
-# ----------------------------------------------------- 
-if [ -f ~/.cache/.themestyle.sh ]; then
-    themestyle=$(cat ~/.cache/.themestyle.sh)
+# Default / persisted theme.
+themestyle="/dope;/dope"
+if [ -f "$HOME/.cache/.themestyle.sh" ]; then
+    themestyle=$(cat "$HOME/.cache/.themestyle.sh")
 else
-    touch ~/.cache/.themestyle.sh
-    echo "$themestyle" > ~/.cache/.themestyle.sh
+    echo "$themestyle" > "$HOME/.cache/.themestyle.sh"
 fi
 
-IFS=';' read -ra arrThemes <<< "$themestyle"
-echo ":: Theme: ${arrThemes[0]}"
+IFS=';' read -r theme variation <<< "$themestyle"
 
-if [ ! -f ~/.config/waybar/themes${arrThemes[1]}/style.css ]; then
-    themestyle="/ml4w;/ml4w/light"
+# Fall back to dope if the persisted theme vanished.
+if [ ! -f "$WAYBAR_DIR/themes$variation/style.css" ]; then
+    theme="/dope"; variation="/dope"
+    echo "/dope;/dope" > "$HOME/.cache/.themestyle.sh"
 fi
 
-# ----------------------------------------------------- 
-# Loading the configuration
-# ----------------------------------------------------- 
 config_file="config"
 style_file="style.css"
+[ -f "$WAYBAR_DIR/themes$theme/config-custom" ] && config_file="config-custom"
+[ -f "$WAYBAR_DIR/themes$variation/style-custom.css" ] && style_file="style-custom.css"
 
-# Standard files can be overwritten with an existing config-custom or style-custom.css
-if [ -f ~/.config/waybar/themes${arrThemes[0]}/config-custom ] ;then
-    config_file="config-custom"
-fi
-if [ -f ~/.config/waybar/themes${arrThemes[1]}/style-custom.css ] ;then
-    style_file="style-custom.css"
-fi
-
-waybar -c ~/.config/waybar/themes${arrThemes[0]}/$config_file -s ~/.config/waybar/themes${arrThemes[1]}/$style_file >/tmp/waybar.log 2>&1 &
+echo ":: waybar theme: $theme ($variation)"
+waybar -c "$WAYBAR_DIR/themes$theme/$config_file" \
+       -s "$WAYBAR_DIR/themes$variation/$style_file" >"$LOG" 2>&1 &
+disown
