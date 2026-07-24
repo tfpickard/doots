@@ -1,0 +1,26 @@
+/* Dreamcore Pastel accents for GTK4/libadwaita apps (symlinked to ~/.config/gtk-4.0/gtk.css) */
+@define-color accent_color #c9a7ff;
+@define-color accent_bg_color #c9a7ff;
+@define-color accent_fg_color #1b1a26;
+@define-color window_bg_color #1b1a26;
+@define-color window_fg_color #e6e2f1;
+@define-color view_bg_color #14131d;
+@define-color view_fg_color #e6e2f1;
+@define-color headerbar_bg_color #14131d;
+@define-color headerbar_fg_color #e6e2f1;
+@define-color card_bg_color #2a2839;
+@define-color card_fg_color #e6e2f1;
+@define-color popover_bg_color #201e2c;
+@define-color popover_fg_color #e6e2f1;
+@define-color dialog_bg_color #201e2c;
+@define-color dialog_fg_color #e6e2f1;
+@define-color sidebar_bg_color #14131d;
+@define-color sidebar_fg_color #e6e2f1;
+@define-color destructive_bg_color #ff9db0;
+@define-color destructive_fg_color #1b1a26;
+@define-color success_bg_color #b6f0c2;
+@define-color success_fg_color #1b1a26;
+@define-color warning_bg_color #ffe6a7;
+@define-color warning_fg_color #1b1a26;
+@define-color error_bg_color #ff9db0;
+@define-color error_fg_color #1b1a26;

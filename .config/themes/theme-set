@@ -41,10 +41,27 @@ if [ -f "$NIRI_CONFIG" ]; then
     accent=$(jq -r .accent "$palette")
     overlay=$(jq -r .overlay "$palette")
     red=$(jq -r .red "$palette")
+
+    # Optional per-theme focus-ring gradient. A theme opts in by adding a
+    # "focus_gradient": {"from","to","angle"} object to its palette.json.
+    # The single line tagged "// THEME:focus-gradient" is rewritten either to a
+    # live active-gradient node (takes precedence over the solid active-color
+    # fallback) or to a comment when the theme has no gradient.
+    grad=$(jq -r '
+        if .focus_gradient then
+            "active-gradient from=\"\(.focus_gradient.from)\" to=\"\(.focus_gradient.to)\" angle=\(.focus_gradient.angle // 45) relative-to=\"workspace-view\" in=\"oklch longer hue\""
+        else "" end' "$palette")
+    if [ -n "$grad" ]; then
+        grad_line="        $grad // THEME:focus-gradient"
+    else
+        grad_line="        // no focus gradient for this theme // THEME:focus-gradient"
+    fi
+
     sed -i \
         -e "s|\(active-color \)\"[^\"]*\"\( // THEME:focus-active\)|\1\"$accent\"\2|" \
         -e "s|\(inactive-color \)\"[^\"]*\"\( // THEME:focus-inactive\)|\1\"$overlay\"\2|" \
         -e "s|\(urgent-color \)\"[^\"]*\"\( // THEME:focus-urgent\)|\1\"$red\"\2|" \
+        -e "s|^.*// THEME:focus-gradient\$|$grad_line|" \
         "$NIRI_CONFIG"
     niri msg action load-config-file >/dev/null 2>&1 || true
 fi
@@ -59,7 +76,62 @@ makoctl reload 2>/dev/null || true
 # 5. ghostty: reads themes/active/ghostty via its config include on reload
 #    (press ctrl+shift+, in ghostty, or open a new window).
 
-# 6. fuzzel / gtk / fastfetch / bottom pick up the active symlink on next launch.
+# 6. bottom: no include mechanism, so regenerate its [colors] block (between
+#    "# >>> theme-set:colors" / "# <<< theme-set:colors" markers) from palette.
+BOTTOM_CFG="$HOME/.config/bottom/bottom.toml"
+if [ -f "$BOTTOM_CFG" ] && grep -q "# >>> theme-set:colors" "$BOTTOM_CFG"; then
+    block=$(jq -r '
+        "table_header_color = \"\(.accent)\"",
+        "widget_title_color = \"\(.text)\"",
+        "avg_cpu_color = \"\(.red)\"",
+        "cpu_core_colors = [\"\(.accent)\", \"\(.accent2)\", \"\(.green)\", \"\(.orange)\", \"\(.blue)\", \"\(.pink)\", \"\(.yellow)\", \"\(.subtext)\"]",
+        "ram_color = \"\(.accent)\"",
+        "swap_color = \"\(.orange)\"",
+        "gpu_core_colors = [\"\(.green)\", \"\(.blue)\", \"\(.pink)\"]",
+        "rx_color = \"\(.accent2)\"",
+        "tx_color = \"\(.green)\"",
+        "border_color = \"\(.surface)\"",
+        "highlighted_border_color = \"\(.accent)\"",
+        "text_color = \"\(.text)\"",
+        "selected_text_color = \"\(.bg)\"",
+        "selected_bg_color = \"\(.accent)\"",
+        "graph_color = \"\(.overlay)\"",
+        "high_battery_color = \"\(.green)\"",
+        "medium_battery_color = \"\(.orange)\"",
+        "low_battery_color = \"\(.red)\""
+    ' "$palette")
+    awk -v block="$block" '
+        /# >>> theme-set:colors/ { print; print "[colors]"; print block; skip=1; next }
+        /# <<< theme-set:colors/ { skip=0; print; next }
+        !skip { print }
+    ' "$BOTTOM_CFG" > "$BOTTOM_CFG.tmp" && mv "$BOTTOM_CFG.tmp" "$BOTTOM_CFG"
+fi
+
+# 7. fastfetch: no include mechanism either. Rewrite the two truecolor ANSI
+#    values (keys = accent, title = green) in-place, preserving structure.
+FASTFETCH_CFG="$HOME/.config/fastfetch/config.jsonc"
+if [ -f "$FASTFETCH_CFG" ]; then
+    hex2ansi() { # "#rrggbb" -> "38;2;r;g;b"
+        local h="${1#\#}"
+        printf '38;2;%d;%d;%d' "0x${h:0:2}" "0x${h:2:2}" "0x${h:4:2}"
+    }
+    keys_ansi=$(hex2ansi "$(jq -r .accent "$palette")")
+    title_ansi=$(hex2ansi "$(jq -r .green "$palette")")
+    sed -i -E \
+        -e "s|(\"keys\"[[:space:]]*:[[:space:]]*\")[0-9;]*(\")|\1$keys_ansi\2|" \
+        -e "s|(\"title\"[[:space:]]*:[[:space:]]*\")[0-9;]*(\")|\1$title_ansi\2|" \
+        "$FASTFETCH_CFG"
+fi
+
+# 8. tmux: colors live in themes/active/tmux.conf, sourced by ~/.tmux.conf.
+#    Re-source it into every running server so open sessions update live.
+if command -v tmux >/dev/null; then
+    for sock in $(find /tmp/tmux-"$(id -u)" -type s 2>/dev/null); do
+        tmux -S "$sock" source-file "$HOME/.config/themes/active/tmux.conf" 2>/dev/null || true
+    done
+fi
+
+# 9. fuzzel / gtk pick up the active symlink on next launch.
 
 command -v notify-send >/dev/null && notify-send "Theme switched" "Now using: $theme" || true
 echo "Theme set to: $theme"

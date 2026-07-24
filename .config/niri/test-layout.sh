@@ -20,8 +20,8 @@ set -uo pipefail
 #   serial:<edid-serial>  -> match a monitor by its EDID serial (cable-proof)
 #   name:<connector>      -> match a monitor by its connector name
 EXPECTED=(
-    "serial:920C993=0"      # left-most external
-    "serial:BJ4X5X2=1920"   # center external
+    "serial:BJ4X5X2=0"      # left-most external
+    "serial:920C993=1920"   # center external
     "name:eDP-1=3840"       # right-most built-in laptop panel
 )
 

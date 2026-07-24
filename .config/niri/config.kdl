@@ -67,7 +67,7 @@ input {
 
     // Focus windows and outputs automatically when moving the mouse into them.
     // Setting max-scroll-amount="0%" makes it work only on windows already fully on screen.
-    // focus-follows-mouse max-scroll-amount="0%"
+    focus-follows-mouse
 }
 
 // You can configure outputs by their name, which you can find
@@ -85,7 +85,7 @@ input {
 // stable no matter which cable goes into which port.
 //
 // Desired layout (left to right), all at scale 1:
-//   [external 920C993]  [external BJ4X5X2]  [built-in eDP-1]
+//   [external BJ4X5X2]  [external 920C993]  [built-in eDP-1]
 //        x=0                 x=1920               x=3840
 
 // Left-most external (currently HDMI/DP, serial BJ4X5X2).
@@ -176,13 +176,18 @@ layout {
         // Color of the ring on the active monitor.
         // The "THEME:" markers let ~/.config/themes/theme-set rewrite these
         // lines when switching the global theme. Don't remove them.
-        active-color "#a277ff" // THEME:focus-active
+        active-color "#bd5eff" // THEME:focus-active
 
         // Color of the ring on inactive monitors.
         //
         // The focus ring only draws around the active window, so the only place
         // where you can see its inactive-color is on other monitors.
-        inactive-color "#4d4d4d" // THEME:focus-inactive
+        inactive-color "#7b8496" // THEME:focus-inactive
+
+        // Optional per-theme neon gradient (managed by theme-set; a gradient
+        // takes precedence over the solid active-color above). Themes opt in
+        // via a "focus_gradient" object in their palette.json.
+        active-gradient from="#bd5eff" to="#5ef1ff" angle=45 relative-to="workspace-view" in="oklch longer hue" // THEME:focus-gradient
 
         // You can also use gradients. They take precedence over solid colors.
         // Gradients are rendered the same as CSS linear-gradient(angle, from, to).
@@ -211,7 +216,7 @@ layout {
         inactive-color "#505050"
 
         // Color of the border around windows that request your attention.
-        urgent-color "#ff6767" // THEME:focus-urgent
+        urgent-color "#ff6e5e" // THEME:focus-urgent
 
         // Gradients can use a few different interpolation color spaces.
         // For example, this is a pastel rainbow gradient via in="oklch longer hue".
@@ -284,13 +289,22 @@ spawn-sh-at-startup "swaybg -i ~/Pictures/Wallpaper/default"
 // Notification daemon (config symlinked to ~/.config/themes/active/mako.ini).
 spawn-at-startup "mako"
 
+// XWayland support (needed for X11 apps like the xscreensaver GL hacks).
+// Exposes an X server on DISPLAY=:12.
+spawn-at-startup "xwayland-satellite" ":12"
+
+// Run the xscreensaver "atlantis" GL hack on the built-in panel.
+// -window is required: rootless XWayland has no root window for -root.
+spawn-sh-at-startup "DISPLAY=:12 /usr/libexec/xscreensaver/atlantis -window"
+
 // Clipboard history: capture text and images into cliphist.
 // Browse with Mod+Semicolon (fuzzel picker).
 spawn-sh-at-startup "wl-paste --type text --watch cliphist store"
 spawn-sh-at-startup "wl-paste --type image --watch cliphist store"
 
-// Idle management: lock after 10 min, screens off after 15, lock before sleep.
-spawn-sh-at-startup "swayidle -w timeout 600 'swaylock -f' timeout 900 'niri msg action power-off-monitors' before-sleep 'swaylock -f'"
+// Idle management: lock after 10 min, screens off after 15 (battery only),
+// lock before sleep. idle-dpms.sh keeps the screen on when plugged into AC.
+spawn-sh-at-startup "swayidle -w timeout 600 'swaylock -f' timeout 900 '/home/tom/.config/scripts/idle-dpms.sh off' resume '/home/tom/.config/scripts/idle-dpms.sh on' before-sleep 'swaylock -f'"
 
 hotkey-overlay {
     // Uncomment this line to disable the "Important Hotkeys" pop-up at startup.
@@ -366,6 +380,13 @@ window-rule {
     clip-to-geometry true
 }
 
+// Run the xscreensaver "atlantis" GL hack fullscreen on the built-in panel.
+window-rule {
+    match app-id="Atlantis"
+    open-on-output "eDP-1"
+    open-fullscreen true
+}
+
 // Utility windows open floating instead of tiling.
 window-rule {
     match app-id=r#"^org\.pulseaudio\.pavucontrol$"#
@@ -401,6 +422,8 @@ binds {
     Mod+Semicolon hotkey-overlay-title="Clipboard History" { spawn "/home/tom/.config/scripts/cliphist-fuzzel.sh"; }
     Mod+Shift+A   hotkey-overlay-title="Ask AI" { spawn "/home/tom/.config/scripts/ask-ai.sh"; }
     Mod+B         hotkey-overlay-title="Toggle Waybar" { spawn "/home/tom/.config/waybar/toggle.sh"; }
+    Mod+Shift+S   hotkey-overlay-title="Toggle Atlantis Screensaver" { spawn "/home/tom/.config/scripts/toggle-atlantis.sh"; }
+    Mod+Ctrl+P    hotkey-overlay-title="Toggle Teams Keep-Active (anti-idle)" { spawn "/home/tom/.config/scripts/teams-keep-active.sh"; }
     Mod+Shift+T   hotkey-overlay-title="Switch Global Theme" { spawn "/home/tom/.config/themes/theme-set"; }
 
     // Use spawn-sh to run a shell command. Do this if you need pipes, multiple commands, etc.
