@@ -3,4 +3,6 @@
 
 # Ghostty per-machine OS include, created by `make ghostty` (uname-selected)
 .config/ghostty/os/active
+# Active theme selection, created by `make theme` / `theme-set` (per-machine)
+.config/themes/active
 __pycache__/

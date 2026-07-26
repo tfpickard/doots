@@ -82,4 +82,18 @@ unset -f mv
 assert_eq "sed_inplace leaves no temp file after mv failure" "" "$(find "$SANDBOX" -name 'mvfail.txt.*' 2>/dev/null)"
 assert_eq "sed_inplace leaves the original intact after mv failure" "alpha" "$(cat "$MVFAIL_FILE")"
 
+# --- active symlink ---------------------------------------------------------
+HOME="$SANDBOX/home" bash "$THEME_SET" cyberdream >/dev/null 2>&1 || true
+assert_relative_link "active symlink is relative" "$SANDBOX/themes/active"
+assert_eq "active points at the bare theme name" "cyberdream" \
+    "$(readlink "$SANDBOX/themes/active")"
+assert_resolves "active resolves" "$SANDBOX/themes/active/palette.json"
+
+HOME="$SANDBOX/home" bash "$THEME_SET" aura >/dev/null 2>&1 || true
+assert_eq "active follows a second switch" "aura" \
+    "$(readlink "$SANDBOX/themes/active")"
+
+assert_fails "unknown theme is rejected" \
+    env HOME="$SANDBOX/home" bash "$THEME_SET" no-such-theme
+
 summary
