@@ -201,9 +201,6 @@ SANDBOX=$(make_sandbox)
 trap 'rm -rf "$SANDBOX"' EXIT
 THEME_SET="$SANDBOX/themes/theme-set"
 
-# --- harness sanity ---------------------------------------------------------
-assert_eq "harness compares equal strings" "a" "a"
-
 # --- --list -----------------------------------------------------------------
 assert_ok "--list exits zero" bash "$THEME_SET" --list
 
@@ -217,8 +214,7 @@ chmod +x tests/run.sh tests/test-theme-set.sh
 ./tests/run.sh
 ```
 
-Expected on macOS: `ok   harness compares equal strings`, then
-`FAIL --list exits zero`, then `1 failed`, exit status 1.
+Expected on macOS: `FAIL --list exits zero`, then `1 run, 1 failed`, exit status 1.
 
 - [ ] **Step 5: Commit the harness (still red)**
 
@@ -1124,19 +1120,31 @@ assert_contains "bottom has a closing marker"  "$(cat "$BOTTOM_SRC")" "# <<< the
 assert_contains "fastfetch has a keys field"   "$(cat "$FF_SRC")" "\"keys\""
 assert_contains "fastfetch has a title field"  "$(cat "$FF_SRC")" "\"title\""
 
-# Applying a theme into a populated sandbox HOME must rewrite both.
+# Exercise the two appliers directly rather than through dispatch. The
+# dispatch probe requires btm/fastfetch on PATH, which neither a dev Mac nor
+# a CI runner has, so a full `theme-set <name>` run would SKIP both and the
+# assertions below would test nothing. Task 5 already covers the probe logic;
+# this covers the rewrite logic.
 mkdir -p "$SANDBOX/home/.config/bottom" "$SANDBOX/home/.config/fastfetch"
 cp "$BOTTOM_SRC" "$SANDBOX/home/.config/bottom/bottom.toml"
 cp "$FF_SRC"     "$SANDBOX/home/.config/fastfetch/config.jsonc"
-HOME="$SANDBOX/home" bash "$THEME_SET" cyberdream >/dev/null 2>&1 || true
 
-# cyberdream accent is #bd5eff -> 189;94;255
-assert_contains "fastfetch keys got the accent ANSI" \
-    "$(cat "$SANDBOX/home/.config/fastfetch/config.jsonc")" "38;2;189;94;255"
-assert_contains "bottom got the accent hex" \
-    "$(cat "$SANDBOX/home/.config/bottom/bottom.toml")" "#bd5eff"
-assert_contains "bottom markers survive rewriting" \
-    "$(cat "$SANDBOX/home/.config/bottom/bottom.toml")" "# <<< theme-set:colors"
+# The shipped configs are seeded with cyberdream's values, so apply AURA:
+# an assertion that the value changed can actually fail, whereas re-applying
+# cyberdream would pass whether or not the applier ran at all.
+AURA_PALETTE="$REPO_ROOT/.config/themes/aura/palette.json"
+( HOME="$SANDBOX/home"; PALETTE="$AURA_PALETTE"; apply_fastfetch )
+( HOME="$SANDBOX/home"; PALETTE="$AURA_PALETTE"; apply_bottom )
+
+# aura accent #a277ff -> 38;2;162;119;255; cyberdream #bd5eff -> 38;2;189;94;255
+FF=$(cat "$SANDBOX/home/.config/fastfetch/config.jsonc")
+assert_contains     "fastfetch keys got the aura accent"  "$FF" "38;2;162;119;255"
+assert_not_contains "fastfetch dropped the seeded accent" "$FF" "38;2;189;94;255"
+
+BT=$(cat "$SANDBOX/home/.config/bottom/bottom.toml")
+assert_contains "bottom got the aura accent"        "$BT" "#a277ff"
+assert_contains "bottom markers survive rewriting"  "$BT" "# <<< theme-set:colors"
+assert_contains "bottom regenerated the colors key" "$BT" "table_header_color"
 ```
 
 - [ ] **Step 2: Run to verify it fails**
@@ -1145,7 +1153,7 @@ assert_contains "bottom markers survive rewriting" \
 ./tests/run.sh
 ```
 
-Expected: `FAIL bottom config ships` and `FAIL fastfetch config ships`, plus the marker and rewrite assertions.
+Expected: `FAIL bottom config ships` and `FAIL fastfetch config ships`, plus the marker and rewrite assertions. Note `apply_fastfetch` and `apply_bottom` are already in scope here — Task 3's `THEME_SET_LIB=1` sourcing defined them.
 
 - [ ] **Step 3: Create the bottom config**
 
@@ -1250,7 +1258,7 @@ concern and changing them here would broaden this task's blast radius.
 ./tests/run.sh
 ```
 
-Expected: all nine assertions in this section pass.
+Expected: all eleven assertions in this section pass.
 
 - [ ] **Step 7: Verify `--check` now resolves them**
 
