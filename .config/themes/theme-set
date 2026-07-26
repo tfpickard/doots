@@ -1,19 +1,28 @@
 #!/usr/bin/env bash
 # theme-set — global theme switcher.
 #
-# Every app reads its colors from ~/.config/themes/active/<snippet>, where
-# `active` is a symlink to one of the theme directories here. Switching theme
-# is therefore: flip the symlink, patch niri's tagged color lines (niri has no
-# include mechanism), and poke each app to reload.
+# Colors live in themes/<name>/. Switching is: flip the themes/active symlink,
+# then poke each application that can pick the change up.
+#
+# Applications are *discovered*, not assumed. The APPLIERS table pairs a probe
+# command with a target path, and an applier runs only when both are present.
+# That is why this script contains no uname branching: macOS simply resolves
+# fewer appliers than a Wayland desktop does.
 #
 # Usage:
 #   theme-set            fuzzel picker of available themes
 #   theme-set aura       switch directly
-#   theme-set --list     list themes
+#   theme-set --list     list theme names
+#   theme-set --check    report which appliers resolve here; change nothing
+#
+# Portability: must run on macOS's bash 3.2. No associative arrays, no
+# mapfile, no ${var,,}, no GNU-only find/sed flags. Loops that mutate state
+# use herestrings, never pipelines (bash 3.2 subshells the RHS of a pipe).
 set -euo pipefail
 
 THEMES_DIR="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
-NIRI_CONFIG="$HOME/.config/niri/config.kdl"
+
+# ------------------------------------------------------------------ helpers --
 
 # List theme directory names. `active` is a symlink-to-directory and must be
 # excluded: `find -type d` did that implicitly (find does not follow symlinks),
@@ -74,71 +83,64 @@ sed_inplace() {
     fi
 }
 
-# Sourcing with THEME_SET_LIB=1 defines the helpers and stops here, so the
-# test suite can exercise them directly.
-if [ -n "${THEME_SET_LIB:-}" ]; then
-    return 0 2>/dev/null || true
-fi
+hex2ansi() { # "#rrggbb" -> "38;2;r;g;b"
+    local h="${1#\#}"
+    printf '38;2;%d;%d;%d' "0x${h:0:2}" "0x${h:2:2}" "0x${h:4:2}"
+}
 
-case "${1:-}" in
-    --list) list_themes; exit 0 ;;
-    "")     theme="$(pick_theme)" || exit 1 ;;
-    *)      theme="$1" ;;
-esac
+pal() { jq -r ".$1" "$PALETTE"; }
 
-[ -d "$THEMES_DIR/$theme" ] || { echo "No such theme: $theme" >&2; exit 1; }
-palette="$THEMES_DIR/$theme/palette.json"
-[ -f "$palette" ] || { echo "Theme $theme has no palette.json" >&2; exit 1; }
+# ----------------------------------------------------------------- appliers --
+# Applications that read themes/active directly need no poking; flipping the
+# symlink is the entire operation for them.
+apply_ghostty() { :; }   # reload with ctrl+shift+, or open a new window
+apply_fuzzel()  { :; }   # include= is re-read on next launch
+apply_gtk()     { :; }   # symlink is re-read on next launch
 
-# 1. Flip the master symlink. Everything else hangs off it. The link is
-#    created *relative* so it stores no machine identity and resolves
-#    identically under /home/tom and /Users/tom.
-( cd "$THEMES_DIR" && ln -sfn "$theme" active )
+apply_mako()   { makoctl reload 2>/dev/null || true; }
+apply_waybar() { pkill -USR2 -x waybar 2>/dev/null || true; }
 
-# 2. niri: patch the color lines tagged with THEME: markers, then reload.
-if [ -f "$NIRI_CONFIG" ]; then
-    accent=$(jq -r .accent "$palette")
-    overlay=$(jq -r .overlay "$palette")
-    red=$(jq -r .red "$palette")
+apply_tmux() {
+    local sock
+    for sock in $(find "/tmp/tmux-$(id -u)" -type s 2>/dev/null); do
+        tmux -S "$sock" source-file "$THEMES_DIR/active/tmux.conf" 2>/dev/null || true
+    done
+}
 
-    # Optional per-theme focus-ring gradient. A theme opts in by adding a
-    # "focus_gradient": {"from","to","angle"} object to its palette.json.
-    # The single line tagged "// THEME:focus-gradient" is rewritten either to a
-    # live active-gradient node (takes precedence over the solid active-color
-    # fallback) or to a comment when the theme has no gradient.
+# niri has no include mechanism, so its color lines carry // THEME: markers
+# that get rewritten in place.
+apply_niri() {
+    local accent overlay red grad grad_line
+    accent=$(pal accent)
+    overlay=$(pal overlay)
+    red=$(pal red)
+
+    # A theme opts into a focus-ring gradient by adding a "focus_gradient"
+    # object to palette.json. The tagged line becomes either a live
+    # active-gradient node or a comment.
     grad=$(jq -r '
         if .focus_gradient then
             "active-gradient from=\"\(.focus_gradient.from)\" to=\"\(.focus_gradient.to)\" angle=\(.focus_gradient.angle // 45) relative-to=\"workspace-view\" in=\"oklch longer hue\""
-        else "" end' "$palette")
+        else "" end' "$PALETTE")
     if [ -n "$grad" ]; then
         grad_line="        $grad // THEME:focus-gradient"
     else
         grad_line="        // no focus gradient for this theme // THEME:focus-gradient"
     fi
 
-    sed -i \
+    sed_inplace "$HOME/.config/niri/config.kdl" \
         -e "s|\(active-color \)\"[^\"]*\"\( // THEME:focus-active\)|\1\"$accent\"\2|" \
         -e "s|\(inactive-color \)\"[^\"]*\"\( // THEME:focus-inactive\)|\1\"$overlay\"\2|" \
         -e "s|\(urgent-color \)\"[^\"]*\"\( // THEME:focus-urgent\)|\1\"$red\"\2|" \
-        -e "s|^.*// THEME:focus-gradient\$|$grad_line|" \
-        "$NIRI_CONFIG"
+        -e "s|^.*// THEME:focus-gradient\$|$grad_line|"
     niri msg action load-config-file >/dev/null 2>&1 || true
-fi
+}
 
-# 3. waybar: CSS @import of themes/active/waybar.css picks up the change on
-#    style reload (SIGUSR2). Falls back to full restart if reload fails.
-pkill -USR2 -x waybar 2>/dev/null || true
-
-# 4. mako: whole config is a symlink to themes/active/mako.ini.
-makoctl reload 2>/dev/null || true
-
-# 5. ghostty: reads themes/active/ghostty via its config include on reload
-#    (press ctrl+shift+, in ghostty, or open a new window).
-
-# 6. bottom: no include mechanism, so regenerate its [colors] block (between
-#    "# >>> theme-set:colors" / "# <<< theme-set:colors" markers) from palette.
-BOTTOM_CFG="$HOME/.config/bottom/bottom.toml"
-if [ -f "$BOTTOM_CFG" ] && grep -q "# >>> theme-set:colors" "$BOTTOM_CFG"; then
+# bottom has no include mechanism either; regenerate its [colors] block
+# between the theme-set markers.
+apply_bottom() {
+    local cfg="$HOME/.config/bottom/bottom.toml" block t
+    grep -q "# >>> theme-set:colors" "$cfg" || return 0
     block=$(jq -r '
         "table_header_color = \"\(.accent)\"",
         "widget_title_color = \"\(.text)\"",
@@ -158,39 +160,103 @@ if [ -f "$BOTTOM_CFG" ] && grep -q "# >>> theme-set:colors" "$BOTTOM_CFG"; then
         "high_battery_color = \"\(.green)\"",
         "medium_battery_color = \"\(.orange)\"",
         "low_battery_color = \"\(.red)\""
-    ' "$palette")
+    ' "$PALETTE")
+    t=$(mktemp "$cfg.XXXXXX") || return 1
     awk -v block="$block" '
         /# >>> theme-set:colors/ { print; print "[colors]"; print block; skip=1; next }
         /# <<< theme-set:colors/ { skip=0; print; next }
         !skip { print }
-    ' "$BOTTOM_CFG" > "$BOTTOM_CFG.tmp" && mv "$BOTTOM_CFG.tmp" "$BOTTOM_CFG"
-fi
+    ' "$cfg" >"$t" && mv "$t" "$cfg"
+}
 
-# 7. fastfetch: no include mechanism either. Rewrite the two truecolor ANSI
-#    values (keys = accent, title = green) in-place, preserving structure.
-FASTFETCH_CFG="$HOME/.config/fastfetch/config.jsonc"
-if [ -f "$FASTFETCH_CFG" ]; then
-    hex2ansi() { # "#rrggbb" -> "38;2;r;g;b"
-        local h="${1#\#}"
-        printf '38;2;%d;%d;%d' "0x${h:0:2}" "0x${h:2:2}" "0x${h:4:2}"
-    }
-    keys_ansi=$(hex2ansi "$(jq -r .accent "$palette")")
-    title_ansi=$(hex2ansi "$(jq -r .green "$palette")")
-    sed -i -E \
+apply_fastfetch() {
+    local cfg="$HOME/.config/fastfetch/config.jsonc" keys_ansi title_ansi
+    keys_ansi=$(hex2ansi "$(pal accent)")
+    title_ansi=$(hex2ansi "$(pal green)")
+    sed_inplace "$cfg" -E \
         -e "s|(\"keys\"[[:space:]]*:[[:space:]]*\")[0-9;]*(\")|\1$keys_ansi\2|" \
-        -e "s|(\"title\"[[:space:]]*:[[:space:]]*\")[0-9;]*(\")|\1$title_ansi\2|" \
-        "$FASTFETCH_CFG"
+        -e "s|(\"title\"[[:space:]]*:[[:space:]]*\")[0-9;]*(\")|\1$title_ansi\2|"
+}
+
+# ----------------------------------------------------------------- dispatch --
+# name|probe command ("-" = no command probe)|target path|apply function
+appliers_table() {
+    cat <<EOF
+ghostty|ghostty|$HOME/.config/ghostty|apply_ghostty
+tmux|tmux|$HOME/.tmux.conf|apply_tmux
+bottom|btm|$HOME/.config/bottom/bottom.toml|apply_bottom
+fastfetch|fastfetch|$HOME/.config/fastfetch/config.jsonc|apply_fastfetch
+niri|niri|$HOME/.config/niri/config.kdl|apply_niri
+waybar|waybar|$HOME/.config/waybar|apply_waybar
+mako|makoctl|$HOME/.config/mako|apply_mako
+fuzzel|fuzzel|$HOME/.config/fuzzel|apply_fuzzel
+gtk|-|$HOME/.config/gtk-4.0|apply_gtk
+EOF
+}
+
+# Echo nothing if the applier is usable here, else a human-readable reason.
+applier_skip_reason() { # probe target
+    if [ "$1" != "-" ] && ! command -v "$1" >/dev/null 2>&1; then
+        printf '%s not installed' "$1"
+    elif [ ! -e "$2" ]; then
+        printf '%s missing' "$2"
+    fi
+}
+
+check_appliers() {
+    local name probe target fn reason
+    while IFS='|' read -r name probe target fn; do
+        [ -z "$name" ] && continue
+        reason=$(applier_skip_reason "$probe" "$target")
+        if [ -z "$reason" ]; then
+            printf '  apply  %-10s\n' "$name"
+        else
+            printf '  skip   %-10s (%s)\n' "$name" "$reason"
+        fi
+    done <<< "$(appliers_table)"
+}
+
+run_appliers() {
+    local name probe target fn reason
+    while IFS='|' read -r name probe target fn; do
+        [ -z "$name" ] && continue
+        reason=$(applier_skip_reason "$probe" "$target")
+        if [ -n "$reason" ]; then
+            printf '  skip   %-10s (%s)\n' "$name" "$reason"
+            continue
+        fi
+        if "$fn"; then
+            printf '  ok     %-10s\n' "$name"
+        else
+            printf '  ERROR  %-10s\n' "$name" >&2
+        fi
+    done <<< "$(appliers_table)"
+}
+
+# Sourcing with THEME_SET_LIB=1 defines the helpers and stops here, so the
+# test suite can exercise them directly.
+if [ -n "${THEME_SET_LIB:-}" ]; then
+    return 0 2>/dev/null || true
 fi
 
-# 8. tmux: colors live in themes/active/tmux.conf, sourced by ~/.tmux.conf.
-#    Re-source it into every running server so open sessions update live.
-if command -v tmux >/dev/null; then
-    for sock in $(find /tmp/tmux-"$(id -u)" -type s 2>/dev/null); do
-        tmux -S "$sock" source-file "$HOME/.config/themes/active/tmux.conf" 2>/dev/null || true
-    done
-fi
+# --------------------------------------------------------------------- main --
+case "${1:-}" in
+    --list)  list_themes; exit 0 ;;
+    --check) check_appliers; exit 0 ;;
+    "")      theme="$(pick_theme)" || exit 1 ;;
+    *)       theme="$1" ;;
+esac
 
-# 9. fuzzel / gtk pick up the active symlink on next launch.
+[ -d "$THEMES_DIR/$theme" ] || { echo "No such theme: $theme" >&2; exit 1; }
+PALETTE="$THEMES_DIR/$theme/palette.json"
+[ -f "$PALETTE" ] || { echo "Theme $theme has no palette.json" >&2; exit 1; }
 
-command -v notify-send >/dev/null && notify-send "Theme switched" "Now using: $theme" || true
+# Flip the master symlink. Everything else hangs off it. Created *relative* so
+# it stores no machine identity and resolves under /home/tom and /Users/tom.
+( cd "$THEMES_DIR" && ln -sfn "$theme" active )
+
+run_appliers
+
+command -v notify-send >/dev/null 2>&1 && \
+    notify-send "Theme switched" "Now using: $theme" || true
 echo "Theme set to: $theme"

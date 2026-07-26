@@ -96,4 +96,25 @@ assert_eq "active follows a second switch" "aura" \
 assert_fails "unknown theme is rejected" \
     env HOME="$SANDBOX/home" bash "$THEME_SET" no-such-theme
 
+# --- --check ----------------------------------------------------------------
+CHECK=$(HOME="$SANDBOX/home" bash "$THEME_SET" --check 2>&1) || CHECK="EXIT-FAILURE: $CHECK"
+assert_ok "--check exits zero" env HOME="$SANDBOX/home" bash "$THEME_SET" --check
+
+# The sandbox HOME is empty, so every applier must skip with a reason.
+for a in ghostty tmux bottom fastfetch niri waybar mako fuzzel gtk; do
+    assert_contains "--check reports applier $a" "$CHECK" "$a"
+done
+assert_contains "--check gives a skip reason" "$CHECK" "skip"
+
+# --check must not create the active symlink or touch HOME.
+rm -f "$SANDBOX/themes/active"
+HOME="$SANDBOX/home" bash "$THEME_SET" --check >/dev/null 2>&1 || true
+assert_fails "--check does not create active" test -L "$SANDBOX/themes/active"
+assert_eq "--check leaves HOME empty" "" "$(ls -A "$SANDBOX/home")"
+
+# --- dispatch skips cleanly -------------------------------------------------
+OUT=$(HOME="$SANDBOX/home" bash "$THEME_SET" cyberdream 2>&1) || OUT="EXIT-FAILURE: $OUT"
+assert_contains "apply run reports skips" "$OUT" "skip"
+assert_contains "apply run succeeds"      "$OUT" "Theme set to: cyberdream"
+
 summary
