@@ -161,12 +161,29 @@ apply_bottom() {
         "medium_battery_color = \"\(.orange)\"",
         "low_battery_color = \"\(.red)\""
     ' "$PALETTE")
+    # $block came from jq and carries embedded newlines; feeding it to awk via
+    # `-v` breaks on macOS's /usr/bin/awk (BWK awk, not gawk), which rejects a
+    # -v assignment containing a literal newline ("newline in string ... at
+    # source line 1", exit 2) before the temp file is ever written. A plain
+    # bash line-by-line copy sidesteps awk entirely and works identically on
+    # BWK awk, gawk, or no awk at all.
+    local line skip=0
     t=$(mktemp "$cfg.XXXXXX") || return 1
-    awk -v block="$block" '
-        /# >>> theme-set:colors/ { print; print "[colors]"; print block; skip=1; next }
-        /# <<< theme-set:colors/ { skip=0; print; next }
-        !skip { print }
-    ' "$cfg" >"$t" && mv "$t" "$cfg"
+    while IFS= read -r line || [ -n "$line" ]; do
+        case "$line" in
+            *'# >>> theme-set:colors'*)
+                printf '%s\n[colors]\n%s\n' "$line" "$block"
+                skip=1
+                ;;
+            *'# <<< theme-set:colors'*)
+                printf '%s\n' "$line"
+                skip=0
+                ;;
+            *)
+                [ "$skip" -eq 1 ] || printf '%s\n' "$line"
+                ;;
+        esac
+    done < "$cfg" >"$t" && mv "$t" "$cfg"
 }
 
 apply_fastfetch() {
@@ -217,7 +234,8 @@ check_appliers() {
 }
 
 run_appliers() {
-    local name probe target fn reason
+    local name probe target fn reason failed
+    failed=0
     while IFS='|' read -r name probe target fn; do
         [ -z "$name" ] && continue
         reason=$(applier_skip_reason "$probe" "$target")
@@ -229,8 +247,10 @@ run_appliers() {
             printf '  ok     %-10s\n' "$name"
         else
             printf '  ERROR  %-10s\n' "$name" >&2
+            failed=1
         fi
     done <<< "$(appliers_table)"
+    return "$failed"
 }
 
 # Sourcing with THEME_SET_LIB=1 defines the helpers and stops here, so the
@@ -255,8 +275,15 @@ PALETTE="$THEMES_DIR/$theme/palette.json"
 # it stores no machine identity and resolves under /home/tom and /Users/tom.
 ( cd "$THEMES_DIR" && ln -sfn "$theme" active )
 
-run_appliers
+# Every applier is attempted regardless of earlier failures (run_appliers
+# never aborts early); its exit status only reflects whether any applier
+# failed, which is deliberately captured here rather than let `set -e` act on
+# it directly, so the symlink flip and final message above always happen.
+appliers_failed=0
+run_appliers || appliers_failed=$?
 
 command -v notify-send >/dev/null 2>&1 && \
     notify-send "Theme switched" "Now using: $theme" || true
 echo "Theme set to: $theme"
+
+exit "$appliers_failed"
