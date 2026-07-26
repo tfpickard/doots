@@ -33,6 +33,9 @@ list_themes() {
         d=${d%/}
         [ -L "$d" ] && continue
         [ -d "$d" ] || continue
+        # A theme is a directory with a palette. This excludes `default/`,
+        # which ships only a tmux fallback, and any stray directory.
+        [ -f "$d/palette.json" ] || continue
         printf '%s\n' "${d##*/}"
     done | sort
 }

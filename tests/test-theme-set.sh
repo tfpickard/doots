@@ -196,4 +196,20 @@ assert_contains "apply_bottom preserves the opening marker" \
 assert_contains "apply_bottom preserves the closing marker" \
     "$BOTTOM_OUT" "# <<< theme-set:colors"
 
+# --- default fallback theme -------------------------------------------------
+assert_resolves "default tmux fallback exists" "$REPO_ROOT/.config/themes/default/tmux.conf"
+
+TMUXCONF=$(cat "$REPO_ROOT/.tmux.conf")
+assert_contains "tmux sources the active theme"   "$TMUXCONF" "themes/active/tmux.conf"
+assert_contains "tmux falls back to the default"  "$TMUXCONF" "themes/default/tmux.conf"
+
+# `default` is a fallback, not a selectable theme: it ships only tmux.conf and
+# has no palette.json, so `theme-set default` would fail. It must not be
+# offered by --list or the fuzzel picker, and Task 10's CI applies every listed
+# theme, so listing it would break CI.
+LIST=$(bash "$THEME_SET" --list 2>&1)
+assert_not_contains "--list excludes the default fallback" "$LIST" "default"
+assert_fails "default is not selectable" \
+    env HOME="$SANDBOX/home" bash "$THEME_SET" default
+
 summary
