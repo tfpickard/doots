@@ -212,4 +212,19 @@ assert_not_contains "--list excludes the default fallback" "$LIST" "default"
 assert_fails "default is not selectable" \
     env HOME="$SANDBOX/home" bash "$THEME_SET" default
 
+# --- orphan snippets are wired ----------------------------------------------
+assert_relative_link "gtk.css is a relative symlink" "$REPO_ROOT/.config/gtk-4.0/gtk.css"
+assert_eq "gtk.css points into themes/active" "../themes/active/gtk.css" \
+    "$(readlink "$REPO_ROOT/.config/gtk-4.0/gtk.css")"
+
+FUZZEL=$(cat "$REPO_ROOT/.config/fuzzel/fuzzel.ini")
+assert_contains "fuzzel includes the active theme" "$FUZZEL" \
+    "include=../themes/active/fuzzel.ini"
+
+# Every theme must ship both snippets, or switching to one breaks a consumer.
+for t in aura catppuccin-mocha cyberdream dreamcore-pastel; do
+    assert_resolves "theme $t ships fuzzel.ini" "$REPO_ROOT/.config/themes/$t/fuzzel.ini"
+    assert_resolves "theme $t ships gtk.css"    "$REPO_ROOT/.config/themes/$t/gtk.css"
+done
+
 summary
