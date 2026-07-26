@@ -46,4 +46,40 @@ assert_eq "sed_inplace left the file intact on failure" "alpha" "$(cat "$SCRATCH
 # No temp files may survive.
 assert_eq "sed_inplace leaves no temp files" "" "$(find "$SANDBOX" -name 'scratch.txt.*' 2>/dev/null)"
 
+# --- sed_inplace: permissions must be preserved ------------------------------
+# mktemp creates the temp file 0600; a naive mv onto the target carries that
+# mode along, silently downgrading a 644 file to owner-only.
+PERM_FILE="$SANDBOX/perm.txt"
+printf 'alpha\n' > "$PERM_FILE"
+chmod 644 "$PERM_FILE"
+MODE_BEFORE=$(ls -l "$PERM_FILE" | awk '{print $1}')
+assert_ok "sed_inplace succeeds on a 644 file" sed_inplace "$PERM_FILE" -e 's/alpha/gamma/'
+MODE_AFTER=$(ls -l "$PERM_FILE" | awk '{print $1}')
+assert_eq "sed_inplace preserves the original file mode" "$MODE_BEFORE" "$MODE_AFTER"
+
+# --- sed_inplace: a symlink target must stay a symlink -----------------------
+# mv'ing the temp file over a symlink path replaces the link with a plain
+# file, orphaning whatever it used to point at. The real file behind the
+# link must receive the edit instead, and the link itself must survive.
+REAL_FILE="$SANDBOX/real-target.txt"
+printf 'alpha\n' > "$REAL_FILE"
+LINK_FILE="$SANDBOX/link-to-real.txt"
+ln -s "$REAL_FILE" "$LINK_FILE"
+assert_ok "sed_inplace succeeds through a symlink" sed_inplace "$LINK_FILE" -e 's/alpha/gamma/'
+if [ -L "$LINK_FILE" ]; then LINK_STATE=symlink; else LINK_STATE=not-a-symlink; fi
+assert_eq "sed_inplace leaves the path a symlink" "symlink" "$LINK_STATE"
+assert_eq "sed_inplace edits the file the symlink points to" "gamma" "$(cat "$REAL_FILE")"
+
+# --- sed_inplace: a failing mv must not leak the temp file -------------------
+# The sed-failure path already cleans up (asserted above); the mv-failure
+# path must too. Override `mv` as a shell function so the failure is
+# deterministic and portable (no filesystem trickery required).
+MVFAIL_FILE="$SANDBOX/mvfail.txt"
+printf 'alpha\n' > "$MVFAIL_FILE"
+mv() { return 1; }
+assert_fails "sed_inplace reports mv failure" sed_inplace "$MVFAIL_FILE" -e 's/alpha/gamma/'
+unset -f mv
+assert_eq "sed_inplace leaves no temp file after mv failure" "" "$(find "$SANDBOX" -name 'mvfail.txt.*' 2>/dev/null)"
+assert_eq "sed_inplace leaves the original intact after mv failure" "alpha" "$(cat "$MVFAIL_FILE")"
+
 summary

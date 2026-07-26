@@ -36,13 +36,39 @@ pick_theme() {
 # The temp file is created beside the target so the rename stays on one
 # filesystem: a cross-filesystem mv degrades to copy+unlink, changing the
 # inode and clobbering permissions.
+#
+# Two more wrinkles handled here:
+#   - mktemp creates the temp file 0600, and a bare mv onto the target would
+#     carry that mode along, silently downgrading e.g. a 644 file to
+#     owner-only. `cp -p` (POSIX, works on both BSD and GNU) copies the
+#     target's current mode onto the temp file; the sed output redirection
+#     that follows truncates-in-place and does not touch the mode, so it
+#     survives the eventual mv. (Deliberately not `chmod --reference=`,
+#     which is GNU-only, nor `stat -c`/`stat -f`, which disagree per
+#     platform.)
+#   - If the target is a symlink, mv'ing over it would replace the link
+#     itself with a plain file, orphaning whatever it pointed to. Resolve to
+#     the real path first and operate entirely on that, leaving the symlink
+#     untouched.
 sed_inplace() {
     local f=$1; shift
-    local t
-    t=$(mktemp "$f.XXXXXX") || return 1
-    if sed "$@" "$f" >"$t" 2>/dev/null; then
-        mv "$t" "$f"
+    local rt t
+
+    if [ -L "$f" ]; then
+        rt=$(readlink -f "$f") || return 1
     else
+        rt=$f
+    fi
+
+    t=$(mktemp "$rt.XXXXXX") || return 1
+    cp -p "$rt" "$t" 2>/dev/null || { rm -f "$t"; return 1; }
+
+    if ! sed "$@" "$rt" >"$t" 2>/dev/null; then
+        rm -f "$t"
+        return 1
+    fi
+
+    if ! mv "$t" "$rt"; then
         rm -f "$t"
         return 1
     fi
