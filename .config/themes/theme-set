@@ -32,6 +32,28 @@ pick_theme() {
     list_themes | fuzzel --dmenu --prompt="theme> " --lines=8
 }
 
+# In-place sed that works with both BSD and GNU sed, which disagree on -i.
+# The temp file is created beside the target so the rename stays on one
+# filesystem: a cross-filesystem mv degrades to copy+unlink, changing the
+# inode and clobbering permissions.
+sed_inplace() {
+    local f=$1; shift
+    local t
+    t=$(mktemp "$f.XXXXXX") || return 1
+    if sed "$@" "$f" >"$t" 2>/dev/null; then
+        mv "$t" "$f"
+    else
+        rm -f "$t"
+        return 1
+    fi
+}
+
+# Sourcing with THEME_SET_LIB=1 defines the helpers and stops here, so the
+# test suite can exercise them directly.
+if [ -n "${THEME_SET_LIB:-}" ]; then
+    return 0 2>/dev/null || true
+fi
+
 case "${1:-}" in
     --list) list_themes; exit 0 ;;
     "")     theme="$(pick_theme)" || exit 1 ;;
