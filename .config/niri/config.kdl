@@ -31,6 +31,19 @@ input {
     touchpad {
         // off
         tap
+
+        // Multi-finger TAP (not swipe) -> mouse button, courtesy of libinput:
+        //   1 finger = left, 2 fingers = right, 3 fingers = MIDDLE.
+        // This is what gives you "3-finger middle click" for paste-primary and
+        // middle-click-to-close-tab. It is libinput's default, but it is spelled
+        // out here so it can't silently change.
+        // Swap to "left-middle-right" if you'd rather have 2 fingers = middle.
+        tap-button-map "left-right-middle"
+
+        // Belt-and-braces middle click: press the physical left and right click
+        // zones at the same time. Harmless alongside tap-button-map.
+        middle-emulation
+
         // Disable-while-typing: stops palm brushes from moving the cursor mid-sentence.
         dwt
         // dwtp
@@ -43,12 +56,45 @@ input {
         // disabled-on-external-mouse
     }
 
+    // Generic mice. natural-scroll is enabled here as well as in the trackball
+    // block below, because many trackballs (Kensington Expert/SlimBlade, Logitech
+    // Trackman/MX Ergo) are not tagged ID_INPUT_TRACKBALL by udev and therefore
+    // land in libinput's plain "mouse" category. Setting both means the trackball
+    // scrolls naturally no matter which bucket it falls into.
     mouse {
         // off
-        // natural-scroll
+        natural-scroll
+
+        // Left + right click pressed together = middle click. This is the
+        // "three-button emulation" for a trackball whose middle button is
+        // awkward (or missing). Note libinput waits ~50ms on left/right press to
+        // see if the other button follows, so clicks feel a hair less snappy.
+        middle-emulation
+
         accel-speed -0.1
         accel-profile "flat"
         // scroll-method "no-scroll"
+    }
+
+    // Devices udev *does* tag as trackballs.
+    trackball {
+        // off
+        natural-scroll
+
+        // Left + right simultaneously = middle click.
+        middle-emulation
+
+        // If your ball has no scroll ring, uncomment these to scroll by holding a
+        // button and rolling the ball. scroll-button is an evdev button code:
+        //   272 BTN_LEFT   273 BTN_RIGHT   274 BTN_MIDDLE
+        //   275 BTN_SIDE   276 BTN_EXTRA   277 BTN_FORWARD   278 BTN_BACK
+        // Run `sudo libinput debug-events` and press the button to find yours.
+        // scroll-method "on-button-down"
+        // scroll-button 278
+        // scroll-button-lock
+
+        // accel-speed 0.2
+        // accel-profile "flat"
     }
 
     trackpoint {
@@ -145,6 +191,12 @@ layout {
     // preset-window-heights { }
 
     // You can change the default width of the new windows.
+    //
+    // NOTE: a window that opens on an *empty* workspace is grown to fill the
+    // output (minus `gaps`/`struts`) by
+    // ~/.config/scripts/niri-expand-lonely-column.py, which is started below.
+    // niri has no config option for that, so it is done over IPC. The value
+    // here is what every *subsequent* window gets.
     default-column-width { proportion 0.5; }
     // If you leave the brackets empty, the windows themselves will decide their initial width.
     // default-column-width {}
@@ -306,6 +358,21 @@ spawn-sh-at-startup "wl-paste --type image --watch cliphist store"
 // lock before sleep. idle-dpms.sh keeps the screen on when plugged into AC.
 spawn-sh-at-startup "swayidle -w timeout 600 'swaylock -f' timeout 900 '/home/tom/.config/scripts/idle-dpms.sh off' resume '/home/tom/.config/scripts/idle-dpms.sh on' before-sleep 'swaylock -f'"
 
+// PolicyKit authentication agent. Without one, any GUI app that needs elevated
+// rights (nm-connection-editor saving a system connection, gnome-disks,
+// blueman pairing, the firmware updater) fails silently with "not authorized"
+// -- there is nothing to show you the password prompt.
+spawn-sh-at-startup "/usr/lib/policykit-1-gnome/polkit-gnome-authentication-agent-1"
+
+// Grow the first window on an otherwise empty workspace to fill the output.
+// See the note next to `default-column-width` above.
+spawn-at-startup "/home/tom/.config/scripts/niri-expand-lonely-column.py"
+
+// Long-running workspace apps: VS Code Insiders and the Teams PWA. The script
+// only launches what isn't already running; the `open-on-output` window rules
+// further down decide which monitor each lands on.
+spawn-at-startup "/home/tom/.config/scripts/niri-autostart-apps.sh"
+
 hotkey-overlay {
     // Uncomment this line to disable the "Important Hotkeys" pop-up at startup.
     // skip-at-startup
@@ -406,6 +473,31 @@ window-rule {
     default-column-width { proportion 0.5; }
 }
 
+// --- Monitor assignments ----------------------------------------------------
+//
+// These pin the two "always open" apps to a physical monitor. If that monitor
+// isn't connected (laptop undocked) niri falls back to the focused output, so
+// nothing is lost when travelling.
+//
+// The rules deliberately match on app-id only, with no title match, so *every*
+// window of these apps lands on the right screen -- second editor windows,
+// Teams call popouts and meeting windows included.
+
+// VS Code Insiders -> left-most external.
+window-rule {
+    match app-id=r#"^code-insiders$"#
+    open-on-output "Dell Inc. DELL P2419H BJ4X5X2"
+}
+
+// Microsoft Teams PWA -> centre external (the right-most *external* panel).
+// Chrome derives the Wayland app-id of an installed web app from its extension
+// id: chrome-<app-id>-<profile>. Get it with `niri msg windows` if it ever
+// changes (e.g. after reinstalling the PWA).
+window-rule {
+    match app-id=r#"^chrome-cifhbcnohmdccbgoicgdjpfamggdegmo-Default$"#
+    open-on-output "Dell Inc. DELL P2419H 920C993"
+}
+
 // Screenshot annotation tools open floating, so editing a capture never
 // reshuffles the tiling layout of the windows that were just captured.
 window-rule {
@@ -451,7 +543,12 @@ binds {
     // For example, this is a standard bind to toggle the screen reader (orca).
     Mod+Alt+O allow-when-locked=true hotkey-overlay-title=null { spawn-sh "pkill orca || exec orca"; }
 
-    // Example volume keys mappings for PipeWire & WirePlumber.
+    // --- Volume / brightness / media ---------------------------------------
+    //
+    // The XF86* binds are the laptop's own dedicated keys. Since a 60% board
+    // has neither those nor an F-row, every one of them also has a Mod+letter
+    // or Mod+punctuation equivalent right below it.
+    //
     // The allow-when-locked=true property makes them work even when the session is locked.
     // Using spawn-sh allows to pass multiple arguments together with the command.
     // "-l 1.0" limits the volume to 100%.
@@ -459,6 +556,12 @@ binds {
     XF86AudioLowerVolume allow-when-locked=true { spawn-sh "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.1-"; }
     XF86AudioMute        allow-when-locked=true { spawn-sh "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"; }
     XF86AudioMicMute     allow-when-locked=true { spawn-sh "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"; }
+
+    // 60%-friendly volume: Mod+Alt and the -/= pair, mute on the digits.
+    Mod+Alt+Equal allow-when-locked=true hotkey-overlay-title="Volume Up"   { spawn-sh "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.05+ -l 1.0"; }
+    Mod+Alt+Minus allow-when-locked=true hotkey-overlay-title="Volume Down" { spawn-sh "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.05-"; }
+    Mod+Alt+0     allow-when-locked=true hotkey-overlay-title="Mute Output" { spawn-sh "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"; }
+    Mod+Alt+9     allow-when-locked=true hotkey-overlay-title="Mute Mic"    { spawn-sh "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"; }
 
     // Example media keys mapping using playerctl.
     // This will work with any MPRIS-enabled media player.
@@ -468,11 +571,20 @@ binds {
     XF86AudioPrev        allow-when-locked=true { spawn-sh "playerctl previous"; }
     XF86AudioNext        allow-when-locked=true { spawn-sh "playerctl next"; }
 
+    // 60%-friendly transport controls.
+    Mod+Alt+P            allow-when-locked=true hotkey-overlay-title="Play / Pause"    { spawn-sh "playerctl play-pause"; }
+    Mod+Alt+BracketLeft  allow-when-locked=true hotkey-overlay-title="Previous Track"  { spawn-sh "playerctl previous"; }
+    Mod+Alt+BracketRight allow-when-locked=true hotkey-overlay-title="Next Track"      { spawn-sh "playerctl next"; }
+
     // Example brightness key mappings for brightnessctl.
     // You can use regular spawn with multiple arguments too (to avoid going through "sh"),
     // but you need to manually put each argument in separate "" quotes.
     XF86MonBrightnessUp allow-when-locked=true { spawn "brightnessctl" "--class=backlight" "set" "+10%"; }
     XF86MonBrightnessDown allow-when-locked=true { spawn "brightnessctl" "--class=backlight" "set" "10%-"; }
+
+    // 60%-friendly brightness: same -/= pair, one modifier over from volume.
+    Mod+Ctrl+Equal allow-when-locked=true hotkey-overlay-title="Brightness Up"   { spawn "brightnessctl" "--class=backlight" "set" "+10%"; }
+    Mod+Ctrl+Minus allow-when-locked=true hotkey-overlay-title="Brightness Down" { spawn "brightnessctl" "--class=backlight" "set" "10%-"; }
 
     // Open/close the Overview: a zoomed-out view of workspaces and windows.
     // You can also move the mouse into the top-left hot corner,
@@ -481,86 +593,85 @@ binds {
 
     Mod+Q repeat=false { close-window; }
 
+    // ========================================================================
+    // Navigation -- bspwm/sxhkd-flavoured, and 60%-keyboard clean.
+    //
+    // Nothing below needs an arrow cluster, a nav cluster (Home/End/PageUp/
+    // PageDown/Insert), Print Screen, or an F-row. Letters, digits and
+    // punctuation only.
+    //
+    //   Mod            + h j k l   focus         (window / column)
+    //   Mod + Shift    + h j k l   MOVE window   (h/l = monitor, j/k = workspace)
+    //   Mod + Ctrl     + h j k l   rearrange     (within this workspace)
+    //   Mod + Alt      + h j k l   focus         (h/l = monitor, j/k = workspace)
+    //
+    // Mnemonic: plain = look around here, Shift = throw the window somewhere
+    // else, Ctrl = shuffle it in place, Alt = look somewhere else.
+    // ========================================================================
+
+    // --- Mod + hjkl: move focus -------------------------------------------
+    Mod+H { focus-column-left; }
+    Mod+J { focus-window-down; }
+    Mod+K { focus-window-up; }
+    Mod+L { focus-column-right; }
+
+    // Arrow keys kept as exact aliases, for when a full-size keyboard is
+    // attached. They are never the only way to do anything.
     Mod+Left  { focus-column-left; }
     Mod+Down  { focus-window-down; }
     Mod+Up    { focus-window-up; }
     Mod+Right { focus-column-right; }
-    Mod+H     { focus-column-left; }
-    Mod+J     { focus-window-down; }
-    Mod+K     { focus-window-up; }
-    Mod+L     { focus-column-right; }
+
+    // --- Mod + Shift + hjkl: send the window to another monitor/workspace ---
+    // Horizontal = monitors (they sit side by side), vertical = workspaces
+    // (niri stacks them vertically). This is the sxhkd "super + shift + {h,j,k,l}
+    // sends the window away" muscle memory.
+    Mod+Shift+H { move-column-to-monitor-left; }
+    Mod+Shift+J { move-column-to-workspace-down; }
+    Mod+Shift+K { move-column-to-workspace-up; }
+    Mod+Shift+L { move-column-to-monitor-right; }
+
+    Mod+Shift+Left  { move-column-to-monitor-left; }
+    Mod+Shift+Down  { move-column-to-workspace-down; }
+    Mod+Shift+Up    { move-column-to-workspace-up; }
+    Mod+Shift+Right { move-column-to-monitor-right; }
+
+    // Same, but taking only the focused window instead of the whole column.
+    Mod+Shift+Alt+H { move-window-to-monitor-left; }
+    Mod+Shift+Alt+J { move-window-to-workspace-down; }
+    Mod+Shift+Alt+K { move-window-to-workspace-up; }
+    Mod+Shift+Alt+L { move-window-to-monitor-right; }
+
+    // --- Mod + Ctrl + hjkl: rearrange within the current workspace ---------
+    Mod+Ctrl+H { move-column-left; }
+    Mod+Ctrl+J { move-window-down; }
+    Mod+Ctrl+K { move-window-up; }
+    Mod+Ctrl+L { move-column-right; }
 
     Mod+Ctrl+Left  { move-column-left; }
     Mod+Ctrl+Down  { move-window-down; }
     Mod+Ctrl+Up    { move-window-up; }
     Mod+Ctrl+Right { move-column-right; }
-    Mod+Ctrl+H     { move-column-left; }
-    Mod+Ctrl+J     { move-window-down; }
-    Mod+Ctrl+K     { move-window-up; }
-    Mod+Ctrl+L     { move-column-right; }
 
-    // Alternative commands that move across workspaces when reaching
-    // the first or last window in a column.
-    // Mod+J     { focus-window-or-workspace-down; }
-    // Mod+K     { focus-window-or-workspace-up; }
-    // Mod+Ctrl+J     { move-window-down-or-to-workspace-down; }
-    // Mod+Ctrl+K     { move-window-up-or-to-workspace-up; }
+    // --- Mod + Alt + hjkl: move focus to another monitor/workspace ---------
+    Mod+Alt+H { focus-monitor-left; }
+    Mod+Alt+J { focus-workspace-down; }
+    Mod+Alt+K { focus-workspace-up; }
+    Mod+Alt+L { focus-monitor-right; }
 
-    Mod+Home { focus-column-first; }
-    Mod+End  { focus-column-last; }
-    Mod+Ctrl+Home { move-column-to-first; }
-    Mod+Ctrl+End  { move-column-to-last; }
-
-    // Aliases for the four above, so a 60% keyboard never needs the nav cluster.
-    // Mnemonic is vim's gg / G.
+    // --- Jump to the ends of the scrolling strip (vim's gg / G) ------------
     Mod+G            { focus-column-first; }
     Mod+Shift+G      { focus-column-last; }
     Mod+Ctrl+G       { move-column-to-first; }
     Mod+Ctrl+Shift+G { move-column-to-last; }
 
-    Mod+Shift+Left  { focus-monitor-left; }
-    Mod+Shift+Down  { focus-monitor-down; }
-    Mod+Shift+Up    { focus-monitor-up; }
-    Mod+Shift+Right { focus-monitor-right; }
-    Mod+Shift+H     { focus-monitor-left; }
-    Mod+Shift+J     { focus-monitor-down; }
-    Mod+Shift+K     { focus-monitor-up; }
-    Mod+Shift+L     { focus-monitor-right; }
+    // Drag a whole workspace up/down the stack.
+    Mod+Ctrl+Shift+J { move-workspace-down; }
+    Mod+Ctrl+Shift+K { move-workspace-up; }
 
-    Mod+Shift+Ctrl+Left  { move-column-to-monitor-left; }
-    Mod+Shift+Ctrl+Down  { move-column-to-monitor-down; }
-    Mod+Shift+Ctrl+Up    { move-column-to-monitor-up; }
-    Mod+Shift+Ctrl+Right { move-column-to-monitor-right; }
-    Mod+Shift+Ctrl+H     { move-column-to-monitor-left; }
-    Mod+Shift+Ctrl+J     { move-column-to-monitor-down; }
-    Mod+Shift+Ctrl+K     { move-column-to-monitor-up; }
-    Mod+Shift+Ctrl+L     { move-column-to-monitor-right; }
-
-    // Alternatively, there are commands to move just a single window:
-    // Mod+Shift+Ctrl+Left  { move-window-to-monitor-left; }
-    // ...
-
-    // And you can also move a whole workspace to another monitor:
-    // Mod+Shift+Ctrl+Left  { move-workspace-to-monitor-left; }
-    // ...
-
-    Mod+Page_Down      { focus-workspace-down; }
-    Mod+Page_Up        { focus-workspace-up; }
-    Mod+U              { focus-workspace-down; }
-    Mod+I              { focus-workspace-up; }
-    Mod+Ctrl+Page_Down { move-column-to-workspace-down; }
-    Mod+Ctrl+Page_Up   { move-column-to-workspace-up; }
-    Mod+Ctrl+U         { move-column-to-workspace-down; }
-    Mod+Ctrl+I         { move-column-to-workspace-up; }
-
-    // Alternatively, there are commands to move just a single window:
-    // Mod+Ctrl+Page_Down { move-window-to-workspace-down; }
-    // ...
-
-    Mod+Shift+Page_Down { move-workspace-down; }
-    Mod+Shift+Page_Up   { move-workspace-up; }
-    Mod+Shift+U         { move-workspace-down; }
-    Mod+Shift+I         { move-workspace-up; }
+    // Push a whole workspace onto another monitor.
+    Mod+Ctrl+Shift+H { move-workspace-to-monitor-left; }
+    Mod+Ctrl+Shift+L { move-workspace-to-monitor-right; }
 
     // You can bind mouse wheel scroll ticks using the following syntax.
     // These binds will change direction based on the natural-scroll setting.
@@ -627,15 +738,34 @@ binds {
     // Switches focus between the current and the previous workspace.
     Mod+Tab { focus-workspace-previous; }
 
-    // The following binds move the focused window in and out of a column.
+    // ========================================================================
+    // "Splitting" windows -- the closest thing niri has to bspwm's dwindle.
+    //
+    // Straight answer: niri CANNOT do a spiral/dwindle layout. bspwm is a binary
+    // *tree* -- every window is a leaf, every split node has a ratio, and the
+    // insertion point spirals. niri is a scrollable *strip*: an infinite row of
+    // columns, each column an optional vertical stack. There is no tree, so
+    // there is nothing to spiral. No config option or plugin adds one.
+    //
+    // What you can build by hand is one level of nesting, which covers the
+    // common bspwm cases:
+    //   * a vertical "split"  -> put two windows in one column (Mod+Comma)
+    //   * a horizontal "split"-> two adjacent columns (the default)
+    //   * unsplit             -> Mod+Period pushes a window back out
+    // A master/stack layout is therefore: one wide column on the left, one
+    // column on the right holding everything else stacked vertically.
+    // ========================================================================
+
+    // Pull the window to the side into the focused column / push it back out.
     // If the window is alone, they will consume it into the nearby column to the side.
     // If the window is already in a column, they will expel it out.
     Mod+BracketLeft  { consume-or-expel-window-left; }
     Mod+BracketRight { consume-or-expel-window-right; }
 
-    // Consume one window from the right to the bottom of the focused column.
+    // Consume one window from the right to the bottom of the focused column
+    // -- i.e. "split the current column vertically and put the next window in it".
     Mod+Comma  { consume-window-into-column; }
-    // Expel the bottom window from the focused column to the right.
+    // Expel the bottom window from the focused column to the right ("unsplit").
     Mod+Period { expel-window-from-column; }
 
     // Cycle through widths set in preset-column-widths.
