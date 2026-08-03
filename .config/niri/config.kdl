@@ -396,6 +396,26 @@ window-rule {
     open-floating true
 }
 
+// Waybar monitoring pop-ups (powertop, s-tui) launched by
+// ~/.config/scripts/monitor-toggle.sh open floating so toggling them never
+// reshuffles the tiling layout.
+window-rule {
+    match app-id=r#"^com\.waybar\."#
+    open-floating true
+    default-window-height { proportion 0.6; }
+    default-column-width { proportion 0.5; }
+}
+
+// Screenshot annotation tools open floating, so editing a capture never
+// reshuffles the tiling layout of the windows that were just captured.
+window-rule {
+    match app-id=r#"^com\.gabm\.satty$"#
+    match app-id=r#"^org\.ksnip\.ksnip$"#
+    open-floating true
+    default-window-height { proportion 0.85; }
+    default-column-width { proportion 0.85; }
+}
+
 binds {
     // Keys consist of modifiers separated by + signs, followed by an XKB key name
     // in the end. To find an XKB name for a particular key, you may use a program
@@ -422,14 +442,14 @@ binds {
     Mod+Semicolon hotkey-overlay-title="Clipboard History" { spawn "/home/tom/.config/scripts/cliphist-fuzzel.sh"; }
     Mod+Shift+A   hotkey-overlay-title="Ask AI" { spawn "/home/tom/.config/scripts/ask-ai.sh"; }
     Mod+B         hotkey-overlay-title="Toggle Waybar" { spawn "/home/tom/.config/waybar/toggle.sh"; }
-    Mod+Shift+S   hotkey-overlay-title="Toggle Atlantis Screensaver" { spawn "/home/tom/.config/scripts/toggle-atlantis.sh"; }
+    Mod+Ctrl+Z    hotkey-overlay-title="Toggle Atlantis Screensaver" { spawn "/home/tom/.config/scripts/toggle-atlantis.sh"; }
     Mod+Ctrl+P    hotkey-overlay-title="Toggle Teams Keep-Active (anti-idle)" { spawn "/home/tom/.config/scripts/teams-keep-active.sh"; }
     Mod+Shift+T   hotkey-overlay-title="Switch Global Theme" { spawn "/home/tom/.config/themes/theme-set"; }
 
     // Use spawn-sh to run a shell command. Do this if you need pipes, multiple commands, etc.
     // Note: the entire command goes as a single argument. It's passed verbatim to `sh -c`.
     // For example, this is a standard bind to toggle the screen reader (orca).
-    Super+Alt+S allow-when-locked=true hotkey-overlay-title=null { spawn-sh "pkill orca || exec orca"; }
+    Mod+Alt+O allow-when-locked=true hotkey-overlay-title=null { spawn-sh "pkill orca || exec orca"; }
 
     // Example volume keys mappings for PipeWire & WirePlumber.
     // The allow-when-locked=true property makes them work even when the session is locked.
@@ -490,6 +510,13 @@ binds {
     Mod+End  { focus-column-last; }
     Mod+Ctrl+Home { move-column-to-first; }
     Mod+Ctrl+End  { move-column-to-last; }
+
+    // Aliases for the four above, so a 60% keyboard never needs the nav cluster.
+    // Mnemonic is vim's gg / G.
+    Mod+G            { focus-column-first; }
+    Mod+Shift+G      { focus-column-last; }
+    Mod+Ctrl+G       { move-column-to-first; }
+    Mod+Ctrl+Shift+G { move-column-to-last; }
 
     Mod+Shift+Left  { focus-monitor-left; }
     Mod+Shift+Down  { focus-monitor-down; }
@@ -669,9 +696,24 @@ binds {
     // Mod+Space       { switch-layout "next"; }
     // Mod+Shift+Space { switch-layout "prev"; }
 
-    Print { screenshot; }
-    Ctrl+Print { screenshot-screen; }
-    Alt+Print { screenshot-window; }
+    // Screenshots and screen recording, all on the S cluster so none of this
+    // needs the Print key or the F-row (60% keyboard friendly).
+    //
+    // The bare `screenshot` action opens niri's own capture UI, which freezes
+    // the screen and can snap the selection to a window -- unlike grim+slurp,
+    // which grabs the pointer and so dismisses any open menu or tooltip.
+    Mod+S       hotkey-overlay-title="Screenshot: region or window" { screenshot; }
+    Mod+Shift+S hotkey-overlay-title="Screenshot: full screen"      { screenshot-screen; }
+    Mod+Ctrl+S  hotkey-overlay-title="Screenshot: focused window"   { screenshot-window; }
+
+    // Press again to stop; the script SIGINTs the recorder so the file is finalised.
+    Mod+Alt+S       repeat=false hotkey-overlay-title="Record region (toggle)"      { spawn "/home/tom/.config/scripts/screenrec.sh" "region"; }
+    Mod+Alt+Shift+S repeat=false hotkey-overlay-title="Record full screen (toggle)" { spawn "/home/tom/.config/scripts/screenrec.sh" "screen"; }
+
+    // Capture through niri's freeze/snap UI, then annotate in satty.
+    Mod+A      repeat=false hotkey-overlay-title="Screenshot + annotate (satty)" { spawn "/home/tom/.config/scripts/screenshot-annotate.sh"; }
+    // Escape hatch for anything more involved: tabs, OCR, delayed capture, upload.
+    Mod+Ctrl+A repeat=false hotkey-overlay-title="Screenshot GUI (ksnip)"        { spawn "ksnip"; }
 
     // Applications such as remote-desktop clients and software KVM switches may
     // request that niri stops processing the keyboard shortcuts defined here

@@ -1,0 +1,33 @@
+# satty -- screenshot annotation editor.
+# The niri keybinds pass --copy-command/--early-exit explicitly, and CLI flags win
+# over anything set here, so this mainly covers running `satty` by hand.
+
+[general]
+# Annotate in a normal window rather than taking over the screen.
+fullscreen = false
+early-exit = true
+initial-tool = "arrow"
+copy-command = "wl-copy"
+# Default annotations are thin on a 1080p display.
+annotation-size-factor = 2
+corner-roundness = 12
+primary-highlighter = "block"
+disable-notifications = false
+actions-on-enter = ["save-to-clipboard", "exit"]
+actions-on-escape = ["exit"]
+
+[font]
+family = "Monaspace Neon"
+style = "Regular"
+
+[color-palette]
+palette = [
+    "#f38ba8",
+    "#fab387",
+    "#f9e2af",
+    "#a6e3a1",
+    "#89b4fa",
+    "#cba6f7",
+    "#ffffff",
+    "#11111b",
+]
