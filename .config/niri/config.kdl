@@ -714,6 +714,10 @@ binds {
     Mod+A      repeat=false hotkey-overlay-title="Screenshot + annotate (satty)" { spawn "/home/tom/.config/scripts/screenshot-annotate.sh"; }
     // Escape hatch for anything more involved: tabs, OCR, delayed capture, upload.
     Mod+Ctrl+A repeat=false hotkey-overlay-title="Screenshot GUI (ksnip)"        { spawn "ksnip"; }
+    // New screenshots are described and renamed automatically by
+    // screenshot-describe.service; this re-runs it on the newest one that still
+    // has a bare timestamp name, for when a description came out unhelpful.
+    Mod+Alt+A  repeat=false hotkey-overlay-title="Describe latest screenshot (AI)" { spawn "/home/tom/.config/scripts/screenshot-describe.sh" "--latest"; }
 
     // Applications such as remote-desktop clients and software KVM switches may
     // request that niri stops processing the keyboard shortcuts defined here
