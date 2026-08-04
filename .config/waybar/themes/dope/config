@@ -41,11 +41,12 @@
             "network",
             "bluetooth",
             "cpu",
+            "custom/cpufreq",
             "temperature",
             "memory",
             "disk",
             "power-profiles-daemon",
-            "battery"
+            "custom/battery"
         ]
     },
     "group/session": {
@@ -212,29 +213,22 @@
         },
         "tooltip-format": "Power profile: {profile}\nClick to cycle"
     },
-    "battery": {
-        "states": {
-            "good": 80,
-            "warning": 25,
-            "critical": 10
-        },
-        "format": "{icon}  {capacity}%",
-        "format-charging": "󰂄  {capacity}%",
-        "format-plugged": "󰚥  {capacity}%",
-        "format-icons": [
-            "󰂎",
-            "󰁺",
-            "󰁻",
-            "󰁼",
-            "󰁽",
-            "󰁾",
-            "󰁿",
-            "󰂀",
-            "󰂁",
-            "󰂂",
-            "󰁹"
-        ],
-        "tooltip-format": "{timeTo} ({power}W)"
+    "custom/cpufreq": {
+        "exec": "~/.config/waybar/scripts/cpu-freq.py",
+        "return-type": "json",
+        "interval": 3,
+        "signal": 9,
+        "on-click": "~/.config/scripts/cpu-governor-toggle.sh",
+        "on-click-right": "~/.config/scripts/monitor-toggle.sh com.waybar.cpumon s-tui"
+    },
+    "custom/battery": {
+        "exec": "~/.config/waybar/scripts/battery-power.py",
+        "return-type": "json",
+        "interval": 5,
+        "signal": 8,
+        "on-click": "~/.config/waybar/scripts/battery-click.sh",
+        "on-click-right": "~/.config/scripts/monitor-toggle.sh com.waybar.powermon sudo powertop",
+        "tooltip": true
     },
     "tray": {
         "icon-size": 16,

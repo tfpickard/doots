@@ -72,11 +72,13 @@ tooltip label {
 #network,
 #bluetooth,
 #cpu,
+#custom-cpufreq,
 #temperature,
 #memory,
 #disk,
 #power-profiles-daemon,
 #battery,
+#custom-battery,
 #idle_inhibitor,
 #custom-clipboard,
 #custom-ai,
@@ -99,6 +101,8 @@ tooltip label {
 #bluetooth:hover,
 #pulseaudio:hover,
 #cpu:hover,
+#custom-cpufreq:hover,
+#custom-battery:hover,
 #memory:hover,
 #power-profiles-daemon:hover {
     background: alpha(@surface, 0.8);
@@ -180,6 +184,11 @@ tooltip label {
 #custom-clipboard         { color: @accent2; }
 #custom-ai                { color: @accent; }
 #cpu                      { color: @orange; }
+#custom-cpufreq           { color: @orange; }
+#custom-cpufreq.performance { color: @red; }
+#custom-cpufreq.powersave { color: @green; }
+#custom-cpufreq.busy      { color: @yellow; }
+#custom-cpufreq.throttling { color: @red; font-weight: 600; }
 #temperature              { color: @subtext; }
 #temperature.critical     { color: @red; }
 #memory                   { color: @blue; }
@@ -198,12 +207,19 @@ tooltip label {
 #battery.warning          { color: @yellow; }
 #battery.critical         { color: @red; }
 #battery.charging         { color: @green; }
+#custom-battery           { color: @green; }
+#custom-battery.warning   { color: @yellow; }
+#custom-battery.critical  { color: @red; }
+#custom-battery.charging  { color: @green; }
 #custom-power             { color: @red; }
 
 @keyframes blink {
     to { color: @bg; background: @red; }
 }
 #battery.critical:not(.charging) {
+    animation: blink 1s steps(2) infinite alternate;
+}
+#custom-battery.critical:not(.charging) {
     animation: blink 1s steps(2) infinite alternate;
 }
 
