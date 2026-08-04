@@ -135,36 +135,90 @@ if command -v tmux >/dev/null; then
     done
 fi
 
-# 9. swaylock: no include mechanism either, so rewrite the colour values that
-#    sit directly under a "# THEME:<key>" marker line. The markers are on their
-#    own lines because swaylock does NOT strip trailing "#" comments -- it would
-#    read "0f1113  # THEME:lock-bg" as the literal colour and fall back to white.
-SWAYLOCK_CFG="$HOME/.config/swaylock/config"
-if [ -f "$SWAYLOCK_CFG" ] && grep -q "# THEME:lock-" "$SWAYLOCK_CFG"; then
-    # key -> colour, taken from the palette. swaylock wants rrggbb with no '#'.
-    lock_map=$(jq -r '
-        {
-            "lock-bg":     .bg_dark,
-            "lock-inside": .surface,
-            "lock-ring":   .overlay,
-            "lock-text":   .text,
-            "lock-keyhl":  .accent,
-            "lock-bshl":   .red,
-            "lock-ver":    .blue,
-            "lock-wrong":  .red,
-            "lock-clear":  .green,
-            "lock-caps":   .orange
-        } | to_entries[] | "\(.key) \(.value)"' "$palette")
+# 9. swaylock / swaylock-effects: no include mechanism either, so rewrite the
+#    colour value that sits directly UNDER a "# THEME:<key>" marker line. The
+#    markers are on their own lines because swaylock does NOT strip trailing
+#    "#" comments -- it would read "0f1113  # THEME:lock-bg" as the literal
+#    colour and fall back to white.
+#
+#    swaylock-effects uses the same option names, so both files take the same
+#    map. The effects config keeps 8-digit rrggbbaa values for the translucent
+#    inside colours; those are tagged with their own keys so the alpha isn't
+#    clobbered.
+lock_map=$(jq -r '
+    {
+        "lock-bg":     .bg_dark,
+        "lock-inside": .surface,
+        "lock-ring":   .overlay,
+        "lock-text":   .text,
+        "lock-keyhl":  .accent,
+        "lock-bshl":   .red,
+        "lock-ver":    .blue,
+        "lock-wrong":  .red,
+        "lock-clear":  .green,
+        "lock-caps":   .orange
+    } | to_entries[] | "\(.key) \(.value)"' "$palette")
 
-    printf '%s\n' "$lock_map" | while read -r key color; do
+patch_marked_values() {
+    # $1 = file, $2 = marker prefix ("# THEME:"), $3 = map, $4 = alpha suffix
+    _file=$1; _prefix=$2; _map=$3; _alpha=${4:-}
+    [ -f "$_file" ] || return 0
+    printf '%s\n' "$_map" | while read -r key color; do
         [ -n "$key" ] || continue
         hex=${color#\#}
-        # For each "# THEME:<key>" line, replace the value on the NEXT line,
-        # keeping that line's option name intact.
-        awk -v key="# THEME:$key" -v hex="$hex" '
-            { if (prev == key && $0 ~ /^[a-z0-9-]+=/) { sub(/=.*/, "=" hex) } print; prev = $0 }
-        ' "$SWAYLOCK_CFG" > "$SWAYLOCK_CFG.tmp" && mv "$SWAYLOCK_CFG.tmp" "$SWAYLOCK_CFG"
+        awk -v key="${_prefix}${key}" -v hex="$hex" -v alpha="$_alpha" '
+            {
+                if (prev == key && $0 ~ /^[a-z0-9-]+=/) {
+                    # Preserve an existing 8-digit (rrggbbaa) value: take the
+                    # old alpha rather than dropping it, unless one is given.
+                    split($0, kv, "=")
+                    old = kv[2]
+                    a = alpha
+                    if (a == "" && length(old) == 8) a = substr(old, 7, 2)
+                    sub(/=.*/, "=" hex a)
+                }
+                print; prev = $0
+            }
+        ' "$_file" > "$_file.tmp" && mv "$_file.tmp" "$_file"
     done
+}
+
+patch_marked_values "$HOME/.config/swaylock/config"         "# THEME:" "$lock_map"
+patch_marked_values "$HOME/.config/swaylock-effects/config" "# THEME:" "$lock_map"
+
+# fnott uses the same marker convention but wants RGBA (8 hex digits), so the
+# alpha is appended explicitly per key.
+FNOTT_CFG="$HOME/.config/fnott/fnott.ini"
+if [ -f "$FNOTT_CFG" ]; then
+    fnott_solid=$(jq -r '
+        {
+            "fnott-border":        .surface,
+            "fnott-title":         .subtext,
+            "fnott-summary":       .text,
+            "fnott-body":          .subtext,
+            "fnott-progress":      .accent,
+            "fnott-low-summary":   .subtext,
+            "fnott-low-body":      .overlay,
+            "fnott-crit-border":   .red,
+            "fnott-crit-summary":  .red,
+            "fnott-crit-body":     .text
+        } | to_entries[] | "\(.key) \(.value)"' "$palette")
+    patch_marked_values "$FNOTT_CFG" "# THEME:" "$fnott_solid" "ff"
+
+    # Backgrounds keep their own translucency.
+    bg=$(jq -r .bg "$palette"); bg=${bg#\#}
+    patch_marked_values "$FNOTT_CFG" "# THEME:" "fnott-bg $bg"      "ee"
+    patch_marked_values "$FNOTT_CFG" "# THEME:" "fnott-low-bg $bg"  "cc"
+    patch_marked_values "$FNOTT_CFG" "# THEME:" "fnott-crit-bg $bg" "f5"
+
+    # Reload if fnott is the daemon currently running.
+    pgrep -x fnott >/dev/null 2>&1 && pkill -USR1 -x fnott 2>/dev/null || true
+fi
+
+# swaync reads CSS, and its stylesheet @imports themes/active/waybar.css just
+# like waybar does, so it only needs a reload.
+if pgrep -x swaync >/dev/null 2>&1; then
+    swaync-client -rs >/dev/null 2>&1 || true
 fi
 
 # 10. fuzzel / gtk pick up the active symlink on next launch.

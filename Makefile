@@ -19,7 +19,8 @@ MAC_PACKAGES := 1password-cli alacritty awscli bat docker docker-buildx \
 
 LINUX_PACKAGES := neovim tmux zsh git fzf eza bat fd ripgrep lazygit \
                   direnv python-pyenv nodejs npm ghostty-git \
-                  hyprland waybar dunst rofi alacritty firefox yq fastfetch
+                  hyprland waybar dunst rofi alacritty firefox yq fastfetch \
+                  sway-notification-center fnott gtklock wlsunset cbonsai
 
 # Files to symlink to home directory
 HOME_FILES := .zshrc .tmux.conf .aliases .functions .gitignore .p10k.zsh \
@@ -39,7 +40,8 @@ HOME_FILES := .zshrc .tmux.conf .aliases .functions .gitignore .p10k.zsh \
 #              `systemd` target instead.
 #   nvim-old - handled by its own special case further down.
 CONFIG_DIRS := nvim hypr ghostty waybar dunst rofi alacritty \
-               niri themes scripts mako eww satty gptcommit paru swaylock
+               niri themes scripts mako eww satty gptcommit paru \
+               swaylock swaylock-effects gtklock swaync fnott
 all: deps backup symlinks ghostty nvim
 	@echo "🎉 Dotfiles installation complete!"
 	@echo "💡 You may need to:"
