@@ -59,7 +59,9 @@ source ~/Repos/znap/znap.zsh
 # =====================================================
 #   MY PLUGINS
 # =====================================================
-znap source tfpickard/zsh-command-histogram
+# zsh-command-histogram removed 2026-07-28 — superseded by `atuin stats`, which
+# reads the same unified history DB (no separate flat file / preexec hook needed).
+# See ~/.config/atuin/config.toml [stats] for subcommand grouping.
 
 # =====================================================
 #   ESSENTIAL PLUGINS
@@ -114,7 +116,6 @@ znap source zsh-users/zsh-autosuggestions  # Fish-like suggestions (must come af
 
 # History improvements
 znap source marlonrichert/zsh-hist         # Better history command with alt-h
-znap source zsh-users/zsh-history-substring-search  # Fish-like up/down for history
 
 # Auto-pairing of brackets, quotes, etc.
 znap source hlissner/zsh-autopair
@@ -232,21 +233,14 @@ znap source ohmyzsh/ohmyzsh plugins/vi-mode
 bindkey '^[q' push-line-or-edit
 bindkey -r '^Q' '^[Q'
 
-# Use substring history search on plain Up/Down when a prefix is already typed.
-# Bind both common arrow escape sequences across the active keymaps.
-for keymap in emacs viins vicmd; do
-    bindkey -M "$keymap" '^[[A' history-substring-search-up
-    bindkey -M "$keymap" '^[[B' history-substring-search-down
-    bindkey -M "$keymap" '^[OA' history-substring-search-up
-    bindkey -M "$keymap" '^[OB' history-substring-search-down
-done
 
 # =====================================================
-#   HISTORY AND SEARCH ENHANCEMENT
+#   FZF (required by fzf-tab completion, above)
 # =====================================================
-# Install fzf if not already installed
+# Install fzf if not already installed. History search is handled by atuin
+# (see the end of this file); fzf remains for fzf-tab Tab-completion.
 if ! command -v fzf &>/dev/null; then
-    echo "Installing fzf for enhanced history search..."
+    echo "Installing fzf for fzf-tab completion..."
     if [[ $(uname) == "Darwin" ]]; then
         brew install fzf
         $(brew --prefix)/opt/fzf/install --key-bindings --completion --no-update-rc
@@ -257,32 +251,6 @@ if ! command -v fzf &>/dev/null; then
 fi
 
 
-# Enhanced history search with fzf
-# This will allow up-arrow to show a multi-line view of matching history
-# Based on what you've already typed
-function fzf-history-widget() {
-    local selected num
-    setopt localoptions noglobsubst noposixbuiltins pipefail no_aliases 2> /dev/null
-    selected=( $(fc -rl 1 | 
-        awk '{ cmd=$0; sub(/^[ \t]*[0-9]+\**[ \t]+/, "", cmd); if (!seen[cmd]++) print $0 }' |
-        FZF_DEFAULT_OPTS="--height ${FZF_TMUX_HEIGHT:-40%} $FZF_DEFAULT_OPTS -n2..,.. --scheme=history --bind=ctrl-r:toggle-sort,ctrl-z:ignore --query=${(qqq)LBUFFER} +m" $(__fzfcmd)) )
-    local ret=$?
-    if [ -n "$selected" ]; then
-        num=$selected[1]
-        if [ -n "$num" ]; then
-            zle vi-fetch-history -n $num
-        fi
-    fi
-    zle reset-prompt
-    set +x
-}
-zle -N fzf-history-widget
-bindkey -M viins '^R' fzf-history-widget
-bindkey -M vicmd '^R' fzf-history-widget
-bindkey -M viins '^[[1;2A' fzf-history-widget
-bindkey -M vicmd '^[[1;2A' fzf-history-widget
-bindkey -M viins '^K' fzf-history-widget
-bindkey -M vicmd '^K' fzf-history-widget
 # =====================================================
 #   TOOL INTEGRATIONS AND COMPLETIONS
 # =====================================================
@@ -410,10 +378,12 @@ export LLM_USER_PATH=$HOME/.config/llm
 [[ -f ~/.extra ]] && source ~/.extra
 
 # Modern CLI tool aliases (add to your .aliases file)
-alias cat='bat --paging=never'
 alias neofetch='fastfetch'  # neofetch is archived upstream; fastfetch replaces it
 # alias find='fd'
 # alias grep='rg'
+# On Debian/Ubuntu the fd binary is installed as `fdfind` (name clash with another
+# package). This shim makes the standard `fd` name work WITHOUT hijacking `find`.
+command -v fdfind >/dev/null && ! command -v fd >/dev/null && alias fd='fdfind'
 
 # Enhanced ls command with eza if available
 if command -v eza &>/dev/null; then
@@ -470,3 +440,166 @@ autoload -Uz _eza 2>/dev/null && _comps[eza]=_eza
 export PATH="$PATH:$HOME/.local/bin"
 
 znap eval zoxide 'zoxide init zsh'
+
+# =====================================================
+#   ATUIN - shell history (Ctrl-R)
+# =====================================================
+# Atuin replaces the old hand-rolled fzf history widget AND
+# zsh-history-substring-search: it records every command into a local SQLite DB
+# (~/.local/share/atuin/history.db) with cwd/exit/duration/timestamp, and owns
+# Ctrl-R (search everything). Up-arrow is deliberately taken back from atuin
+# further down (see "HISTORY CYCLING"). Local-only: no cloud sync (auto_sync=false).
+# Handy: `atuin stats`, `atuin search --cwd .`, `atuin wrapped`.
+# Kept as a plain eval (not znap-cached) so a future `atuin` upgrade can't serve a
+# stale init. Must stay at/near the end so atuin's keybindings win.
+command -v atuin >/dev/null && eval "$(atuin init zsh)"
+# Atuin 18.x also binds '?' at an EMPTY prompt to an experimental AI assistant
+# (atuin ai), which needs a backend we don't have and is surprising magic. Undo
+# it so '?' is always a literal '?' in insert mode. (vi command-mode '?' stays as
+# the normal history-search.)
+if command -v atuin >/dev/null; then
+    bindkey -M viins '?' self-insert
+    bindkey -M main  '?' self-insert
+fi
+
+# Shift-Up = atuin's TUI pinned to the CURRENT DIRECTORY via --filter-mode, still
+# prefilled with whatever you've typed. Plain Up no longer opens any TUI (see
+# below), so this is the quick way into a cwd-scoped search.
+# Defined after the atuin init since it reuses _atuin_search.
+if command -v atuin >/dev/null; then
+    _atuin_up_search_dir() {
+        if [[ ! $BUFFER == *$'\n'* ]]; then
+            _atuin_search --filter-mode directory "$@"
+        else
+            zle up-line
+        fi
+    }
+    _atuin_up_search_dir_vicmd() { _atuin_up_search_dir --keymap-mode=vim-normal }
+    _atuin_up_search_dir_viins() { _atuin_up_search_dir --keymap-mode=vim-insert }
+    zle -N atuin-up-search-dir-vicmd _atuin_up_search_dir_vicmd
+    zle -N atuin-up-search-dir-viins _atuin_up_search_dir_viins
+    # Shift-Up escape sequence (CSI 1;2A) across keymaps.
+    bindkey -M viins '^[[1;2A' atuin-up-search-dir-viins
+    bindkey -M vicmd '^[[1;2A' atuin-up-search-dir-vicmd
+    bindkey -M emacs '^[[1;2A' atuin-up-search-dir-viins
+fi
+
+# =====================================================
+#   HISTORY CYCLING (Up/Down) + Tab hand-off to atuin
+# =====================================================
+# Traditional behavior: Up/Down walk one command at a time through history, no
+# full-screen tool, no subprocess. If the line is non-empty, only entries that
+# start with what you already typed are matched (type "git " then Up to walk your
+# git commands). Must come after `atuin init`, which binds Up itself.
+#
+# Tab *while cycling* escalates to the fuzzy tool: it drops the history entry you
+# landed on, restores the prefix you originally typed, and opens atuin's TUI
+# prefilled with it. Tab at any other time is normal (fzf-tab) completion.
+#
+# NOTE: this deliberately does NOT use zsh's up-line-or-beginning-search. That
+# function decides "am I continuing a search run?" with [[ $LASTWIDGET == $WIDGET ]],
+# and $WIDGET is wrong inside a wrapper widget (zsh-autosuggestions rebinds us and
+# calls through an autosuggest-orig-* name). The check then fails on every press,
+# the cursor is never rewound to the typed prefix, and the 2nd Up searches for the
+# whole recalled command -- giving a history depth of exactly 1. We track run state
+# ourselves off (BUFFER, CURSOR), which no wrapper can perturb.
+
+# The prefix the user actually typed before the run started, plus the exact
+# (BUFFER, CURSOR) we left behind, used to detect "still cycling".
+typeset -g  __hist_cycle_prefix=''
+typeset -gi __hist_cycle_cursor=0
+typeset -g  __hist_cycle_buffer=$'\0'
+typeset -gi __hist_cycle_endcur=-1
+# Whatever ^I was bound to before we wrap it (fzf-tab-complete, normally).
+typeset -g  __hist_cycle_tab_orig="${${$(builtin bindkey -M viins '^I')##* }:-expand-or-complete}"
+
+# Are we mid-run? Keyed off the exact (BUFFER, CURSOR) we left behind, so nothing
+# a wrapper widget does to $WIDGET can confuse us. vi command mode clamps CURSOR to
+# len-1 after we return, hence the off-by-one tolerance; $LASTWIDGET is accepted as
+# a second opinion for the same reason.
+_hist_cycle_active() {
+    [[ $BUFFER == "$__hist_cycle_buffer" ]] || return 1
+    [[ $LASTWIDGET == hist-cycle-(up|down) ]] && return 0
+    (( CURSOR == __hist_cycle_endcur || CURSOR == __hist_cycle_endcur - 1 ))
+}
+_hist_cycle_end() { __hist_cycle_buffer=$'\0'; __hist_cycle_endcur=-1 }
+
+_hist_cycle_move() {
+    local dir=$1
+    if _hist_cycle_active; then
+        # Continuing: rewind to the typed prefix so the search keeps matching it.
+        CURSOR=$__hist_cycle_cursor
+    else
+        if [[ $BUFFER == *$'\n'* ]]; then
+            [[ $dir == up ]] && zle .up-line-or-history || zle .down-line-or-history
+            _hist_cycle_end
+            return
+        fi
+        __hist_cycle_prefix=$LBUFFER
+        __hist_cycle_cursor=$CURSOR
+        # Rewind to the newest entry. zle keeps the history position for the whole
+        # line-editing session, so without this an abandoned run (e.g. Up Up then
+        # ^U) leaves the next Up searching from wherever the last one stopped
+        # instead of from your most recent command. Assigning HISTNO rewrites the
+        # buffer, so put the typed line back afterwards.
+        local buf=$BUFFER cur=$CURSOR
+        HISTNO=$HISTCMD
+        BUFFER=$buf
+        CURSOR=$cur
+    fi
+
+    if [[ $dir == up ]]; then
+        zle .history-beginning-search-backward
+    elif ! zle .history-beginning-search-forward; then
+        # Walked past the newest match: give the user their own line back.
+        BUFFER=$__hist_cycle_prefix
+        CURSOR=${#BUFFER}
+        _hist_cycle_end
+        return
+    fi
+    CURSOR=${#BUFFER}
+    __hist_cycle_buffer=$BUFFER
+    __hist_cycle_endcur=$CURSOR
+}
+_hist_cycle_up()   { _hist_cycle_move up }
+_hist_cycle_down() { _hist_cycle_move down }
+zle -N hist-cycle-up _hist_cycle_up
+zle -N hist-cycle-down _hist_cycle_down
+
+_hist_cycle_tab() {
+    if _hist_cycle_active && (( ${+widgets[atuin-search-viins]} )); then
+        BUFFER=$__hist_cycle_prefix
+        CURSOR=${#BUFFER}
+        _hist_cycle_end
+        if [[ $KEYMAP == vicmd ]]; then
+            zle atuin-search-vicmd
+        else
+            zle atuin-search-viins
+        fi
+        return
+    fi
+    zle "$__hist_cycle_tab_orig" -- "$@"
+}
+zle -N hist-cycle-tab _hist_cycle_tab
+
+# Both the normal and application-mode Up/Down sequences, in every keymap.
+for _hc_keymap in emacs viins vicmd main; do
+    bindkey -M $_hc_keymap '^[[A' hist-cycle-up
+    bindkey -M $_hc_keymap '^[OA' hist-cycle-up
+    bindkey -M $_hc_keymap '^[[B' hist-cycle-down
+    bindkey -M $_hc_keymap '^[OB' hist-cycle-down
+    bindkey -M $_hc_keymap '^I'   hist-cycle-tab
+done
+unset _hc_keymap
+# vi command mode: k/j cycle too (atuin binds k to its TUI).
+bindkey -M vicmd 'k' hist-cycle-up
+bindkey -M vicmd 'j' hist-cycle-down
+
+# Start every prompt with a clean run, so a hand-typed line that happens to equal
+# the last recalled one isn't mistaken for a continuation.
+autoload -Uz add-zsh-hook && add-zsh-hook precmd _hist_cycle_end
+
+# Tell zsh-autosuggestions these are history-navigation widgets. Without this it
+# classifies them as buffer-modifying, fetches a suggestion after every press, and
+# the async autosuggest-suggest widget fires in the middle of a cycling run.
+ZSH_AUTOSUGGEST_CLEAR_WIDGETS+=(hist-cycle-up hist-cycle-down)
