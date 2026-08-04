@@ -135,7 +135,39 @@ if command -v tmux >/dev/null; then
     done
 fi
 
-# 9. fuzzel / gtk pick up the active symlink on next launch.
+# 9. swaylock: no include mechanism either, so rewrite the colour values that
+#    sit directly under a "# THEME:<key>" marker line. The markers are on their
+#    own lines because swaylock does NOT strip trailing "#" comments -- it would
+#    read "0f1113  # THEME:lock-bg" as the literal colour and fall back to white.
+SWAYLOCK_CFG="$HOME/.config/swaylock/config"
+if [ -f "$SWAYLOCK_CFG" ] && grep -q "# THEME:lock-" "$SWAYLOCK_CFG"; then
+    # key -> colour, taken from the palette. swaylock wants rrggbb with no '#'.
+    lock_map=$(jq -r '
+        {
+            "lock-bg":     .bg_dark,
+            "lock-inside": .surface,
+            "lock-ring":   .overlay,
+            "lock-text":   .text,
+            "lock-keyhl":  .accent,
+            "lock-bshl":   .red,
+            "lock-ver":    .blue,
+            "lock-wrong":  .red,
+            "lock-clear":  .green,
+            "lock-caps":   .orange
+        } | to_entries[] | "\(.key) \(.value)"' "$palette")
+
+    printf '%s\n' "$lock_map" | while read -r key color; do
+        [ -n "$key" ] || continue
+        hex=${color#\#}
+        # For each "# THEME:<key>" line, replace the value on the NEXT line,
+        # keeping that line's option name intact.
+        awk -v key="# THEME:$key" -v hex="$hex" '
+            { if (prev == key && $0 ~ /^[a-z0-9-]+=/) { sub(/=.*/, "=" hex) } print; prev = $0 }
+        ' "$SWAYLOCK_CFG" > "$SWAYLOCK_CFG.tmp" && mv "$SWAYLOCK_CFG.tmp" "$SWAYLOCK_CFG"
+    done
+fi
+
+# 10. fuzzel / gtk pick up the active symlink on next launch.
 
 command -v notify-send >/dev/null && notify-send "Theme switched" "Now using: $theme" || true
 echo "Theme set to: $theme"

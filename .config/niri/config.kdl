@@ -51,16 +51,15 @@ input {
         // drag-lock
 
         // SCROLL DIRECTION, stated physically:
-        //   natural-scroll OFF (current) -> two fingers UP moves content DOWN
-        //   natural-scroll ON            -> two fingers UP moves content UP
+        //   natural-scroll OFF -> two fingers UP moves content DOWN
+        //   natural-scroll ON  -> two fingers UP moves content UP  (current)
         //
-        // Off, to match the trackball and mice, so every scrolling surface on
-        // this machine behaves the same way. If you preferred the phone-style
-        // touchpad scrolling (content follows your fingers) while keeping the
-        // wheel traditional, uncomment the line below -- it affects the
-        // touchpad only.
-        //
-        // natural-scroll
+        // ON here, deliberately different from the wheel devices below. The
+        // touchpad is a direct-manipulation surface, so content following your
+        // fingers (phone-style) is the intuitive mapping; a wheel is an
+        // indirect control, where the traditional mapping wins. Comment this
+        // line out to make the touchpad match the wheels.
+        natural-scroll
         // accel-speed 0.2
         // accel-profile "flat"
         // scroll-method "two-finger"
@@ -400,9 +399,19 @@ spawn-sh-at-startup "DISPLAY=:12 /usr/libexec/xscreensaver/atlantis -window"
 spawn-sh-at-startup "wl-paste --type text --watch cliphist store"
 spawn-sh-at-startup "wl-paste --type image --watch cliphist store"
 
-// Idle management: lock after 10 min, screens off after 15 (battery only),
-// lock before sleep. idle-dpms.sh keeps the screen on when plugged into AC.
-spawn-sh-at-startup "swayidle -w timeout 600 'swaylock -f' timeout 900 '/home/tom/.config/scripts/idle-dpms.sh off' resume '/home/tom/.config/scripts/idle-dpms.sh on' before-sleep 'swaylock -f'"
+// Idle management, in stages:
+//
+//   5 min  -> a random xscreensaver GL hack takes over the screen; any input
+//             dismisses it and puts you straight back where you were
+//   10 min -> the hack is stopped and swaylock locks for real
+//   15 min -> screens off (battery only; idle-dpms.sh no-ops on AC)
+//   sleep  -> lock before suspending
+//
+// The screensaver stage is deliberately BEFORE the lock, not on top of it:
+// under ext-session-lock the compositor renders only the lock surface, so
+// nothing can be drawn over swaylock. See ~/.config/scripts/lock-screensaver.py
+// for the full explanation and for auditioning hacks.
+spawn-sh-at-startup "swayidle -w timeout 300 '/home/tom/.config/scripts/lock-screensaver.py start' resume '/home/tom/.config/scripts/lock-screensaver.py stop' timeout 600 '/home/tom/.config/scripts/lock-screensaver.py stop; swaylock -f' timeout 900 '/home/tom/.config/scripts/idle-dpms.sh off' resume '/home/tom/.config/scripts/idle-dpms.sh on' before-sleep '/home/tom/.config/scripts/lock-screensaver.py stop; swaylock -f'"
 
 // PolicyKit authentication agent. Without one, any GUI app that needs elevated
 // rights (nm-connection-editor saving a system connection, gnome-disks,
