@@ -91,6 +91,11 @@ input {
     // is not enough.
     trackball {
         // off
+
+        // Scroll direction. This is verified working: rolling the wheel up
+        // scrolls content down. To go back to traditional scrolling, comment
+        // out this ONE line -- now that the udev rule above tags the device,
+        // this affects the trackball only and leaves other mice alone.
         natural-scroll
 
         // Left + right simultaneously = middle click.
@@ -101,8 +106,13 @@ input {
         //   272 BTN_LEFT   273 BTN_RIGHT   274 BTN_MIDDLE
         //   275 BTN_SIDE   276 BTN_EXTRA   277 BTN_FORWARD   278 BTN_BACK
         // Run `sudo libinput debug-events` and press the button to find yours.
+        //
+        // Measured: button scrolling is currently OFF, so holding the middle
+        // button and rolling the ball just middle-clicks. If you'd rather scroll
+        // that way, uncomment the two lines below -- middle-CLICK keeps working
+        // through middle-emulation (left + right together), so nothing is lost.
         // scroll-method "on-button-down"
-        // scroll-button 278
+        // scroll-button 274
         // scroll-button-lock
 
         // accel-speed 0.2
