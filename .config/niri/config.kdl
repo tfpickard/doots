@@ -77,6 +77,18 @@ input {
     }
 
     // Devices udev *does* tag as trackballs.
+    //
+    // IMPORTANT: niri picks this block only when udev sets ID_INPUT_TRACKBALL
+    // on the device (it mirrors Mutter here; see niri src/input/mod.rs). Most
+    // Bluetooth/USB trackballs are NOT in systemd's hwdb and arrive tagged only
+    // ID_INPUT_MOUSE, which makes this whole block silently dead and leaves the
+    // trackball governed by `mouse { }` above. The Nulea BT5.0 is tagged by
+    // etc/udev/rules.d/71-trackball-tags.rules in this repo.
+    //
+    // Check what governs what:  ~/.config/scripts/niri-inputs.py
+    // The tag is read when the device is ADDED, so reconnect the trackball (or
+    // restart niri) after changing the udev rule -- reloading the niri config
+    // is not enough.
     trackball {
         // off
         natural-scroll
