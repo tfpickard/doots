@@ -171,6 +171,47 @@ def load_libinput() -> tuple[dict[str, int], dict[str, dict[str, str]]]:
     return taps, settings
 
 
+def user_home() -> str:
+    """Home directory of the invoking user, even under sudo.
+
+    This script is usually run with sudo (reading /dev/input/* needs it), where
+    os.path.expanduser("~") would give /root and the niri config would appear to
+    be missing.
+    """
+    if os.geteuid() == 0 and os.environ.get("SUDO_USER"):
+        try:
+            import pwd
+            return pwd.getpwnam(os.environ["SUDO_USER"]).pw_dir
+        except (ImportError, KeyError):
+            pass
+    return os.path.expanduser("~")
+
+
+def config_natural_scroll(path: str | None = None) -> dict[str, bool | None]:
+    """Read natural-scroll out of each input block of the niri config.
+
+    Answers the question the libinput columns cannot: what will this device
+    ACTUALLY do, given the config niri is running? Returns block -> True
+    (natural), False (traditional) or None (config unreadable).
+    """
+    path = path or os.path.join(user_home(), ".config/niri/config.kdl")
+    try:
+        text = open(path, encoding="utf-8").read()
+    except OSError:
+        return {}
+
+    result: dict[str, bool | None] = {}
+    for block in (BLOCK_TOUCHPAD, BLOCK_MOUSE, BLOCK_TRACKBALL, BLOCK_TRACKPOINT):
+        m = re.search(rf"^    {block} \{{(.*?)^    \}}", text, re.S | re.M)
+        if not m:
+            result[block] = None
+            continue
+        result[block] = any(
+            line.strip() == "natural-scroll" for line in m.group(1).splitlines()
+        )
+    return result
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(
         description="Show input devices and the niri config block that governs each."
@@ -198,24 +239,33 @@ def main() -> int:
         rows.append((dev, block))
 
     name_w = max([len(d.name) for d, _ in rows] + [6])
+    natural = config_natural_scroll()
+
+    def direction(block: str) -> str:
+        val = natural.get(block)
+        if val is None:
+            return "?"
+        return "up->content UP" if val else "up->content DOWN"
+
     print(f"{'DEVICE'.ljust(name_w)}  {'EVENT':<8} {'NIRI BLOCK':<11} "
-          f"{'WHEEL':<6} {'NAT.SCROLL*':<12} BUS")
-    print("-" * (name_w + 50))
+          f"{'WHEEL':<6} {'SCROLLS (from config)':<22} BUS")
+    print("-" * (name_w + 60))
     for dev, block in rows:
-        s = settings.get(dev.event, {})
-        nat = s.get("Nat.scrolling", "?" if not have_libinput else "n/a")
+        scrolls = direction(block) if block in natural else "-"
         print(f"{dev.name.ljust(name_w)}  {dev.event:<8} {block:<11} "
-              f"{'yes' if dev.has_wheel else '-':<6} {nat:<12} "
+              f"{'yes' if dev.has_wheel else '-':<6} {scrolls:<22} "
               f"{dev.props.get('ID_BUS', '-')}")
 
-    print("\n* Nat.scrolling is libinput's DEFAULT for a fresh context, not the "
-          "value niri\n  currently has applied -- libinput settings are "
-          "per-context and niri does not\n  expose its own. Trust the niri "
-          "config block column to know which settings win.")
-    print("\n  Direction, stated physically (the word 'natural' causes endless "
-          "confusion):\n    natural-scroll OFF -> wheel up moves content DOWN "
-          "(traditional wheel)\n    natural-scroll ON  -> wheel up moves content "
+    print("\nSCROLLS is read from ~/.config/niri/config.kdl -- it is what the "
+          "device will\nactually do. 'up' means wheel/ring away from you, or "
+          "two fingers up the pad.\n  natural-scroll OFF -> up moves content "
+          "DOWN (traditional wheel)\n  natural-scroll ON  -> up moves content "
           "UP   (touchscreen-like)")
+
+    if have_libinput:
+        print("\n(libinput's own 'Nat.scrolling' field is deliberately not shown: "
+              "it reports the\ndefault for a fresh context, NOT what niri has "
+              "applied, and reading it as the\nlive value is misleading.)")
 
     if args.verbose:
         for dev, block in rows:

@@ -49,7 +49,18 @@ input {
         // dwtp
         // drag false
         // drag-lock
-        natural-scroll
+
+        // SCROLL DIRECTION, stated physically:
+        //   natural-scroll OFF (current) -> two fingers UP moves content DOWN
+        //   natural-scroll ON            -> two fingers UP moves content UP
+        //
+        // Off, to match the trackball and mice, so every scrolling surface on
+        // this machine behaves the same way. If you preferred the phone-style
+        // touchpad scrolling (content follows your fingers) while keeping the
+        // wheel traditional, uncomment the line below -- it affects the
+        // touchpad only.
+        //
+        // natural-scroll
         // accel-speed 0.2
         // accel-profile "flat"
         // scroll-method "two-finger"
