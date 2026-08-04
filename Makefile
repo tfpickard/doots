@@ -1,5 +1,5 @@
 SHELL := /bin/bash
-.PHONY: all install deps deps-mac deps-linux backup symlinks nvim hypr ghostty shell tmux git clean help
+.PHONY: all install deps deps-mac deps-linux backup symlinks nvim hypr ghostty systemd shell tmux git clean help
 
 # Detect OS
 UNAME_S := $(shell uname -s)
@@ -19,14 +19,27 @@ MAC_PACKAGES := 1password-cli alacritty awscli bat docker docker-buildx \
 
 LINUX_PACKAGES := neovim tmux zsh git fzf eza bat fd ripgrep lazygit \
                   direnv python-pyenv nodejs npm ghostty-git \
-                  hyprland waybar dunst rofi alacritty firefox yq
+                  hyprland waybar dunst rofi alacritty firefox yq fastfetch
 
 # Files to symlink to home directory
 HOME_FILES := .zshrc .tmux.conf .aliases .functions .gitignore .p10k.zsh \
               .zshenv .zprofile .profile
 
 # Directories to symlink to .config
-CONFIG_DIRS := nvim hypr ghostty waybar dunst rofi alacritty
+#
+# Keep this in sync with the directories actually committed under .config/.
+# Entries that don't exist in the repo are skipped harmlessly by the loop in the
+# `symlinks` target, so leaving legacy names here is safe.
+#
+# Deliberately NOT listed:
+#   systemd  - ~/.config/systemd/user holds unit *enablement* state (the
+#              .wants/ directories created by `systemctl --user enable`).
+#              Replacing that directory with a symlink into the repo would throw
+#              away every enabled unit. The individual units are linked by the
+#              `systemd` target instead.
+#   nvim-old - handled by its own special case further down.
+CONFIG_DIRS := nvim hypr ghostty waybar dunst rofi alacritty \
+               niri themes scripts mako eww satty gptcommit paru
 all: deps backup symlinks ghostty nvim
 	@echo "🎉 Dotfiles installation complete!"
 	@echo "💡 You may need to:"
@@ -46,6 +59,7 @@ help:
 	@echo "  nvim       - Setup Neovim configuration"
 	@echo "  hypr       - Setup Hyprland configuration"
 	@echo "  ghostty    - Setup Ghostty terminal"
+	@echo "  systemd    - Link systemd user units (does not enable them)"
 	@echo "  shell      - Setup shell configuration"
 	@echo "  tmux       - Setup tmux configuration"
 	@echo "  git        - Setup git configuration"
@@ -201,6 +215,26 @@ ghostty:
 		if [ "$(UNAME_S)" = "Darwin" ]; then osfile=macos.conf; else osfile=linux.conf; fi; \
 		ln -sfn $$osfile $(DOTFILES_DIR)/.config/ghostty/os/active; \
 		echo "👻 Ghostty OS profile: os/active -> $$osfile"; \
+	fi
+
+systemd:
+	@echo "⚙️  Linking systemd user units..."
+	@# Units are linked FILE BY FILE on purpose. ~/.config/systemd/user also
+	@# holds enablement state (the .wants/ directories written by
+	@# `systemctl --user enable`), so replacing the whole directory with a
+	@# symlink into the repo would silently disable every enabled unit.
+	@if [ -d $(DOTFILES_DIR)/.config/systemd/user ]; then \
+		mkdir -p $(CONFIG_DIR)/systemd/user; \
+		for unit in $(DOTFILES_DIR)/.config/systemd/user/*; do \
+			[ -e "$$unit" ] || continue; \
+			name=$$(basename "$$unit"); \
+			echo "Linking systemd unit $$name"; \
+			ln -sfn "$$unit" $(CONFIG_DIR)/systemd/user/$$name; \
+		done; \
+		systemctl --user daemon-reload 2>/dev/null || true; \
+		echo "⚙️  systemd units linked (enable with: systemctl --user enable --now <unit>)"; \
+	else \
+		echo "❌ No systemd units found"; \
 	fi
 
 shell:

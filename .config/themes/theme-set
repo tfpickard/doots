@@ -34,7 +34,11 @@ palette="$THEMES_DIR/$theme/palette.json"
 [ -f "$palette" ] || { echo "Theme $theme has no palette.json" >&2; exit 1; }
 
 # 1. Flip the master symlink. Everything else hangs off it.
-ln -sfn "$THEMES_DIR/$theme" "$THEMES_DIR/active"
+#    The target is deliberately RELATIVE (just the theme dir name) so the link
+#    stays valid in any checkout path -- the repo is deployed by symlinking or
+#    copying into $HOME, and an absolute /home/<someone>/doots/... target would
+#    dangle on every other machine, taking the whole theme system with it.
+ln -sfn "$theme" "$THEMES_DIR/active"
 
 # 2. niri: patch the color lines tagged with THEME: markers, then reload.
 if [ -f "$NIRI_CONFIG" ]; then

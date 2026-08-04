@@ -63,6 +63,8 @@ tooltip label {
 #custom-logo,
 #custom-niriws,
 #custom-niriwindow,
+#workspaces,
+#window,
 #custom-weather,
 #mpris,
 #pulseaudio,
@@ -117,6 +119,44 @@ tooltip label {
 
 /* focused window title */
 #custom-niriwindow {
+    color: @subtext;
+    font-weight: 500;
+    padding-right: 12px;
+}
+
+/* Hyprland equivalents of the two modules above. launch.sh substitutes
+   hyprland/workspaces and hyprland/window for the niri helpers when the bar is
+   started inside a Hyprland session, so both compositors get the same look. */
+#workspaces {
+    padding: 0 2px;
+}
+
+#workspaces button {
+    background: transparent;
+    color: @subtext;
+    padding: 0 7px;
+    margin: 0 2px;
+    border-radius: 11px;
+    transition: background 0.15s ease-in-out, color 0.15s ease-in-out;
+}
+
+#workspaces button.active {
+    background: @accent;
+    color: @bg;
+    font-weight: 700;
+}
+
+#workspaces button.urgent {
+    background: @red;
+    color: @bg;
+}
+
+#workspaces button:hover {
+    background: alpha(@surface, 0.8);
+    color: @text;
+}
+
+#window {
     color: @subtext;
     font-weight: 500;
     padding-right: 12px;

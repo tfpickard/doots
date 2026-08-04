@@ -378,7 +378,10 @@ export LLM_USER_PATH=$HOME/.config/llm
 [[ -f ~/.extra ]] && source ~/.extra
 
 # Modern CLI tool aliases (add to your .aliases file)
-alias neofetch='fastfetch'  # neofetch is archived upstream; fastfetch replaces it
+# neofetch is archived upstream, so prefer fastfetch -- but only if it's actually
+# installed. An unconditional alias would turn a working `neofetch` into
+# "command not found" on any machine that doesn't have fastfetch yet.
+command -v fastfetch >/dev/null && alias neofetch='fastfetch'
 # alias find='fd'
 # alias grep='rg'
 # On Debian/Ubuntu the fd binary is installed as `fdfind` (name clash with another
