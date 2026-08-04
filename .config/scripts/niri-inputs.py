@@ -212,6 +212,10 @@ def main() -> int:
           "value niri\n  currently has applied -- libinput settings are "
           "per-context and niri does not\n  expose its own. Trust the niri "
           "config block column to know which settings win.")
+    print("\n  Direction, stated physically (the word 'natural' causes endless "
+          "confusion):\n    natural-scroll OFF -> wheel up moves content DOWN "
+          "(traditional wheel)\n    natural-scroll ON  -> wheel up moves content "
+          "UP   (touchscreen-like)")
 
     if args.verbose:
         for dev, block in rows:

@@ -56,14 +56,16 @@ input {
         // disabled-on-external-mouse
     }
 
-    // Generic mice. natural-scroll is enabled here as well as in the trackball
-    // block below, because many trackballs (Kensington Expert/SlimBlade, Logitech
-    // Trackman/MX Ergo) are not tagged ID_INPUT_TRACKBALL by udev and therefore
-    // land in libinput's plain "mouse" category. Setting both means the trackball
-    // scrolls naturally no matter which bucket it falls into.
+    // Generic mice. This block governs the PS/2 mouse, the keyd virtual
+    // pointer, and the pointer built into the AULA Bluetooth keyboard. The
+    // Nulea trackball is NOT here -- it has its own block below, thanks to the
+    // udev rule that tags it (see etc/udev/rules.d/71-trackball-tags.rules).
     mouse {
         // off
-        natural-scroll
+
+        // Same direction as the trackball: wheel UP moves content DOWN.
+        // Uncomment to invert (wheel up moves content up).
+        // natural-scroll
 
         // Left + right click pressed together = middle click. This is the
         // "three-button emulation" for a trackball whose middle button is
@@ -92,11 +94,22 @@ input {
     trackball {
         // off
 
-        // Scroll direction. This is verified working: rolling the wheel up
-        // scrolls content down. To go back to traditional scrolling, comment
-        // out this ONE line -- now that the udev rule above tags the device,
-        // this affects the trackball only and leaves other mice alone.
-        natural-scroll
+        // SCROLL DIRECTION. Stated physically, because the word "natural" is
+        // the exact thing that makes this confusing:
+        //
+        //   natural-scroll OFF (current) -> wheel/ring UP moves content DOWN
+        //   natural-scroll ON            -> wheel/ring UP moves content UP
+        //
+        // libinput calls the second one "natural" because the content follows
+        // the direction your finger/wheel travels, like a touchscreen. That is
+        // NOT the same as the traditional wheel behaviour most people want on a
+        // trackball, so this stays off. Uncomment to invert.
+        //
+        // Verified by injecting REL_WHEEL into the evdev node and reading
+        // wl_pointer.axis in a Wayland client: off gives -15 (content down),
+        // on gives +15 (content up).
+        //
+        // natural-scroll
 
         // Left + right simultaneously = middle click.
         middle-emulation
