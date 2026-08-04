@@ -381,10 +381,24 @@ layout {
 spawn-at-startup "/home/tom/.config/waybar/launch.sh"
 
 // To run a shell command (with variables, pipes, etc.), use spawn-sh-at-startup:
+// Static wallpaper. For animated/video wallpapers instead, see
+// ~/.config/scripts/wallpaper.sh, which drives awww (the maintained successor
+// to swww) and mpvpaper -- stop swaybg first, they both want the background
+// layer.
 spawn-sh-at-startup "swaybg -i ~/Pictures/Wallpaper/default"
 
 // Notification daemon (config symlinked to ~/.config/themes/active/mako.ini).
+// swaync and fnott are installed as alternatives -- only one can own the
+// notification bus name at a time, so switch with
+// ~/.config/scripts/notify-daemon.sh rather than starting a second one here.
 spawn-at-startup "mako"
+
+// Night-light: shift the screen to a warmer colour after sunset. Coordinates
+// are Denver (matching the system timezone); wlsunset has no config file, so
+// location and temperatures are given as flags.
+//   -t low colour temp (night)   -T high colour temp (day)
+// Bump -t up towards 4500 if 3600 is too orange to work in.
+spawn-sh-at-startup "wlsunset -l 39.7 -L -105.0 -t 3600 -T 6500"
 
 // XWayland support (needed for X11 apps like the xscreensaver GL hacks).
 // Exposes an X server on DISPLAY=:12.
@@ -411,7 +425,7 @@ spawn-sh-at-startup "wl-paste --type image --watch cliphist store"
 // under ext-session-lock the compositor renders only the lock surface, so
 // nothing can be drawn over swaylock. See ~/.config/scripts/lock-screensaver.py
 // for the full explanation and for auditioning hacks.
-spawn-sh-at-startup "swayidle -w timeout 300 '/home/tom/.config/scripts/lock-screensaver.py start' resume '/home/tom/.config/scripts/lock-screensaver.py stop' timeout 600 '/home/tom/.config/scripts/lock-screensaver.py stop; swaylock -f' timeout 900 '/home/tom/.config/scripts/idle-dpms.sh off' resume '/home/tom/.config/scripts/idle-dpms.sh on' before-sleep '/home/tom/.config/scripts/lock-screensaver.py stop; swaylock -f'"
+spawn-sh-at-startup "swayidle -w timeout 300 '/home/tom/.config/scripts/lock-screensaver.py start' resume '/home/tom/.config/scripts/lock-screensaver.py stop' timeout 600 '/home/tom/.config/scripts/lock.sh -f' timeout 900 '/home/tom/.config/scripts/idle-dpms.sh off' resume '/home/tom/.config/scripts/idle-dpms.sh on' before-sleep '/home/tom/.config/scripts/lock.sh -f'"
 
 // PolicyKit authentication agent. Without one, any GUI app that needs elevated
 // rights (nm-connection-editor saving a system connection, gnome-disks,
@@ -502,11 +516,27 @@ window-rule {
     clip-to-geometry true
 }
 
-// Run the xscreensaver "atlantis" GL hack fullscreen on the built-in panel.
+// xscreensaver GL hacks open fullscreen.
+//
+// Match on TITLE, not app-id. Every hack sets its own app-id from its name --
+// "Atlantis", "Flurry", "GLMatrix", "UnknownPleasures", ... -- so an app-id
+// rule only ever covers the one hack it names, and every other hack from
+// lock-screensaver.py lands in a normal tiled column instead. All of them do
+// set a title of the form
+//     "<Name>: from the XScreenSaver 6.08 distribution (10-Oct-2023)"
+// so this one rule catches the lot, including hacks added to FAVOURITES later.
+window-rule {
+    match title=r#"from the XScreenSaver"#
+    open-fullscreen true
+}
+
+// The manually-toggled atlantis (Mod+Ctrl+Z) additionally gets pinned to the
+// built-in panel, so it doesn't take over a monitor you're working on. The
+// screensaver stage deliberately has no open-on-output: when it fires you are
+// idle, and it should cover whichever screen you were last using.
 window-rule {
     match app-id="Atlantis"
     open-on-output "eDP-1"
-    open-fullscreen true
 }
 
 // Utility windows open floating instead of tiling.
@@ -582,7 +612,11 @@ binds {
     Mod+Return hotkey-overlay-title="Open a Terminal: ghostty" { spawn "ghostty"; }
     Mod+T hotkey-overlay-title="Open a Terminal: foot (bash)" { spawn "foot" "bash"; }
     Mod+D hotkey-overlay-title="Run an Application: fuzzel" { spawn "fuzzel"; }
-    Super+Alt+L hotkey-overlay-title="Lock the Screen: swaylock" { spawn "swaylock"; }
+    // lock.sh picks the best available locker (swaylock-effects, falling back
+    // to swaylock then gtklock) and takes the pre-lock screenshot that the
+    // blur effect needs -- see the script for why niri needs that workaround.
+    // Override the choice with LOCKER=swaylock in ~/.extra.
+    Super+Alt+L hotkey-overlay-title="Lock the Screen" { spawn "/home/tom/.config/scripts/lock.sh"; }
 
     // Custom launchers (fuzzel-based helpers in ~/.config/scripts).
     Mod+X         hotkey-overlay-title="Power Menu" { spawn "/home/tom/.config/scripts/fuzzel-powermenu.sh"; }
@@ -592,6 +626,15 @@ binds {
     Mod+Ctrl+Z    hotkey-overlay-title="Toggle Atlantis Screensaver" { spawn "/home/tom/.config/scripts/toggle-atlantis.sh"; }
     Mod+Ctrl+P    hotkey-overlay-title="Toggle Teams Keep-Active (anti-idle)" { spawn "/home/tom/.config/scripts/teams-keep-active.sh"; }
     Mod+Shift+T   hotkey-overlay-title="Switch Global Theme" { spawn "/home/tom/.config/themes/theme-set"; }
+
+    // Notification centre. Only does anything while swaync is the running
+    // daemon (mako is the default); switch with
+    //   ~/.config/scripts/notify-daemon.sh swaync
+    Mod+N       hotkey-overlay-title="Toggle Notification Centre" { spawn "swaync-client" "-t"; }
+    Mod+Shift+N hotkey-overlay-title="Dismiss All Notifications"  { spawn-sh "swaync-client -C 2>/dev/null || makoctl dismiss --all"; }
+    // dnd.sh papers over mako and swaync spelling this completely differently
+    // -- mako has no toggle flag at all, only add/remove.
+    Mod+Ctrl+N  hotkey-overlay-title="Toggle Do Not Disturb"      { spawn "/home/tom/.config/scripts/dnd.sh"; }
 
     // Use spawn-sh to run a shell command. Do this if you need pipes, multiple commands, etc.
     // Note: the entire command goes as a single argument. It's passed verbatim to `sh -c`.
