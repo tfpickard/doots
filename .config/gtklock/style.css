@@ -1,0 +1,112 @@
+/* ============================================================
+   gtklock -- lock screen styling, matching the cyberdream palette.
+
+   gtklock is a GTK app, so the whole lock screen is styleable with normal GTK
+   CSS. Widget names come from gtklock's own hierarchy; run
+
+       gtklock --debug
+
+   to open a GTK inspector against the lock window and find selectors.
+
+   Colours are inlined rather than @import-ed: gtklock loads this file
+   directly, and a missing @import would leave the lock screen unstyled --
+   which is a bad failure mode for the thing standing between your session and
+   the room. theme-set rewrites the values tagged with THEME: markers.
+   ============================================================ */
+
+/* THEME:gtklock-window */
+window {
+    background-color: #0f1113;
+}
+
+/* The clock shown above the password form. */
+/* THEME:gtklock-clock */
+#clock-label {
+    color: #ffffff;
+    font-family: "JetBrainsMono Nerd Font", monospace;
+    font-size: 56px;
+    font-weight: 300;
+    margin-bottom: 24px;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+
+/* The box holding the password entry and buttons. */
+#window-box {
+    background-color: rgba(30, 33, 36, 0.85);
+    border: 1px solid rgba(123, 132, 150, 0.35);
+    border-radius: 16px;
+    padding: 28px 32px;
+}
+
+/* Password entry. */
+entry {
+    background-color: #16181a;
+    /* THEME:gtklock-text */
+    color: #ffffff;
+    /* THEME:gtklock-border */
+    border: 2px solid #7b8496;
+    border-radius: 12px;
+    padding: 10px 14px;
+    min-width: 260px;
+    font-family: "JetBrainsMono Nerd Font", monospace;
+    font-size: 14px;
+}
+
+entry:focus {
+    /* THEME:gtklock-accent */
+    border-color: #bd5eff;
+    box-shadow: 0 0 0 3px rgba(189, 94, 255, 0.25);
+}
+
+/* Wrong password. gtklock adds .error while the message is displayed. */
+entry.error,
+#error-label {
+    /* THEME:gtklock-error */
+    color: #ff6e5e;
+    border-color: #ff6e5e;
+}
+
+#error-label {
+    font-size: 12px;
+    margin-top: 10px;
+}
+
+/* Caps Lock / info messages. */
+#info-label,
+#warning-label {
+    /* THEME:gtklock-warning */
+    color: #ffbd5e;
+    font-size: 12px;
+    margin-top: 6px;
+}
+
+/* Buttons -- used by the powerbar module if you install it. */
+button {
+    background-image: none;
+    background-color: #1e2124;
+    /* THEME:gtklock-text */
+    color: #ffffff;
+    border: 1px solid rgba(123, 132, 150, 0.35);
+    border-radius: 12px;
+    padding: 8px 14px;
+    margin: 4px;
+}
+
+button:hover {
+    /* THEME:gtklock-accent */
+    background-color: #bd5eff;
+    color: #0f1113;
+}
+
+/* Username / avatar, from the userinfo module. */
+#username-label {
+    /* THEME:gtklock-subtext */
+    color: #b3bccb;
+    font-size: 15px;
+    margin-bottom: 8px;
+}
+
+#user-image {
+    border-radius: 999px;
+    margin-bottom: 12px;
+}

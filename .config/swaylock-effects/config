@@ -1,0 +1,170 @@
+# swaylock-effects -- the fork of swaylock with blur, clock and screenshots.
+#
+# Installed as ~/.local/bin/swaylock-effects, ALONGSIDE the packaged
+# /usr/bin/swaylock, not replacing it. swayidle still uses plain swaylock; run
+# this one explicitly, or point swayidle at it once you're happy:
+#
+#     swaylock-effects -C ~/.config/swaylock-effects/config
+#
+# ~/.config/scripts/lock.sh wraps that, and is what Super+Alt+L runs.
+#
+# Built from jirutka/swaylock-effects (the mortie original is unmaintained;
+# jirutka's is the more recently updated fork, though it too was last touched
+# in 2024 -- worth knowing before you rely on it).
+#
+# Syntax matches swaylock: long option names without leading dashes, `key=value`
+# for options that take one, bare words for flags. Colours are rrggbb[aa] with
+# NO leading '#'.
+#
+# IMPORTANT: swaylock does not strip trailing "#" comments -- a line like
+#     ring-color=bd5eff  # my accent
+# is parsed as the literal colour "bd5eff  # my accent" and silently falls back
+# to white. That's why the THEME: markers below sit on their own lines.
+
+# ---------------------------------------------------------------------------
+# Behaviour
+# ---------------------------------------------------------------------------
+ignore-empty-password
+show-failed-attempts
+
+# Grace period: for the first N seconds the lock accepts any keypress to
+# unlock, without a password. Stops a 2-second coffee refill from costing you
+# a full re-auth. The two -no- options make it keyboard-only, so a nudged
+# trackball can't unlock the machine.
+grace=3
+grace-no-mouse
+grace-no-touch
+
+# Fade the lock in rather than snapping to it.
+fade-in=0.3
+
+# ---------------------------------------------------------------------------
+# The actual eyecandy: frosted glass over your own desktop
+# ---------------------------------------------------------------------------
+#
+# `screenshots` grabs the current screen and uses it as the lock background,
+# then the effects below process it. This is the whole reason to run the fork.
+#
+# PRIVACY NOTE: your desktop stays visible, just blurred. If you lock at a
+# desk with people around, either raise the blur radius a lot, or drop the
+# background image and use a flat colour instead.
+#
+# `screenshots` is DELIBERATELY LEFT OFF: it does not work on niri. The fork
+# grabs the screen *after* taking the session lock, and while locked niri
+# renders only the lock surface over a solid clear colour
+# (CLEAR_COLOR_LOCKED = dark red, src/niri.rs) -- so you get a blurred red
+# rectangle, not your desktop.
+#
+# ~/.config/scripts/lock.sh works around this: it captures the desktop with
+# grim BEFORE locking and passes it in with --image, which the effects below
+# then blur. Run the lock through that script, not directly.
+# screenshots
+
+# Blur is <radius>x<passes>. More passes = smoother but slower; 7x5 is the
+# usual "can see it's a desktop, can't read it" setting. For a genuinely
+# unreadable screen use something like 20x3.
+effect-blur=7x5
+
+# Darken the edges to draw the eye to the middle. base:factor, both 0-1.
+effect-vignette=0.5:0.5
+
+# Render the effects at reduced resolution then scale back up. Costs a little
+# fidelity, and makes locking noticeably faster on a 3-monitor setup like this
+# one -- the blur is per-pixel, per-output.
+effect-scale=0.4
+
+# Other effects, off by default:
+# effect-pixelate=8
+# effect-greyscale
+# effect-custom=/path/to/effect.so
+
+# Uncomment to time each effect, when tuning the above.
+# time-effects
+
+# Fallback background if `screenshots` is disabled. Also shows on outputs that
+# couldn't be captured.
+# THEME:lock-bg
+color=0f1113
+
+# A wallpaper instead. The effects apply to this too, so a blurred wallpaper
+# is a decent middle ground between "my desktop" and "a flat colour".
+# image=/home/tom/Pictures/Wallpaper/default
+# scaling=fill
+
+# ---------------------------------------------------------------------------
+# Clock
+# ---------------------------------------------------------------------------
+# Drawn inside the indicator ring. strftime(3) formats.
+clock
+timestr=%H:%M
+datestr=%a %e %B
+
+# ---------------------------------------------------------------------------
+# Indicator
+# ---------------------------------------------------------------------------
+# Bigger than the plain swaylock config, because it now holds the clock.
+indicator-radius=120
+indicator-thickness=10
+indicator-caps-lock
+
+# Keep the ring visible instead of fading it out when idle -- with a clock in
+# it, that's a feature rather than clutter.
+indicator-idle-visible
+
+font=JetBrainsMono Nerd Font
+font-size=28
+
+# ---------------------------------------------------------------------------
+# Colours
+# ---------------------------------------------------------------------------
+# Semi-transparent inside colours so the blurred desktop shows through the
+# ring. Same state/part matrix as the plain swaylock config: states are
+# (idle) / ver / wrong / clear / caps-lock, parts are inside/ring/line/text.
+# Rewritten by ~/.config/themes/theme-set; keep the THEME: markers.
+
+# THEME:lock-inside
+inside-color=1e212488
+# THEME:lock-ring
+ring-color=7b8496cc
+# THEME:lock-text
+text-color=ffffff
+
+line-color=00000000
+separator-color=00000000
+
+# THEME:lock-keyhl
+key-hl-color=bd5eff
+# THEME:lock-bshl
+bs-hl-color=ff6e5e
+
+# THEME:lock-inside
+inside-ver-color=1e212488
+# THEME:lock-ver
+ring-ver-color=5ea1ff
+# THEME:lock-ver
+text-ver-color=5ea1ff
+
+# THEME:lock-inside
+inside-wrong-color=1e212488
+# THEME:lock-wrong
+ring-wrong-color=ff6e5e
+# THEME:lock-wrong
+text-wrong-color=ff6e5e
+
+# THEME:lock-inside
+inside-clear-color=1e212488
+# THEME:lock-clear
+ring-clear-color=5eff6c
+# THEME:lock-clear
+text-clear-color=5eff6c
+
+# THEME:lock-inside
+inside-caps-lock-color=1e212488
+# THEME:lock-caps
+ring-caps-lock-color=ffbd5e
+# THEME:lock-caps
+text-caps-lock-color=ffbd5e
+# THEME:lock-caps
+caps-lock-key-hl-color=ffbd5e
+# THEME:lock-bshl
+caps-lock-bs-hl-color=ff6e5e
