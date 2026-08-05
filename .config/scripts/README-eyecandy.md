@@ -56,34 +56,80 @@ export LOCKER=swaylock   # change the default, in ~/.extra
 | swaylock-effects | `~/.local/bin/swaylock-effects` | `.config/swaylock-effects/config` |
 | gtklock | `/usr/bin/gtklock` | `.config/gtklock/{config.ini,style.css}` |
 
-Two niri-specific gotchas, both worked around already:
+### Silicon Graphics styling
 
-* **swaylock-effects' `screenshots` does not work on niri.** It grabs the
-  screen *after* taking the session lock, and while locked niri renders only
-  the lock surface over a solid clear colour (`CLEAR_COLOR_LOCKED` = dark red,
-  `src/niri.rs`) -- so you get a blurred red rectangle. `lock.sh` captures the
-  desktop with `grim` first and passes it in with `--image`, then deletes the
-  capture (it's a plaintext picture of your unlocked screen).
-* **gtklock needs `-i`.** It otherwise tries `wlr-input-inhibitor`, which niri
-  doesn't implement, and aborts. It also does **not** expand `~` in its config,
-  so paths there must be absolute.
+Both swaylock configs are **pinned to the SGI palette** (`#29558e` indigo and
+white) rather than following the desktop theme, so the lock always matches its
+background image. They have no `THEME:` markers, which makes `theme-set` a
+no-op on them — it only substitutes where a marker matches. Put markers back
+above the colour lines to re-enable theme-following.
+
+The background is generated per output by `lock-background.py`, which lifts the
+white logo out of `~/Pictures/Wallpaper/indigo.png` as an alpha mask and
+re-composites it at each monitor's exact resolution:
+
+```sh
+lock-background.py            # regenerate for connected outputs
+lock-background.py --list     # show what it would generate
+```
+
+Per output, rather than one image scaled across all of them, because
+`--scaling fill` crops a single picture differently on a 1920x1080 panel than
+on a 1920x1200 one and the logo ends up in a different place on each screen.
+`lock.sh` regenerates them and passes the `-i <output>:<path>` pairs, which is
+why you should lock through the script rather than calling swaylock directly.
+
+Set `SGI_LOCK=0` to skip all of that and use the plain configured background.
+
+### niri gotchas, both worked around
+
+* **swaylock-effects' `screenshots` doesn't work on niri.** It grabs the screen
+  *after* taking the session lock, and while locked niri renders only the lock
+  surface over a solid clear colour (`CLEAR_COLOR_LOCKED`, `src/niri.rs`), so
+  you get a blurred dark-red rectangle. Irrelevant now that the background is
+  the SGI image, but that's why the option is off.
+* **gtklock needs `-i`.** It otherwise reaches for `wlr-input-inhibitor`, which
+  niri doesn't implement, and aborts. It also does **not** expand `~` in its
+  config, so paths there must be absolute or you silently get an unstyled lock.
 
 ## Screensaver
 
 Wayland has no xscreensaver equivalent, because nothing can draw over a lock
-screen. `lock-screensaver.py` does the other half instead: swayidle runs a
-random GL hack at 5 minutes, any input dismisses it, and a real lock takes over
-at 10.
+screen. `lock-screensaver.py` does the other half instead — and it now puts a
+**different vintage hack on every monitor**:
 
 ```sh
-lock-screensaver.py list        # 258 hacks; shortlist is FAVOURITES in the file
-lock-screensaver.py test pipes  # audition one
+lock-screensaver.py list        # installed hacks + the vintage shortlist
+lock-screensaver.py test pipes  # audition one on every screen
 ```
 
-The hacks are X11, so they run through `xwayland-satellite`. A niri window rule
-matches on **title** (`from the XScreenSaver`) rather than app-id, because each
-hack sets its own app-id -- `Atlantis`, `Flurry`, `GLMatrix` -- so an app-id
-rule only ever fullscreens the one hack it names.
+Timings, set in the niri config's swayidle line:
+
+| after | happens |
+|---|---|
+| 10 min | one vintage hack per monitor, fullscreen |
+| any input | hacks are killed, you're back where you were |
+| 45 min | hacks stop, screen locks for real |
+| 46 min | screens off (battery only — `idle-dpms.sh` no-ops on AC) |
+
+DPMS sits *after* the lock deliberately. With the lock at 45 minutes, blanking
+at the old 15 would have left the machine dark but **unlocked** for half an
+hour. The cost is 35 minutes of GL hacks before the lock; move the DPMS
+timeout down if you'd rather have the battery back.
+
+The shortlist favours period pieces — `atlantis` and `sproingies` are the
+actual SGI IRIX demos, `pipes` is Windows 95, `flyingtoasters` is After Dark
+1989, plus the early Mesa/GLX demos and the original 2D X11 hacks. Hacks that
+mangle screen contents (`decayscreen`, `slidescreen`, `xanalogtv`) are never
+auto-selected: there's nothing behind them on Wayland, so they just look
+broken. `test` still runs them.
+
+**Multi-monitor placement is done over IPC, not by window rule.** Each hack
+sets its own app-id from its name (`Atlantis`, `Flurry`, `GLMatrix`), so a
+niri rule can only fullscreen them generically — matching on *title*, which
+they all share. Which screen each lands on is then set with
+`niri msg action move-window-to-monitor --id <id> <output>`, one at a time so
+each new window can be identified before the next appears.
 
 ## Wallpaper
 
@@ -156,3 +202,18 @@ translucent `rrggbbaa` values in the effects config survive a theme switch.
 
 gtklock's `style.css` is plain GTK CSS with inlined colours; it is not
 currently rewritten by `theme-set`.
+
+## SDDM greeter
+
+`.config/sddm/sgi-sddm/` is an SGI-styled greeter matching the lock screen, so
+the machine looks the same before and after login. Install and activate it
+with:
+
+```sh
+make sddm
+```
+
+That symlinks it into `/usr/share/sddm/themes`, points
+`/etc/sddm.conf.d/theme.conf.user` at it, and installs JetBrainsMono
+system-wide — the greeter runs as the `sddm` user and cannot see fonts in your
+home. See the theme's own README for the details, including how to roll back.

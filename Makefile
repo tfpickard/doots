@@ -1,5 +1,5 @@
 SHELL := /bin/bash
-.PHONY: all install deps deps-mac deps-linux backup symlinks nvim hypr ghostty systemd shell tmux git clean help
+.PHONY: all install deps deps-mac deps-linux backup symlinks nvim hypr ghostty systemd sddm shell tmux git clean help
 
 # Detect OS
 UNAME_S := $(shell uname -s)
@@ -62,6 +62,7 @@ help:
 	@echo "  hypr       - Setup Hyprland configuration"
 	@echo "  ghostty    - Setup Ghostty terminal"
 	@echo "  systemd    - Link systemd user units (does not enable them)"
+	@echo "  sddm       - Install and activate the SGI SDDM theme (uses sudo)"
 	@echo "  shell      - Setup shell configuration"
 	@echo "  tmux       - Setup tmux configuration"
 	@echo "  git        - Setup git configuration"
@@ -237,6 +238,37 @@ systemd:
 		echo "⚙️  systemd units linked (enable with: systemctl --user enable --now <unit>)"; \
 	else \
 		echo "❌ No systemd units found"; \
+	fi
+
+sddm:
+	@echo "🖥️  Installing SDDM theme..."
+	@# SDDM only looks in /usr/share/sddm/themes, and it runs as the `sddm`
+	@# user, so the theme has to be reachable from outside $$HOME. A symlink
+	@# keeps edits live; if your home is ever mode 0700 the greeter can't
+	@# traverse it, in which case copy instead of linking (see below).
+	@if [ -d $(DOTFILES_DIR)/.config/sddm/sgi-sddm ]; then \
+		sudo ln -sfn $(DOTFILES_DIR)/.config/sddm/sgi-sddm /usr/share/sddm/themes/sgi-sddm; \
+		echo "Linked /usr/share/sddm/themes/sgi-sddm"; \
+		if sudo -u sddm test -r /usr/share/sddm/themes/sgi-sddm/Main.qml; then \
+			echo "✅ readable by the sddm user"; \
+		else \
+			echo "⚠️  sddm cannot read it through the symlink; copying instead"; \
+			sudo rm -f /usr/share/sddm/themes/sgi-sddm; \
+			sudo cp -r $(DOTFILES_DIR)/.config/sddm/sgi-sddm /usr/share/sddm/themes/sgi-sddm; \
+		fi; \
+		sudo mkdir -p /etc/sddm.conf.d; \
+		printf '[Theme]\nCurrent=sgi-sddm\n' | sudo tee /etc/sddm.conf.d/theme.conf.user >/dev/null; \
+		echo "🖥️  SDDM theme set to sgi-sddm"; \
+	else \
+		echo "❌ SDDM theme not found"; \
+	fi
+	@# The greeter renders with the sddm user's fonts, not yours.
+	@if [ -d $(HOME)/.local/share/fonts/JetBrainsMonoNF ]; then \
+		sudo mkdir -p /usr/local/share/fonts/JetBrainsMonoNF; \
+		sudo cp -n $(HOME)/.local/share/fonts/JetBrainsMonoNF/*.ttf \
+			/usr/local/share/fonts/JetBrainsMonoNF/ 2>/dev/null || true; \
+		sudo fc-cache -f >/dev/null 2>&1 || true; \
+		echo "🔤 JetBrainsMono installed system-wide for the greeter"; \
 	fi
 
 shell:
