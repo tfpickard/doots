@@ -45,45 +45,67 @@ while [ $# -gt 0 ]; do
     shift
 done
 
+# --- Silicon Graphics backgrounds ------------------------------------------
+#
+# Populates $SGI_ARGS with one "-i <output>:<path>" pair per connected monitor.
+# The images are generated at each output's exact resolution by
+# lock-background.py, which is why they're passed per output rather than
+# letting swaylock scale one picture across three differently-shaped screens.
+#
+# Set SGI_LOCK=0 to skip this and get the plain configured background (or, for
+# swaylock-effects with `screenshots` uncommented, the blurred desktop).
+SGI_ARGS=""
+
+sgi_backgrounds() {
+    SGI_ARGS=""
+    [ "${SGI_LOCK:-1}" = "0" ] && return 0
+
+    gen="$HOME/.config/scripts/lock-background.py"
+    [ -x "$gen" ] || return 0
+
+    # Cheap when everything is current: it only re-renders images that are
+    # missing or older than the source wallpaper.
+    "$gen" >/dev/null 2>&1 || return 0
+
+    cache="$HOME/.cache/sgi-lock"
+    [ -d "$cache" ] || return 0
+
+    # Ask niri which outputs exist rather than globbing the cache, so a stale
+    # image for a disconnected monitor is never passed to swaylock.
+    have niri || return 0
+    for out in $(niri msg --json outputs 2>/dev/null \
+                 | python3 -c 'import json,sys
+try:
+    print("\n".join(json.load(sys.stdin).keys()))
+except Exception:
+    pass' 2>/dev/null); do
+        [ -f "$cache/$out.png" ] && SGI_ARGS="$SGI_ARGS -i $out:$cache/$out.png"
+    done
+}
+
 run_effects() {
     [ -x "$HOME/.local/bin/swaylock-effects" ] || return 1
 
     set -- -C "$HOME/.config/swaylock-effects/config"
     [ "$daemonize" -eq 1 ] && set -- "$@" -f
 
-    # The config's `screenshots` option does NOT work on niri: swaylock-effects
-    # grabs the screen *after* taking the session lock, and while locked niri
-    # renders only the lock surface over a solid clear colour
-    # (CLEAR_COLOR_LOCKED = [0.3, 0.1, 0.1], dark red -- src/niri.rs). You get
-    # a blurred red rectangle instead of your desktop.
-    #
-    # So capture the desktop ourselves BEFORE locking and pass it in as a
-    # background image, which the blur/vignette effects then work on.
-    shot=""
-    if have grim; then
-        shot="$(mktemp -t lockshot-XXXXXX.png)"
-        if grim "$shot" 2>/dev/null && [ -s "$shot" ]; then
-            set -- "$@" --image "$shot" --scaling fill
-        else
-            rm -f "$shot"
-            shot=""
-        fi
-    fi
+    sgi_backgrounds
+    # Unquoted on purpose: SGI_ARGS is a list of separate arguments.
+    # shellcheck disable=SC2086
+    [ -n "$SGI_ARGS" ] && set -- "$@" $SGI_ARGS
 
     "$HOME/.local/bin/swaylock-effects" "$@"
-    rc=$?
-
-    # The capture is a plaintext picture of your unlocked desktop, so it must
-    # not linger in /tmp. swaylock loads the image during startup, and with -f
-    # it only returns once the lock surface is up, so removing it here is safe.
-    [ -n "$shot" ] && rm -f "$shot"
-    return $rc
 }
 
 run_swaylock() {
     have swaylock || return 1
     set -- -C "$HOME/.config/swaylock/config"
     [ "$daemonize" -eq 1 ] && set -- "$@" -f
+
+    sgi_backgrounds
+    # shellcheck disable=SC2086
+    [ -n "$SGI_ARGS" ] && set -- "$@" $SGI_ARGS
+
     swaylock "$@"
 }
 

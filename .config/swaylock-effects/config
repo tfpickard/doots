@@ -19,7 +19,7 @@
 # IMPORTANT: swaylock does not strip trailing "#" comments -- a line like
 #     ring-color=bd5eff  # my accent
 # is parsed as the literal colour "bd5eff  # my accent" and silently falls back
-# to white. That's why the THEME: markers below sit on their own lines.
+# to white. Keep comments on their own lines, never trailing a value.
 
 # ---------------------------------------------------------------------------
 # Behaviour
@@ -39,132 +39,106 @@ grace-no-touch
 fade-in=0.3
 
 # ---------------------------------------------------------------------------
-# The actual eyecandy: frosted glass over your own desktop
+# Background -- Silicon Graphics
 # ---------------------------------------------------------------------------
 #
-# `screenshots` grabs the current screen and uses it as the lock background,
-# then the effects below process it. This is the whole reason to run the fork.
+# `screenshots` (blur your own desktop) is DELIBERATELY OFF, for two reasons:
 #
-# PRIVACY NOTE: your desktop stays visible, just blurred. If you lock at a
-# desk with people around, either raise the blur radius a lot, or drop the
-# background image and use a flat colour instead.
+#   1. It does not work on niri anyway. The fork grabs the screen *after*
+#      taking the session lock, and while locked niri renders only the lock
+#      surface over a solid clear colour (CLEAR_COLOR_LOCKED = [0.3, 0.1, 0.1],
+#      src/niri.rs) -- so you get a blurred dark-red rectangle, not a desktop.
 #
-# `screenshots` is DELIBERATELY LEFT OFF: it does not work on niri. The fork
-# grabs the screen *after* taking the session lock, and while locked niri
-# renders only the lock surface over a solid clear colour
-# (CLEAR_COLOR_LOCKED = dark red, src/niri.rs) -- so you get a blurred red
-# rectangle, not your desktop.
+#   2. The point here is the SGI look. ~/.config/scripts/lock.sh generates a
+#      per-output SGI background with lock-background.py and passes it in with
+#      `-i <output>:<path>`, which is why you should lock through that script
+#      rather than invoking this binary directly.
 #
-# ~/.config/scripts/lock.sh works around this: it captures the desktop with
-# grim BEFORE locking and passes it in with --image, which the effects below
-# then blur. Run the lock through that script, not directly.
+# To go back to the frosted-glass-over-desktop look, uncomment `screenshots`
+# and `effect-blur` below and run lock.sh with SGI_LOCK=0.
 # screenshots
+# effect-blur=7x5
 
-# Blur is <radius>x<passes>. More passes = smoother but slower; 7x5 is the
-# usual "can see it's a desktop, can't read it" setting. For a genuinely
-# unreadable screen use something like 20x3.
-effect-blur=7x5
+# Subtle darkening towards the corners. On the flat SGI field this reads as a
+# CRT-ish falloff rather than an obvious effect. base:factor, both 0-1.
+effect-vignette=0.55:0.35
 
-# Darken the edges to draw the eye to the middle. base:factor, both 0-1.
-effect-vignette=0.5:0.5
-
-# Render the effects at reduced resolution then scale back up. Costs a little
-# fidelity, and makes locking noticeably faster on a 3-monitor setup like this
-# one -- the blur is per-pixel, per-output.
-effect-scale=0.4
-
-# Other effects, off by default:
+# Other effects, off:
 # effect-pixelate=8
 # effect-greyscale
+# effect-scale=0.4
 # effect-custom=/path/to/effect.so
-
-# Uncomment to time each effect, when tuning the above.
 # time-effects
 
-# Fallback background if `screenshots` is disabled. Also shows on outputs that
-# couldn't be captured.
-# THEME:lock-bg
-color=0f1113
-
-# A wallpaper instead. The effects apply to this too, so a blurred wallpaper
-# is a decent middle ground between "my desktop" and "a flat colour".
-# image=/home/tom/Pictures/Wallpaper/default
-# scaling=fill
+# Fallback flat colour: the SGI field blue, sampled from the wallpaper. Shows
+# on any output with no generated image (e.g. hotplugged while already locked).
+color=29558e
+scaling=fill
 
 # ---------------------------------------------------------------------------
 # Clock
 # ---------------------------------------------------------------------------
-# Drawn inside the indicator ring. strftime(3) formats.
+# Drawn inside the indicator ring. strftime(3) formats. This is the main thing
+# the fork buys over plain swaylock, and it suits the workstation look.
 clock
 timestr=%H:%M
-datestr=%a %e %B
+datestr=%a %e %b
 
 # ---------------------------------------------------------------------------
 # Indicator
 # ---------------------------------------------------------------------------
-# Bigger than the plain swaylock config, because it now holds the clock.
-indicator-radius=120
-indicator-thickness=10
+# Larger than the plain swaylock ring because it holds the clock.
+# lock-background.py places the logo above centre so the two don't collide.
+indicator-radius=125
+indicator-thickness=8
 indicator-caps-lock
 
-# Keep the ring visible instead of fading it out when idle -- with a clock in
-# it, that's a feature rather than clutter.
+# Keep the ring (and therefore the clock) visible instead of fading out when
+# idle -- with a clock in it, that's the point.
 indicator-idle-visible
 
 font=JetBrainsMono Nerd Font
-font-size=28
+font-size=30
 
 # ---------------------------------------------------------------------------
-# Colours
+# Colours -- SGI indigo and white
 # ---------------------------------------------------------------------------
-# Semi-transparent inside colours so the blurred desktop shows through the
-# ring. Same state/part matrix as the plain swaylock config: states are
-# (idle) / ver / wrong / clear / caps-lock, parts are inside/ring/line/text.
-# Rewritten by ~/.config/themes/theme-set; keep the THEME: markers.
+#
+# Pinned to SGI rather than following the desktop theme, to match the fixed
+# background image. There are no "THEME:" markers here any more, so theme-set
+# is a no-op on this file (it only substitutes where a marker matches).
+#
+# States are (idle) / -ver- / -wrong- / -clear- / -caps-lock-, parts are
+# inside- / ring- / line- / text-. Colours are rrggbb[aa] with NO leading '#';
+# the 8-digit values are translucent so the SGI blue shows through the disc.
+#
+# CAREFUL: swaylock does not strip trailing "#" comments -- a value with one
+# appended is parsed literally and silently falls back to white.
 
-# THEME:lock-inside
-inside-color=1e212488
-# THEME:lock-ring
-ring-color=7b8496cc
-# THEME:lock-text
+inside-color=14294dcc
+ring-color=ffffff
 text-color=ffffff
 
 line-color=00000000
 separator-color=00000000
 
-# THEME:lock-keyhl
-key-hl-color=bd5eff
-# THEME:lock-bshl
-bs-hl-color=ff6e5e
+key-hl-color=8fc0ff
+bs-hl-color=f0a068
 
-# THEME:lock-inside
-inside-ver-color=1e212488
-# THEME:lock-ver
-ring-ver-color=5ea1ff
-# THEME:lock-ver
-text-ver-color=5ea1ff
+inside-ver-color=14294dcc
+ring-ver-color=8fc0ff
+text-ver-color=8fc0ff
 
-# THEME:lock-inside
-inside-wrong-color=1e212488
-# THEME:lock-wrong
-ring-wrong-color=ff6e5e
-# THEME:lock-wrong
-text-wrong-color=ff6e5e
+inside-wrong-color=14294dcc
+ring-wrong-color=e8706b
+text-wrong-color=e8706b
 
-# THEME:lock-inside
-inside-clear-color=1e212488
-# THEME:lock-clear
-ring-clear-color=5eff6c
-# THEME:lock-clear
-text-clear-color=5eff6c
+inside-clear-color=14294dcc
+ring-clear-color=66c98a
+text-clear-color=66c98a
 
-# THEME:lock-inside
-inside-caps-lock-color=1e212488
-# THEME:lock-caps
-ring-caps-lock-color=ffbd5e
-# THEME:lock-caps
-text-caps-lock-color=ffbd5e
-# THEME:lock-caps
-caps-lock-key-hl-color=ffbd5e
-# THEME:lock-bshl
-caps-lock-bs-hl-color=ff6e5e
+inside-caps-lock-color=14294dcc
+ring-caps-lock-color=f0cd6b
+text-caps-lock-color=f0cd6b
+caps-lock-key-hl-color=f0cd6b
+caps-lock-bs-hl-color=f0a068
