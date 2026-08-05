@@ -415,17 +415,29 @@ spawn-sh-at-startup "wl-paste --type image --watch cliphist store"
 
 // Idle management, in stages:
 //
-//   5 min  -> a random xscreensaver GL hack takes over the screen; any input
-//             dismisses it and puts you straight back where you were
-//   10 min -> the hack is stopped and swaylock locks for real
-//   15 min -> screens off (battery only; idle-dpms.sh no-ops on AC)
+//   10 min -> a vintage xscreensaver GL hack takes over EVERY monitor, each
+//             screen getting a different one; any input dismisses them and
+//             puts you straight back where you were
+//   45 min -> the hacks are stopped and the screen locks for real
+//   46 min -> screens off (battery only; idle-dpms.sh no-ops on AC)
 //   sleep  -> lock before suspending
 //
 // The screensaver stage is deliberately BEFORE the lock, not on top of it:
 // under ext-session-lock the compositor renders only the lock surface, so
 // nothing can be drawn over swaylock. See ~/.config/scripts/lock-screensaver.py
 // for the full explanation and for auditioning hacks.
-spawn-sh-at-startup "swayidle -w timeout 300 '/home/tom/.config/scripts/lock-screensaver.py start' resume '/home/tom/.config/scripts/lock-screensaver.py stop' timeout 600 '/home/tom/.config/scripts/lock.sh -f' timeout 900 '/home/tom/.config/scripts/idle-dpms.sh off' resume '/home/tom/.config/scripts/idle-dpms.sh on' before-sleep '/home/tom/.config/scripts/lock.sh -f'"
+//
+// Note the DPMS stage sits just AFTER the lock rather than before it. With the
+// lock pushed out to 45 minutes, blanking the screens at the old 15 would have
+// left the machine dark but UNLOCKED for half an hour -- wiggle the mouse and
+// you're straight into the session. Powering them down a minute after the lock
+// keeps "screen off" and "locked" from ever disagreeing.
+//
+// The cost is that the GL hacks run for 35 minutes before the lock arrives,
+// which on battery is real power. idle-dpms.sh already no-ops on AC; if you
+// want the screens to blank earlier on battery specifically, move that timeout
+// down -- just be aware of the unlocked-but-dark window it reopens.
+spawn-sh-at-startup "swayidle -w timeout 600 '/home/tom/.config/scripts/lock-screensaver.py start' resume '/home/tom/.config/scripts/lock-screensaver.py stop' timeout 2700 '/home/tom/.config/scripts/lock.sh -f' timeout 2760 '/home/tom/.config/scripts/idle-dpms.sh off' resume '/home/tom/.config/scripts/idle-dpms.sh on' before-sleep '/home/tom/.config/scripts/lock.sh -f'"
 
 // PolicyKit authentication agent. Without one, any GUI app that needs elevated
 // rights (nm-connection-editor saving a system connection, gnome-disks,
