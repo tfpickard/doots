@@ -427,6 +427,10 @@ spawn-sh-at-startup "wl-paste --type image --watch cliphist store"
 // nothing can be drawn over swaylock. See ~/.config/scripts/lock-screensaver.py
 // for the full explanation and for auditioning hacks.
 //
+// Every helper referenced below is committed in this repo under
+// .config/scripts/ (lock-screensaver.py, lock.sh, idle-dpms.sh) and is linked
+// into ~/.config/scripts by `make symlinks`.
+//
 // Note the DPMS stage sits just AFTER the lock rather than before it. With the
 // lock pushed out to 45 minutes, blanking the screens at the old 15 would have
 // left the machine dark but UNLOCKED for half an hour -- wiggle the mouse and

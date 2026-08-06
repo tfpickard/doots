@@ -1,11 +1,15 @@
 /* ============================================================
    "dope" — niri waybar theme.
    Grouped floating "islands" (cards) with JetBrainsMono NF Propo.
-   Colors come from the global theme system: colors.css is a symlink
-   to ~/.config/themes/active/waybar.css (flipped by `theme-set`).
    Reload style with SIGUSR2; theme-set does it for you.
    ============================================================ */
 
+/* colors.css is a COMMITTED SYMLINK in this directory, pointing at
+   ../../../themes/active/waybar.css -- i.e. the palette of whichever theme
+   theme-set has made active. It defines @bg, @text, @accent and the rest.
+
+   It is tracked in git (`git ls-files` lists it); tooling that doesn't follow
+   symlinks reports it as missing, which it isn't. */
 @import "colors.css";
 
 * {
