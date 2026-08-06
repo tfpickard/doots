@@ -221,7 +221,28 @@ if pgrep -x swaync >/dev/null 2>&1; then
     swaync-client -rs >/dev/null 2>&1 || true
 fi
 
-# 10. fuzzel / gtk pick up the active symlink on next launch.
+# 10. neovim: every running instance auto-creates a socket in $XDG_RUNTIME_DIR
+#     (e.g. /run/user/1000/nvim.<pid>.0). nvim has no config-include mechanism
+#     for colours, and only one of the themes here has a matching colorscheme
+#     plugin, so the config builds its own colorscheme from palette.json
+#     (lua/util/theme.lua) and exposes :Theme to re-read it. Poke each live
+#     instance so open editors follow the switch without a restart.
+#
+#     --remote-expr rather than --remote-send: it runs in the target without
+#     touching its input state, so it can't corrupt a pending mapping or an
+#     insert-mode buffer the way injected keystrokes can. Each call is
+#     backgrounded with a timeout because a wedged nvim would otherwise block
+#     the whole theme switch.
+if command -v nvim >/dev/null; then
+    for sock in "${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"/nvim.*; do
+        [ -S "$sock" ] || continue
+        timeout 2 nvim --server "$sock" --remote-expr \
+            "execute('silent! Theme')" >/dev/null 2>&1 &
+    done
+    wait 2>/dev/null || true
+fi
+
+# 11. fuzzel / gtk pick up the active symlink on next launch.
 
 command -v notify-send >/dev/null && notify-send "Theme switched" "Now using: $theme" || true
 echo "Theme set to: $theme"
