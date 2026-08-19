@@ -1,0 +1,26 @@
+# SGI — Silicon Graphics indigo (self-contained; no vendored theme needed).
+# Included via ~/.config/ghostty/theme/active -> themes/active/ghostty.
+background = 1c3a6b
+foreground = ffffff
+cursor-color = ffffff
+cursor-text = 1c3a6b
+selection-background = 29558e
+selection-foreground = ffffff
+
+palette = 0=#1c3a6b
+palette = 1=#e8706b
+palette = 2=#66c98a
+palette = 3=#f0cd6b
+palette = 4=#5e9eff
+palette = 5=#8fc0ff
+palette = 6=#ffffff
+palette = 7=#ffffff
+palette = 8=#3c4048
+palette = 9=#e8706b
+palette = 10=#66c98a
+palette = 11=#f0cd6b
+palette = 12=#5e9eff
+palette = 13=#8fc0ff
+palette = 14=#ffffff
+palette = 15=#ffffff
+# vim: ft=config

@@ -222,7 +222,9 @@ assert_contains "fuzzel includes the active theme" "$FUZZEL" \
     "include=../themes/active/fuzzel.ini"
 
 # Every theme must ship both snippets, or switching to one breaks a consumer.
-for t in aura catppuccin-mocha cyberdream dreamcore-pastel; do
+# Driven off --list rather than a hardcoded set, so a theme added later is
+# covered the moment it shows up instead of quietly escaping this check.
+for t in $(bash "$THEME_SET" --list); do
     assert_resolves "theme $t ships fuzzel.ini" "$REPO_ROOT/.config/themes/$t/fuzzel.ini"
     assert_resolves "theme $t ships gtk.css"    "$REPO_ROOT/.config/themes/$t/gtk.css"
 done

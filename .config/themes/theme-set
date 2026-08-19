@@ -86,6 +86,60 @@ sed_inplace() {
     fi
 }
 
+# Rewrite the value on the line directly BELOW a "<prefix><key>" marker
+# comment, for configs with no include mechanism at all (swaylock, fnott).
+# The marker sits on its own line because swaylock does NOT strip trailing
+# "#" comments -- it would read "0f1113  # THEME:lock-bg" as the literal
+# colour and fall back to white.
+#
+# $4 is an optional alpha suffix for configs that want rrggbbaa. When it is
+# empty an existing 8-digit value keeps its own alpha rather than losing it.
+#
+# Editing goes through the same symlink/mode discipline as sed_inplace: these
+# files are deployed by symlinking into $HOME, so a plain `mv` over the target
+# would swap the link for a regular file and detach it from the repo. The map
+# is read with a herestring, not a pipe, so a failure inside the loop can
+# actually return (bash 3.2 subshells the RHS of a pipe).
+patch_marked_values() { # file marker-prefix map [alpha-suffix]
+    local file=$1 prefix=$2 map=$3 alpha=${4:-}
+    local rt key color hex t
+
+    [ -e "$file" ] || return 0
+    if [ -L "$file" ]; then
+        rt=$(readlink -f "$file") || return 1
+    else
+        rt=$file
+    fi
+
+    while read -r key color; do
+        [ -n "$key" ] || continue
+        hex=${color#\#}
+        t=$(mktemp "$rt.XXXXXX") || return 1
+        cp -p "$rt" "$t" 2>/dev/null || { rm -f "$t"; return 1; }
+        if ! awk -v key="${prefix}${key}" -v hex="$hex" -v alpha="$alpha" '
+            {
+                if (prev == key && $0 ~ /^[a-z0-9-]+=/) {
+                    # Preserve an existing 8-digit (rrggbbaa) value: take the
+                    # old alpha rather than dropping it, unless one is given.
+                    split($0, kv, "=")
+                    old = kv[2]
+                    a = alpha
+                    if (a == "" && length(old) == 8) a = substr(old, 7, 2)
+                    sub(/=.*/, "=" hex a)
+                }
+                print; prev = $0
+            }
+        ' "$rt" >"$t" 2>/dev/null; then
+            rm -f "$t"
+            return 1
+        fi
+        if ! mv "$t" "$rt"; then
+            rm -f "$t"
+            return 1
+        fi
+    done <<< "$map"
+}
+
 hex2ansi() { # "#rrggbb" -> "38;2;r;g;b"
     local h="${1#\#}"
     printf '38;2;%d;%d;%d' "0x${h:0:2}" "0x${h:2:2}" "0x${h:4:2}"
@@ -198,6 +252,94 @@ apply_fastfetch() {
         -e "s|(\"title\"[[:space:]]*:[[:space:]]*\")[0-9;]*(\")|\1$title_ansi\2|"
 }
 
+# The two lock screens share one key map. Both configs are currently pinned to
+# the SGI palette and carry NO "THEME:" markers, so these appliers are a
+# deliberate no-op -- patch_marked_values only substitutes where a marker
+# matches. They stay wired so that re-adding a marker is all it takes to put
+# the lock back under theme control, exactly as those configs document.
+lock_map() {
+    jq -r '
+        {
+            "lock-bg":     .bg_dark,
+            "lock-inside": .surface,
+            "lock-ring":   .overlay,
+            "lock-text":   .text,
+            "lock-keyhl":  .accent,
+            "lock-bshl":   .red,
+            "lock-ver":    .blue,
+            "lock-wrong":  .red,
+            "lock-clear":  .green,
+            "lock-caps":   .orange
+        } | to_entries[] | "\(.key) \(.value)"' "$PALETTE"
+}
+
+apply_swaylock() {
+    patch_marked_values "$HOME/.config/swaylock/config" "# THEME:" "$(lock_map)"
+}
+
+apply_swaylock_effects() {
+    patch_marked_values "$HOME/.config/swaylock-effects/config" "# THEME:" "$(lock_map)"
+}
+
+# fnott uses the same marker convention but wants RGBA (8 hex digits), so the
+# alpha is appended explicitly per key. Backgrounds keep their own
+# translucency and are therefore patched separately from the solid colours.
+apply_fnott() {
+    local cfg="$HOME/.config/fnott/fnott.ini" solid bg
+    solid=$(jq -r '
+        {
+            "fnott-border":        .surface,
+            "fnott-title":         .subtext,
+            "fnott-summary":       .text,
+            "fnott-body":          .subtext,
+            "fnott-progress":      .accent,
+            "fnott-low-summary":   .subtext,
+            "fnott-low-body":      .overlay,
+            "fnott-crit-border":   .red,
+            "fnott-crit-summary":  .red,
+            "fnott-crit-body":     .text
+        } | to_entries[] | "\(.key) \(.value)"' "$PALETTE")
+    patch_marked_values "$cfg" "# THEME:" "$solid" "ff"
+
+    bg=$(pal bg)
+    patch_marked_values "$cfg" "# THEME:" "fnott-bg $bg"      "ee"
+    patch_marked_values "$cfg" "# THEME:" "fnott-low-bg $bg"  "cc"
+    patch_marked_values "$cfg" "# THEME:" "fnott-crit-bg $bg" "f5"
+
+    # Reload only if fnott is the notification daemon currently running.
+    pgrep -x fnott >/dev/null 2>&1 && pkill -USR1 -x fnott 2>/dev/null || true
+}
+
+# swaync reads CSS, and its colors.css is a symlink to themes/active/waybar.css
+# just like the waybar theme, so flipping the symlink is the whole change and
+# it only needs a reload.
+apply_swaync() {
+    pgrep -x swaync >/dev/null 2>&1 || return 0
+    swaync-client -rs >/dev/null 2>&1 || true
+}
+
+# neovim: every running instance auto-creates a socket in $XDG_RUNTIME_DIR
+# (e.g. /run/user/1000/nvim.<pid>.0). nvim has no config-include mechanism for
+# colours, and only one of the themes here has a matching colorscheme plugin,
+# so the config builds its own colorscheme from palette.json
+# (lua/util/theme.lua) and exposes :Theme to re-read it. Poke each live
+# instance so open editors follow the switch without a restart.
+#
+# --remote-expr rather than --remote-send: it runs in the target without
+# touching its input state, so it can't corrupt a pending mapping or an
+# insert-mode buffer the way injected keystrokes can. Each call is
+# backgrounded with a timeout because a wedged nvim would otherwise block the
+# whole theme switch.
+apply_nvim() {
+    local sock
+    for sock in "${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"/nvim.*; do
+        [ -S "$sock" ] || continue
+        timeout 2 nvim --server "$sock" --remote-expr \
+            "execute('silent! Theme')" >/dev/null 2>&1 &
+    done
+    wait 2>/dev/null || true
+}
+
 # ----------------------------------------------------------------- dispatch --
 # name|probe command ("-" = no command probe)|target path|apply function
 appliers_table() {
@@ -211,6 +353,11 @@ waybar|waybar|$HOME/.config/waybar|apply_waybar
 mako|makoctl|$HOME/.config/mako|apply_mako
 fuzzel|fuzzel|$HOME/.config/fuzzel|apply_fuzzel
 gtk|-|$HOME/.config/gtk-4.0|apply_gtk
+swaylock|swaylock|$HOME/.config/swaylock/config|apply_swaylock
+swaylock-fx|swaylock|$HOME/.config/swaylock-effects/config|apply_swaylock_effects
+fnott|fnott|$HOME/.config/fnott/fnott.ini|apply_fnott
+swaync|swaync-client|$HOME/.config/swaync|apply_swaync
+nvim|nvim|$HOME/.config/nvim|apply_nvim
 EOF
 }
 
@@ -229,9 +376,9 @@ check_appliers() {
         [ -z "$name" ] && continue
         reason=$(applier_skip_reason "$probe" "$target")
         if [ -z "$reason" ]; then
-            printf '  apply  %-10s\n' "$name"
+            printf '  apply  %-11s\n' "$name"
         else
-            printf '  skip   %-10s (%s)\n' "$name" "$reason"
+            printf '  skip   %-11s (%s)\n' "$name" "$reason"
         fi
     done <<< "$(appliers_table)"
 }
@@ -243,13 +390,13 @@ run_appliers() {
         [ -z "$name" ] && continue
         reason=$(applier_skip_reason "$probe" "$target")
         if [ -n "$reason" ]; then
-            printf '  skip   %-10s (%s)\n' "$name" "$reason"
+            printf '  skip   %-11s (%s)\n' "$name" "$reason"
             continue
         fi
         if "$fn"; then
-            printf '  ok     %-10s\n' "$name"
+            printf '  ok     %-11s\n' "$name"
         else
-            printf '  ERROR  %-10s\n' "$name" >&2
+            printf '  ERROR  %-11s\n' "$name" >&2
             failed=1
         fi
     done <<< "$(appliers_table)"

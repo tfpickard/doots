@@ -41,11 +41,12 @@
             "network",
             "bluetooth",
             "cpu",
+            "custom/cpufreq",
             "temperature",
             "memory",
             "disk",
             "power-profiles-daemon",
-            "battery"
+            "custom/battery"
         ]
     },
     "group/session": {
@@ -63,6 +64,16 @@
         "on-click": "~/.config/themes/theme-set",
         "tooltip-format": "Switch global theme"
     },
+    // These two follow niri's IPC event stream and emit Pango markup.
+    //
+    // No "escape" key is needed: waybar's escape option DEFAULTS TO FALSE
+    // (see waybar-custom(5)), so markup is passed through and the pills render
+    // styled. Setting "escape": true is what would break them.
+    //
+    // Under Hyprland there is no niri socket, so these helpers would exit at
+    // once and be respawned every 5s behind a blank bar. launch.sh detects
+    // that and generates a variant config substituting hyprland/workspaces and
+    // hyprland/window -- see ../../scripts/compositor-config.py.
     "custom/niriws": {
         "exec": "~/.config/waybar/scripts/niri-workspaces.py",
         "return-type": "json",
@@ -212,29 +223,22 @@
         },
         "tooltip-format": "Power profile: {profile}\nClick to cycle"
     },
-    "battery": {
-        "states": {
-            "good": 80,
-            "warning": 25,
-            "critical": 10
-        },
-        "format": "{icon}  {capacity}%",
-        "format-charging": "󰂄  {capacity}%",
-        "format-plugged": "󰚥  {capacity}%",
-        "format-icons": [
-            "󰂎",
-            "󰁺",
-            "󰁻",
-            "󰁼",
-            "󰁽",
-            "󰁾",
-            "󰁿",
-            "󰂀",
-            "󰂁",
-            "󰂂",
-            "󰁹"
-        ],
-        "tooltip-format": "{timeTo} ({power}W)"
+    "custom/cpufreq": {
+        "exec": "~/.config/waybar/scripts/cpu-freq.py",
+        "return-type": "json",
+        "interval": 3,
+        "signal": 9,
+        "on-click": "~/.config/scripts/cpu-governor-toggle.sh",
+        "on-click-right": "~/.config/scripts/monitor-toggle.sh com.waybar.cpumon s-tui"
+    },
+    "custom/battery": {
+        "exec": "~/.config/waybar/scripts/battery-power.py",
+        "return-type": "json",
+        "interval": 5,
+        "signal": 8,
+        "on-click": "~/.config/waybar/scripts/battery-click.sh",
+        "on-click-right": "~/.config/scripts/monitor-toggle.sh com.waybar.powermon sudo powertop",
+        "tooltip": true
     },
     "tray": {
         "icon-size": 16,

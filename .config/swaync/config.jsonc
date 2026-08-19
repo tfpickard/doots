@@ -1,0 +1,154 @@
+{
+  "$schema": "/etc/xdg/swaync/configSchema.json",
+
+  // SwayNotificationCenter -- notification daemon with a slide-out control
+  // centre. This is an ALTERNATIVE to mako, which is still the default here;
+  // only one process can own org.freedesktop.Notifications at a time.
+  //
+  // Try it:      ~/.config/scripts/notify-daemon.sh swaync
+  // Go back:     ~/.config/scripts/notify-daemon.sh mako
+  // Toggle panel: swaync-client -t     (bound to Mod+N in the niri config)
+  //
+  // NOTE: the package ships a globally-enabled swaync.service in
+  // /etc/systemd/user. It is masked per-user (systemctl --user mask
+  // swaync.service) so it can't race mako for the D-Bus name at login.
+  // The switcher script starts it by hand instead.
+
+  // --- Where the popups appear ---------------------------------------------
+  // Match the waybar side: top-right, below the bar's 8px top margin + 34px
+  // height, so notifications don't overlap it.
+  "positionX": "right",
+  "positionY": "top",
+  "layer": "overlay",
+  "layer-shell": true,
+  "control-center-layer": "top",
+
+  "control-center-margin-top": 8,
+  "control-center-margin-bottom": 8,
+  "control-center-margin-right": 12,
+  "control-center-margin-left": 0,
+
+  "control-center-width": 420,
+  "control-center-height": 860,
+  "notification-window-width": 420,
+
+  // --- Timeouts (seconds) --------------------------------------------------
+  // Critical notifications never auto-dismiss: with timeout-critical 0 they
+  // stay until you act on them, which is the point of the urgency level.
+  "timeout": 8,
+  "timeout-low": 4,
+  "timeout-critical": 0,
+
+  "transition-time": 200,
+
+  // --- Content -------------------------------------------------------------
+  "notification-icon-size": 48,
+  "notification-body-image-height": 160,
+  "notification-body-image-width": 200,
+  "image-visibility": "when-available",
+
+  // Close the control centre when you click a notification action, and when
+  // you clear all -- otherwise it lingers over the window you just acted on.
+  "hide-on-action": true,
+  "hide-on-clear": true,
+
+  // Inline reply boxes for apps that support them (Element, Fractal, some
+  // mail clients). Harmless when unsupported.
+  "notification-inline-replies": true,
+
+  "fit-to-screen": true,
+  "cssPriority": "user",
+
+  // --- Control centre layout -----------------------------------------------
+  // Valid widgets: title, dnd, label, mpris, buttons-grid, volume, backlight,
+  // menubar, inhibitors, notifications. Order here is the order on screen.
+  "widgets": [
+    "title",
+    "buttons-grid",
+    "mpris",
+    "volume",
+    "backlight",
+    "dnd",
+    "notifications"
+  ],
+
+  "widget-config": {
+    "title": {
+      "text": "Notifications",
+      "clear-all-button": true,
+      "button-text": "Clear all"
+    },
+
+    "dnd": {
+      "text": "Do not disturb"
+    },
+
+    // Media player controls, for anything MPRIS-aware.
+    "mpris": {
+      "image-size": 88,
+      "image-radius": 12
+    },
+
+    "volume": {
+      "label": "󰕾",
+      "show-per-app": true,
+      "show-per-app-icon": true,
+      "show-per-app-label": false
+    },
+
+    "backlight": {
+      "label": "󰃟",
+      "device": "intel_backlight",
+      "subsystem": "backlight"
+    },
+
+    // Quick actions. These shell out to the same helpers the waybar modules
+    // and niri binds use, so behaviour stays consistent wherever you click.
+    "buttons-grid": {
+      "actions": [
+        {
+          "label": "󰤨",
+          "command": "nm-connection-editor"
+        },
+        {
+          "label": "󰂯",
+          "command": "blueman-manager"
+        },
+        {
+          "label": "󰕾",
+          "command": "pavucontrol"
+        },
+        {
+          "label": "󰄄",
+          "command": "sh -c '$HOME/.config/scripts/screenshot-annotate.sh'"
+        },
+        {
+          "label": "󰃨",
+          "command": "sh -c '$HOME/.config/themes/theme-set'"
+        },
+        {
+          "label": "󰐥",
+          "command": "sh -c '$HOME/.config/scripts/fuzzel-powermenu.sh'"
+        }
+      ]
+    }
+  },
+
+  // --- Per-app rules -------------------------------------------------------
+  // Regexes match the notification's app-name / summary / body. Use this to
+  // silence chatty apps without turning off notifications wholesale.
+  "notification-visibility": {
+    // Example: keep Spotify's "now playing" spam out of the popup queue but
+    // still record it in the control centre.
+    "spotify-quiet": {
+      "state": "transient",
+      "app-name": "Spotify"
+    }
+  },
+
+  // --- Scripts -------------------------------------------------------------
+  // Run a command when a notification matches. Handy for e.g. flashing a
+  // keyboard LED, or piping urgent alerts somewhere else.
+  "script-fail-notify": true,
+  "scripts": {}
+}

@@ -1,0 +1,41 @@
+# Tag trackballs so compositors apply their trackball settings to them.
+#
+# Install to /etc/udev/rules.d/71-trackball-tags.rules
+#
+# WHY THIS EXISTS
+# ---------------
+# niri (like Mutter, which it copies here) decides which config block governs a
+# pointer by reading udev properties, in src/input/mod.rs:
+#
+#     is_trackball  = udev property ID_INPUT_TRACKBALL is set
+#     is_trackpoint = udev property ID_INPUT_POINTINGSTICK is set
+#     is_mouse      = pointer capability AND not touchpad/trackball/trackpoint
+#
+# systemd's own 60-evdev/60-input-id rules only set ID_INPUT_TRACKBALL for
+# devices listed in its hwdb, and most Bluetooth/USB trackballs are not in it --
+# they come through as plain ID_INPUT_MOUSE. The practical effect is that
+# `trackball { }` in the niri config is silently DEAD for those devices, and the
+# trackball instead inherits whatever `mouse { }` says, so it can't be given a
+# different scroll direction or acceleration from a regular mouse.
+#
+# Tagging the device here makes `trackball { }` actually govern it.
+#
+# CHECK YOUR OWN DEVICE with:
+#     ~/.config/scripts/niri-inputs.py -v
+# and find the match attributes with:
+#     udevadm info -a /dev/input/eventN | grep -E 'ATTRS\{(name|id/vendor|id/product)\}'
+#
+# After editing:
+#     sudo udevadm control --reload-rules
+#     sudo udevadm trigger --subsystem-match=input --action=change
+# A Bluetooth device may need to be reconnected, and niri re-reads the tag when
+# the device is re-added.
+
+# Nulea BT5.0 wireless trackball (Bluetooth 25a7:faa0).
+SUBSYSTEM=="input", ATTRS{id/vendor}=="25a7", ATTRS{id/product}=="faa0", \
+    ENV{ID_INPUT_MOUSE}=="1", ENV{ID_INPUT_TRACKBALL}="1"
+
+# Add further trackballs below, one line each, e.g.:
+# Kensington Expert Mouse / SlimBlade (USB 047d:*)
+# SUBSYSTEM=="input", ATTRS{id/vendor}=="047d", ATTRS{id/product}=="2041", \
+#     ENV{ID_INPUT_MOUSE}=="1", ENV{ID_INPUT_TRACKBALL}="1"

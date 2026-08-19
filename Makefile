@@ -1,5 +1,5 @@
 SHELL := /bin/bash
-.PHONY: all install deps deps-mac deps-linux backup symlinks nvim hypr ghostty shell tmux git clean help
+.PHONY: all install deps deps-mac deps-linux backup symlinks nvim hypr ghostty systemd sddm shell tmux git clean help
 
 # Detect OS
 UNAME_S := $(shell uname -s)
@@ -19,14 +19,29 @@ MAC_PACKAGES := 1password-cli alacritty awscli bat docker docker-buildx \
 
 LINUX_PACKAGES := neovim tmux zsh git fzf eza bat fd ripgrep lazygit \
                   direnv python-pyenv nodejs npm ghostty-git \
-                  hyprland waybar dunst rofi alacritty firefox yq
+                  hyprland waybar dunst rofi alacritty firefox yq fastfetch \
+                  sway-notification-center fnott gtklock wlsunset cbonsai
 
 # Files to symlink to home directory
 HOME_FILES := .zshrc .tmux.conf .aliases .functions .gitignore .p10k.zsh \
               .zshenv .zprofile .profile
 
 # Directories to symlink to .config
-CONFIG_DIRS := nvim hypr ghostty waybar dunst rofi alacritty
+#
+# Keep this in sync with the directories actually committed under .config/.
+# Entries that don't exist in the repo are skipped harmlessly by the loop in the
+# `symlinks` target, so leaving legacy names here is safe.
+#
+# Deliberately NOT listed:
+#   systemd  - ~/.config/systemd/user holds unit *enablement* state (the
+#              .wants/ directories created by `systemctl --user enable`).
+#              Replacing that directory with a symlink into the repo would throw
+#              away every enabled unit. The individual units are linked by the
+#              `systemd` target instead.
+#   nvim-old - handled by its own special case further down.
+CONFIG_DIRS := nvim hypr ghostty waybar dunst rofi alacritty \
+               niri themes scripts mako eww satty gptcommit paru \
+               swaylock swaylock-effects gtklock swaync fnott
 all: deps backup symlinks ghostty nvim
 	@echo "🎉 Dotfiles installation complete!"
 	@echo "💡 You may need to:"
@@ -46,6 +61,8 @@ help:
 	@echo "  nvim       - Setup Neovim configuration"
 	@echo "  hypr       - Setup Hyprland configuration"
 	@echo "  ghostty    - Setup Ghostty terminal"
+	@echo "  systemd    - Link systemd user units (does not enable them)"
+	@echo "  sddm       - Install and activate the SGI SDDM theme (uses sudo)"
 	@echo "  shell      - Setup shell configuration"
 	@echo "  tmux       - Setup tmux configuration"
 	@echo "  git        - Setup git configuration"
@@ -201,6 +218,57 @@ ghostty:
 		if [ "$(UNAME_S)" = "Darwin" ]; then osfile=macos.conf; else osfile=linux.conf; fi; \
 		ln -sfn $$osfile $(DOTFILES_DIR)/.config/ghostty/os/active; \
 		echo "👻 Ghostty OS profile: os/active -> $$osfile"; \
+	fi
+
+systemd:
+	@echo "⚙️  Linking systemd user units..."
+	@# Units are linked FILE BY FILE on purpose. ~/.config/systemd/user also
+	@# holds enablement state (the .wants/ directories written by
+	@# `systemctl --user enable`), so replacing the whole directory with a
+	@# symlink into the repo would silently disable every enabled unit.
+	@if [ -d $(DOTFILES_DIR)/.config/systemd/user ]; then \
+		mkdir -p $(CONFIG_DIR)/systemd/user; \
+		for unit in $(DOTFILES_DIR)/.config/systemd/user/*; do \
+			[ -e "$$unit" ] || continue; \
+			name=$$(basename "$$unit"); \
+			echo "Linking systemd unit $$name"; \
+			ln -sfn "$$unit" $(CONFIG_DIR)/systemd/user/$$name; \
+		done; \
+		systemctl --user daemon-reload 2>/dev/null || true; \
+		echo "⚙️  systemd units linked (enable with: systemctl --user enable --now <unit>)"; \
+	else \
+		echo "❌ No systemd units found"; \
+	fi
+
+sddm:
+	@echo "🖥️  Installing SDDM theme..."
+	@# SDDM only looks in /usr/share/sddm/themes, and it runs as the `sddm`
+	@# user, so the theme has to be reachable from outside $$HOME. A symlink
+	@# keeps edits live; if your home is ever mode 0700 the greeter can't
+	@# traverse it, in which case copy instead of linking (see below).
+	@if [ -d $(DOTFILES_DIR)/.config/sddm/sgi-sddm ]; then \
+		sudo ln -sfn $(DOTFILES_DIR)/.config/sddm/sgi-sddm /usr/share/sddm/themes/sgi-sddm; \
+		echo "Linked /usr/share/sddm/themes/sgi-sddm"; \
+		if sudo -u sddm test -r /usr/share/sddm/themes/sgi-sddm/Main.qml; then \
+			echo "✅ readable by the sddm user"; \
+		else \
+			echo "⚠️  sddm cannot read it through the symlink; copying instead"; \
+			sudo rm -f /usr/share/sddm/themes/sgi-sddm; \
+			sudo cp -r $(DOTFILES_DIR)/.config/sddm/sgi-sddm /usr/share/sddm/themes/sgi-sddm; \
+		fi; \
+		sudo mkdir -p /etc/sddm.conf.d; \
+		printf '[Theme]\nCurrent=sgi-sddm\n' | sudo tee /etc/sddm.conf.d/theme.conf.user >/dev/null; \
+		echo "🖥️  SDDM theme set to sgi-sddm"; \
+	else \
+		echo "❌ SDDM theme not found"; \
+	fi
+	@# The greeter renders with the sddm user's fonts, not yours.
+	@if [ -d $(HOME)/.local/share/fonts/JetBrainsMonoNF ]; then \
+		sudo mkdir -p /usr/local/share/fonts/JetBrainsMonoNF; \
+		sudo cp -n $(HOME)/.local/share/fonts/JetBrainsMonoNF/*.ttf \
+			/usr/local/share/fonts/JetBrainsMonoNF/ 2>/dev/null || true; \
+		sudo fc-cache -f >/dev/null 2>&1 || true; \
+		echo "🔤 JetBrainsMono installed system-wide for the greeter"; \
 	fi
 
 shell:

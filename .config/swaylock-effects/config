@@ -1,0 +1,144 @@
+# swaylock-effects -- the fork of swaylock with blur, clock and screenshots.
+#
+# Installed as ~/.local/bin/swaylock-effects, ALONGSIDE the packaged
+# /usr/bin/swaylock, not replacing it. swayidle still uses plain swaylock; run
+# this one explicitly, or point swayidle at it once you're happy:
+#
+#     swaylock-effects -C ~/.config/swaylock-effects/config
+#
+# ~/.config/scripts/lock.sh wraps that, and is what Super+Alt+L runs.
+#
+# Built from jirutka/swaylock-effects (the mortie original is unmaintained;
+# jirutka's is the more recently updated fork, though it too was last touched
+# in 2024 -- worth knowing before you rely on it).
+#
+# Syntax matches swaylock: long option names without leading dashes, `key=value`
+# for options that take one, bare words for flags. Colours are rrggbb[aa] with
+# NO leading '#'.
+#
+# IMPORTANT: swaylock does not strip trailing "#" comments -- a line like
+#     ring-color=bd5eff  # my accent
+# is parsed as the literal colour "bd5eff  # my accent" and silently falls back
+# to white. Keep comments on their own lines, never trailing a value.
+
+# ---------------------------------------------------------------------------
+# Behaviour
+# ---------------------------------------------------------------------------
+ignore-empty-password
+show-failed-attempts
+
+# Grace period: for the first N seconds the lock accepts any keypress to
+# unlock, without a password. Stops a 2-second coffee refill from costing you
+# a full re-auth. The two -no- options make it keyboard-only, so a nudged
+# trackball can't unlock the machine.
+grace=3
+grace-no-mouse
+grace-no-touch
+
+# Fade the lock in rather than snapping to it.
+fade-in=0.3
+
+# ---------------------------------------------------------------------------
+# Background -- Silicon Graphics
+# ---------------------------------------------------------------------------
+#
+# `screenshots` (blur your own desktop) is DELIBERATELY OFF, for two reasons:
+#
+#   1. It does not work on niri anyway. The fork grabs the screen *after*
+#      taking the session lock, and while locked niri renders only the lock
+#      surface over a solid clear colour (CLEAR_COLOR_LOCKED = [0.3, 0.1, 0.1],
+#      src/niri.rs) -- so you get a blurred dark-red rectangle, not a desktop.
+#
+#   2. The point here is the SGI look. ~/.config/scripts/lock.sh generates a
+#      per-output SGI background with lock-background.py and passes it in with
+#      `-i <output>:<path>`, which is why you should lock through that script
+#      rather than invoking this binary directly.
+#
+# To go back to the frosted-glass-over-desktop look, uncomment `screenshots`
+# and `effect-blur` below and run lock.sh with SGI_LOCK=0.
+# screenshots
+# effect-blur=7x5
+
+# Subtle darkening towards the corners. On the flat SGI field this reads as a
+# CRT-ish falloff rather than an obvious effect. base:factor, both 0-1.
+effect-vignette=0.55:0.35
+
+# Other effects, off:
+# effect-pixelate=8
+# effect-greyscale
+# effect-scale=0.4
+# effect-custom=/path/to/effect.so
+# time-effects
+
+# Fallback flat colour: the SGI field blue, sampled from the wallpaper. Shows
+# on any output with no generated image (e.g. hotplugged while already locked).
+color=29558e
+scaling=fill
+
+# ---------------------------------------------------------------------------
+# Clock
+# ---------------------------------------------------------------------------
+# Drawn inside the indicator ring. strftime(3) formats. This is the main thing
+# the fork buys over plain swaylock, and it suits the workstation look.
+clock
+timestr=%H:%M
+datestr=%a %e %b
+
+# ---------------------------------------------------------------------------
+# Indicator
+# ---------------------------------------------------------------------------
+# Larger than the plain swaylock ring because it holds the clock.
+# lock-background.py places the logo above centre so the two don't collide.
+indicator-radius=125
+indicator-thickness=8
+indicator-caps-lock
+
+# Keep the ring (and therefore the clock) visible instead of fading out when
+# idle -- with a clock in it, that's the point.
+indicator-idle-visible
+
+font=JetBrainsMono Nerd Font
+font-size=30
+
+# ---------------------------------------------------------------------------
+# Colours -- SGI indigo and white
+# ---------------------------------------------------------------------------
+#
+# Pinned to SGI rather than following the desktop theme, to match the fixed
+# background image. There are no "THEME:" markers here any more, so theme-set
+# is a no-op on this file (it only substitutes where a marker matches).
+#
+# States are (idle) / -ver- / -wrong- / -clear- / -caps-lock-, parts are
+# inside- / ring- / line- / text-. Colours are rrggbb[aa] with NO leading '#';
+# the 8-digit values are translucent so the SGI blue shows through the disc.
+#
+# CAREFUL: swaylock does not strip trailing "#" comments -- a value with one
+# appended is parsed literally and silently falls back to white.
+
+inside-color=14294dcc
+ring-color=ffffff
+text-color=ffffff
+
+line-color=00000000
+separator-color=00000000
+
+key-hl-color=8fc0ff
+bs-hl-color=f0a068
+
+inside-ver-color=14294dcc
+ring-ver-color=8fc0ff
+text-ver-color=8fc0ff
+
+inside-wrong-color=14294dcc
+ring-wrong-color=e8706b
+text-wrong-color=e8706b
+
+inside-clear-color=14294dcc
+ring-clear-color=66c98a
+text-clear-color=66c98a
+
+inside-caps-lock-color=14294dcc
+ring-caps-lock-color=f0cd6b
+text-caps-lock-color=f0cd6b
+caps-lock-key-hl-color=f0cd6b
+caps-lock-bs-hl-color=f0a068
