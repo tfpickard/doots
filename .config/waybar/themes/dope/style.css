@@ -1,0 +1,231 @@
+/* ============================================================
+   "dope" — niri waybar theme.
+   Grouped floating "islands" (cards) with JetBrainsMono NF Propo.
+   Reload style with SIGUSR2; theme-set does it for you.
+   ============================================================ */
+
+/* colors.css is a COMMITTED SYMLINK in this directory, pointing at
+   ../../../themes/active/waybar.css -- i.e. the palette of whichever theme
+   theme-set has made active. It defines @bg, @text, @accent and the rest.
+
+   It is tracked in git (`git ls-files` lists it); tooling that doesn't follow
+   symlinks reports it as missing, which it isn't. */
+@import "colors.css";
+
+* {
+    font-family: "JetBrainsMono Nerd Font Propo", "Symbols Nerd Font", sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    min-height: 0;
+    border: none;
+    border-radius: 0;
+}
+
+window#waybar {
+    background: transparent;
+    color: @text;
+}
+
+tooltip {
+    background: @bg_dark;
+    border: 2px solid alpha(@surface, 0.9);
+    border-radius: 12px;
+}
+tooltip label {
+    color: @text;
+    padding: 6px;
+    font-family: "JetBrainsMono Nerd Font", monospace;
+}
+
+/* ---- group "islands" ------------------------------------------------- */
+#left,
+#info,
+#sys,
+#session {
+    background: alpha(@bg, 0.92);
+    border: 1px solid alpha(@surface, 0.55);
+    border-radius: 16px;
+    padding: 0 4px;
+    margin: 0 3px;
+    box-shadow: 0 2px 6px alpha(@bg_dark, 0.55);
+}
+
+/* center clock — accent island of its own */
+#clock {
+    background: alpha(@surface, 0.95);
+    color: @accent2;
+    border: 1px solid alpha(@accent2, 0.25);
+    border-radius: 16px;
+    padding: 0 16px;
+    margin: 0 3px;
+    box-shadow: 0 2px 6px alpha(@bg_dark, 0.55);
+    transition: background 0.2s ease-in-out;
+}
+#clock:hover { background: @surface; }
+
+/* ---- modules inside islands: transparent, just colored glyphs -------- */
+#custom-logo,
+#custom-niriws,
+#custom-niriwindow,
+#workspaces,
+#window,
+#custom-weather,
+#mpris,
+#pulseaudio,
+#backlight,
+#network,
+#bluetooth,
+#cpu,
+#custom-cpufreq,
+#temperature,
+#memory,
+#disk,
+#power-profiles-daemon,
+#battery,
+#custom-battery,
+#idle_inhibitor,
+#custom-clipboard,
+#custom-ai,
+#tray,
+#custom-power {
+    background: transparent;
+    padding: 0 8px;
+    margin: 0;
+    transition: background 0.15s ease-in-out, color 0.15s ease-in-out;
+}
+
+/* subtle rounded highlight on hover for clickable modules */
+#custom-logo:hover,
+#custom-weather:hover,
+#custom-clipboard:hover,
+#custom-ai:hover,
+#custom-power:hover,
+#idle_inhibitor:hover,
+#network:hover,
+#bluetooth:hover,
+#pulseaudio:hover,
+#cpu:hover,
+#custom-cpufreq:hover,
+#custom-battery:hover,
+#memory:hover,
+#power-profiles-daemon:hover {
+    background: alpha(@surface, 0.8);
+    border-radius: 11px;
+}
+
+/* left: logo doubles as theme switcher */
+#custom-logo {
+    color: @accent;
+    font-size: 15px;
+    padding: 0 10px 0 12px;
+}
+
+/* workspaces (pango markup / colors come from the script) */
+#custom-niriws {
+    padding: 0 4px;
+}
+
+/* focused window title */
+#custom-niriwindow {
+    color: @subtext;
+    font-weight: 500;
+    padding-right: 12px;
+}
+
+/* Hyprland equivalents of the two modules above. launch.sh substitutes
+   hyprland/workspaces and hyprland/window for the niri helpers when the bar is
+   started inside a Hyprland session, so both compositors get the same look. */
+#workspaces {
+    padding: 0 2px;
+}
+
+#workspaces button {
+    background: transparent;
+    color: @subtext;
+    padding: 0 7px;
+    margin: 0 2px;
+    border-radius: 11px;
+    transition: background 0.15s ease-in-out, color 0.15s ease-in-out;
+}
+
+#workspaces button.active {
+    background: @accent;
+    color: @bg;
+    font-weight: 700;
+}
+
+#workspaces button.urgent {
+    background: @red;
+    color: @bg;
+}
+
+#workspaces button:hover {
+    background: alpha(@surface, 0.8);
+    color: @text;
+}
+
+#window {
+    color: @subtext;
+    font-weight: 500;
+    padding-right: 12px;
+}
+
+/* media player */
+#mpris        { color: @pink; font-weight: 500; }
+#mpris.paused { color: @overlay; }
+
+/* weather — colored by condition class from the script */
+#custom-weather              { color: @yellow; }
+#custom-weather.night        { color: @subtext; }
+#custom-weather.rain         { color: @blue; }
+#custom-weather.snow         { color: @text; }
+#custom-weather.storm        { color: @accent; }
+#custom-weather.error        { color: @overlay; }
+
+/* right-side accents */
+#idle_inhibitor           { color: @overlay; }
+#idle_inhibitor.activated { color: @yellow; }
+#custom-clipboard         { color: @accent2; }
+#custom-ai                { color: @accent; }
+#cpu                      { color: @orange; }
+#custom-cpufreq           { color: @orange; }
+#custom-cpufreq.performance { color: @red; }
+#custom-cpufreq.powersave { color: @green; }
+#custom-cpufreq.busy      { color: @yellow; }
+#custom-cpufreq.throttling { color: @red; font-weight: 600; }
+#temperature              { color: @subtext; }
+#temperature.critical     { color: @red; }
+#memory                   { color: @blue; }
+#disk                     { color: @subtext; }
+#backlight                { color: @yellow; }
+#network                  { color: @blue; }
+#network.disconnected     { color: @red; }
+#bluetooth                { color: @accent2; }
+#bluetooth.disabled       { color: @overlay; }
+#pulseaudio               { color: @accent; }
+#pulseaudio.muted         { color: @overlay; }
+#power-profiles-daemon    { color: @subtext; }
+#power-profiles-daemon.performance { color: @red; }
+#power-profiles-daemon.power-saver { color: @green; }
+#battery                  { color: @green; }
+#battery.warning          { color: @yellow; }
+#battery.critical         { color: @red; }
+#battery.charging         { color: @green; }
+#custom-battery           { color: @green; }
+#custom-battery.warning   { color: @yellow; }
+#custom-battery.critical  { color: @red; }
+#custom-battery.charging  { color: @green; }
+#custom-power             { color: @red; }
+
+@keyframes blink {
+    to { color: @bg; background: @red; }
+}
+#battery.critical:not(.charging) {
+    animation: blink 1s steps(2) infinite alternate;
+}
+#custom-battery.critical:not(.charging) {
+    animation: blink 1s steps(2) infinite alternate;
+}
+
+#tray > .passive { -gtk-icon-effect: dim; }
+#tray > .needs-attention { -gtk-icon-effect: highlight; }

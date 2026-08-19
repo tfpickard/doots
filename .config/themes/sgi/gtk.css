@@ -1,0 +1,26 @@
+/* SGI accents for GTK4/libadwaita apps (symlinked to ~/.config/gtk-4.0/gtk.css) */
+@define-color accent_color #8fc0ff;
+@define-color accent_bg_color #8fc0ff;
+@define-color accent_fg_color #1c3a6b;
+@define-color window_bg_color #1c3a6b;
+@define-color window_fg_color #ffffff;
+@define-color view_bg_color #14294d;
+@define-color view_fg_color #ffffff;
+@define-color headerbar_bg_color #14294d;
+@define-color headerbar_fg_color #ffffff;
+@define-color card_bg_color #29558e;
+@define-color card_fg_color #ffffff;
+@define-color popover_bg_color #1a1d20;
+@define-color popover_fg_color #ffffff;
+@define-color dialog_bg_color #1a1d20;
+@define-color dialog_fg_color #ffffff;
+@define-color sidebar_bg_color #14294d;
+@define-color sidebar_fg_color #ffffff;
+@define-color destructive_bg_color #e8706b;
+@define-color destructive_fg_color #1c3a6b;
+@define-color success_bg_color #66c98a;
+@define-color success_fg_color #1c3a6b;
+@define-color warning_bg_color #f0a068;
+@define-color warning_fg_color #1c3a6b;
+@define-color error_bg_color #e8706b;
+@define-color error_fg_color #1c3a6b;

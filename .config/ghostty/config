@@ -13,23 +13,11 @@ macos-icon-screen-color = "222436"
 
 # macos-option-as-alt = "both"  # values: left|right|both|none
 mouse-hide-while-typing = true
-font-thicken = true
+# font-thicken is tuned per-font in font/<name>; don't set it here (the include
+# loads after this file and would override it anyway).
 alpha-blending = linear-corrected
 
-# Performance & Visual Improvements
-# background-opacity = 0.98           # Removed - not supported in current version
-# background-blur-radius = 8          # Removed - not supported in current version
-# window-decoration = false           # Removed - not supported
-
-# Window Management  
-# window-save-state = "always"        # Removed - not supported
 macos-window-shadow = true
-# macos-titlebar-proxy-icon = "visible" # Removed - not supported
-
-# quick-terminal = true                 # Removed - not supported
-# quick-terminal-position = "top"        # Removed - not supported  
-# quick-terminal-size = 45%            # Removed - not supported
-# quick-terminal-screen = "main"       # Removed - not supported, use default
 
 # OS-specific settings (e.g. the quick-terminal keybind, which only works on
 # macOS) live in os/macos.conf and os/linux.conf. `make ghostty` creates the
@@ -39,8 +27,13 @@ config-file = ?os/active
 
 config-file = font/monaspace-neon
 config-file = leading/default
-# c1onfig-file = theme/vague
-config-file = theme/catppuccin-mocha
+# Theme comes from the global theme system: ~/.config/themes/active is a
+# symlink flipped by `theme-set` (see ~/.config/themes/theme-set). The
+# theme/active symlink below points into it. Old static picks kept for
+# reference:
+# config-file = theme/vague
+# config-file = theme/catppuccin-mocha
+config-file = ?theme/active
 config-file = opacity/85%
 # config-file = shader/starfield
 # config-file = shader/matrix-hallway

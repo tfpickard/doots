@@ -1,0 +1,983 @@
+// This config is in the KDL format: https://kdl.dev
+// "/-" comments out the following node.
+// Check the wiki for a full description of the configuration:
+// https://niri-wm.github.io/niri/Configuration:-Introduction
+
+// Input device configuration.
+// Find the full list of options on the wiki:
+// https://niri-wm.github.io/niri/Configuration:-Input
+input {
+    keyboard {
+        xkb {
+            // You can set rules, model, layout, variant and options.
+            // For more information, see xkeyboard-config(7).
+
+            // For example:
+            // layout "us,ru"
+            // options "grp:win_space_toggle,compose:ralt,ctrl:nocaps"
+
+            // If this section is empty, niri will fetch xkb settings
+            // from org.freedesktop.locale1. You can control these using
+            // localectl set-x11-keymap.
+        }
+
+        // Enable numlock on startup, omitting this setting disables it.
+        numlock
+    }
+
+    // Next sections include libinput settings.
+    // Omitting settings disables them, or leaves them at their default values.
+    // All commented-out settings here are examples, not defaults.
+    touchpad {
+        // off
+        tap
+
+        // Multi-finger TAP (not swipe) -> mouse button, courtesy of libinput:
+        //   1 finger = left, 2 fingers = right, 3 fingers = MIDDLE.
+        // This is what gives you "3-finger middle click" for paste-primary and
+        // middle-click-to-close-tab. It is libinput's default, but it is spelled
+        // out here so it can't silently change.
+        // Swap to "left-middle-right" if you'd rather have 2 fingers = middle.
+        tap-button-map "left-right-middle"
+
+        // Belt-and-braces middle click: press the physical left and right click
+        // zones at the same time. Harmless alongside tap-button-map.
+        middle-emulation
+
+        // Disable-while-typing: stops palm brushes from moving the cursor mid-sentence.
+        dwt
+        // dwtp
+        // drag false
+        // drag-lock
+
+        // SCROLL DIRECTION, stated physically:
+        //   natural-scroll OFF -> two fingers UP moves content DOWN
+        //   natural-scroll ON  -> two fingers UP moves content UP  (current)
+        //
+        // ON here, deliberately different from the wheel devices below. The
+        // touchpad is a direct-manipulation surface, so content following your
+        // fingers (phone-style) is the intuitive mapping; a wheel is an
+        // indirect control, where the traditional mapping wins. Comment this
+        // line out to make the touchpad match the wheels.
+        natural-scroll
+        // accel-speed 0.2
+        // accel-profile "flat"
+        // scroll-method "two-finger"
+        // disabled-on-external-mouse
+    }
+
+    // Generic mice. This block governs the PS/2 mouse, the keyd virtual
+    // pointer, and the pointer built into the AULA Bluetooth keyboard. The
+    // Nulea trackball is NOT here -- it has its own block below, thanks to the
+    // udev rule that tags it (see etc/udev/rules.d/71-trackball-tags.rules).
+    mouse {
+        // off
+
+        // Same direction as the trackball: wheel UP moves content DOWN.
+        // Uncomment to invert (wheel up moves content up).
+        // natural-scroll
+
+        // Left + right click pressed together = middle click. This is the
+        // "three-button emulation" for a trackball whose middle button is
+        // awkward (or missing). Note libinput waits ~50ms on left/right press to
+        // see if the other button follows, so clicks feel a hair less snappy.
+        middle-emulation
+
+        accel-speed -0.1
+        accel-profile "flat"
+        // scroll-method "no-scroll"
+    }
+
+    // Devices udev *does* tag as trackballs.
+    //
+    // IMPORTANT: niri picks this block only when udev sets ID_INPUT_TRACKBALL
+    // on the device (it mirrors Mutter here; see niri src/input/mod.rs). Most
+    // Bluetooth/USB trackballs are NOT in systemd's hwdb and arrive tagged only
+    // ID_INPUT_MOUSE, which makes this whole block silently dead and leaves the
+    // trackball governed by `mouse { }` above. The Nulea BT5.0 is tagged by
+    // etc/udev/rules.d/71-trackball-tags.rules in this repo.
+    //
+    // Check what governs what:  ~/.config/scripts/niri-inputs.py
+    // The tag is read when the device is ADDED, so reconnect the trackball (or
+    // restart niri) after changing the udev rule -- reloading the niri config
+    // is not enough.
+    trackball {
+        // off
+
+        // SCROLL DIRECTION. Stated physically, because the word "natural" is
+        // the exact thing that makes this confusing:
+        //
+        //   natural-scroll OFF (current) -> wheel/ring UP moves content DOWN
+        //   natural-scroll ON            -> wheel/ring UP moves content UP
+        //
+        // libinput calls the second one "natural" because the content follows
+        // the direction your finger/wheel travels, like a touchscreen. That is
+        // NOT the same as the traditional wheel behaviour most people want on a
+        // trackball, so this stays off. Uncomment to invert.
+        //
+        // Verified by injecting REL_WHEEL into the evdev node and reading
+        // wl_pointer.axis in a Wayland client: off gives -15 (content down),
+        // on gives +15 (content up).
+        //
+        // natural-scroll
+
+        // Left + right simultaneously = middle click.
+        middle-emulation
+
+        // If your ball has no scroll ring, uncomment these to scroll by holding a
+        // button and rolling the ball. scroll-button is an evdev button code:
+        //   272 BTN_LEFT   273 BTN_RIGHT   274 BTN_MIDDLE
+        //   275 BTN_SIDE   276 BTN_EXTRA   277 BTN_FORWARD   278 BTN_BACK
+        // Run `sudo libinput debug-events` and press the button to find yours.
+        //
+        // Measured: button scrolling is currently OFF, so holding the middle
+        // button and rolling the ball just middle-clicks. If you'd rather scroll
+        // that way, uncomment the two lines below -- middle-CLICK keeps working
+        // through middle-emulation (left + right together), so nothing is lost.
+        // scroll-method "on-button-down"
+        // scroll-button 274
+        // scroll-button-lock
+
+        // accel-speed 0.2
+        // accel-profile "flat"
+    }
+
+    trackpoint {
+        // off
+        // natural-scroll
+        // accel-speed 0.2
+        // accel-profile "flat"
+        // scroll-method "on-button-down"
+        // scroll-button 273
+        // scroll-button-lock
+        // middle-emulation
+    }
+
+    // Uncomment this to make the mouse warp to the center of newly focused windows.
+    // warp-mouse-to-focus
+
+    // Focus windows and outputs automatically when moving the mouse into them.
+    // Setting max-scroll-amount="0%" makes it work only on windows already fully on screen.
+    focus-follows-mouse
+}
+
+// You can configure outputs by their name, which you can find
+// by running `niri msg outputs` while inside a niri instance.
+// The built-in laptop monitor is usually called "eDP-1".
+// Find more information on the wiki:
+// https://niri-wm.github.io/niri/Configuration:-Outputs
+//
+// IMPORTANT: The two external monitors are identical Dell P2419H panels.
+// Niri can only tell them apart by the unique serial number in their EDID,
+// which is the last token of the full output name reported by
+// `niri msg outputs`. Connector names (DP-5, DP-6, HDMI-A-1, ...) change
+// when cables are swapped, so we pin each monitor by its full make/model/serial
+// name and give each an explicit position. This keeps the physical layout
+// stable no matter which cable goes into which port.
+//
+// Desired layout (left to right), all at scale 1:
+//   [external BJ4X5X2]  [external 920C993]  [built-in eDP-1]
+//        x=0                 x=1920               x=3840
+
+// Left-most external (currently HDMI/DP, serial BJ4X5X2).
+output "Dell Inc. DELL P2419H BJ4X5X2" {
+    mode "1920x1080@60.000"
+    scale 1
+    transform "normal"
+    position x=0 y=0
+}
+
+// Center external (currently HDMI/DP, serial 920C993).
+output "Dell Inc. DELL P2419H 920C993" {
+    mode "1920x1080@60.000"
+    scale 1
+    transform "normal"
+    position x=1920 y=0
+}
+
+// Right-most: built-in laptop display. The connector name "eDP-1" never
+// changes, so it is safe to match on it directly.
+output "eDP-1" {
+    mode "1920x1200@120.003"
+    scale 1
+    transform "normal"
+    position x=3840 y=0
+}
+
+// Settings that influence how windows are positioned and sized.
+// Find more information on the wiki:
+// https://niri-wm.github.io/niri/Configuration:-Layout
+layout {
+    // Set gaps around windows in logical pixels.
+    gaps 16
+
+    // When to center a column when changing focus, options are:
+    // - "never", default behavior, focusing an off-screen column will keep at the left
+    //   or right edge of the screen.
+    // - "always", the focused column will always be centered.
+    // - "on-overflow", focusing a column will center it if it doesn't fit
+    //   together with the previously focused column.
+    center-focused-column "never"
+
+    // You can customize the widths that "switch-preset-column-width" (Mod+R) toggles between.
+    preset-column-widths {
+        // Proportion sets the width as a fraction of the output width, taking gaps into account.
+        // For example, you can perfectly fit four windows sized "proportion 0.25" on an output.
+        // The default preset widths are 1/3, 1/2 and 2/3 of the output.
+        proportion 0.33333
+        proportion 0.5
+        proportion 0.66667
+
+        // Fixed sets the width in logical pixels exactly.
+        // fixed 1920
+    }
+
+    // You can also customize the heights that "switch-preset-window-height" (Mod+Ctrl+Shift+R) toggles between.
+    // preset-window-heights { }
+
+    // You can change the default width of the new windows.
+    //
+    // NOTE: a window that opens on an *empty* workspace is grown to fill the
+    // output (minus `gaps`/`struts`) by
+    // ~/.config/scripts/niri-expand-lonely-column.py, which is started below.
+    // niri has no config option for that, so it is done over IPC. The value
+    // here is what every *subsequent* window gets.
+    default-column-width { proportion 0.5; }
+    // If you leave the brackets empty, the windows themselves will decide their initial width.
+    // default-column-width {}
+
+    // By default focus ring and border are rendered as a solid background rectangle
+    // behind windows. That is, they will show up through semitransparent windows.
+    // This is because windows using client-side decorations can have an arbitrary shape.
+    //
+    // If you don't like that, you should uncomment `prefer-no-csd` below.
+    // Niri will draw focus ring and border *around* windows that agree to omit their
+    // client-side decorations.
+    //
+    // Alternatively, you can override it with a window rule called
+    // `draw-border-with-background`.
+
+    // You can change how the focus ring looks.
+    focus-ring {
+        // Uncomment this line to disable the focus ring.
+        // off
+
+        // How many logical pixels the ring extends out from the windows.
+        width 4
+
+        // Colors can be set in a variety of ways:
+        // - CSS named colors: "red"
+        // - RGB hex: "#rgb", "#rgba", "#rrggbb", "#rrggbbaa"
+        // - CSS-like notation: "rgb(255, 127, 0)", rgba(), hsl() and a few others.
+
+        // Color of the ring on the active monitor.
+        // The "THEME:" markers let ~/.config/themes/theme-set rewrite these
+        // lines when switching the global theme. Don't remove them.
+        active-color "#bd5eff" // THEME:focus-active
+
+        // Color of the ring on inactive monitors.
+        //
+        // The focus ring only draws around the active window, so the only place
+        // where you can see its inactive-color is on other monitors.
+        inactive-color "#7b8496" // THEME:focus-inactive
+
+        // Optional per-theme neon gradient (managed by theme-set; a gradient
+        // takes precedence over the solid active-color above). Themes opt in
+        // via a "focus_gradient" object in their palette.json.
+        active-gradient from="#bd5eff" to="#5ef1ff" angle=45 relative-to="workspace-view" in="oklch longer hue" // THEME:focus-gradient
+
+        // You can also use gradients. They take precedence over solid colors.
+        // Gradients are rendered the same as CSS linear-gradient(angle, from, to).
+        // The angle is the same as in linear-gradient, and is optional,
+        // defaulting to 180 (top-to-bottom gradient).
+        // You can use any CSS linear-gradient tool on the web to set these up.
+        // Changing the color space is also supported, check the wiki for more info.
+        //
+        // active-gradient from="#80c8ff" to="#c7ff7f" angle=45
+
+        // You can also color the gradient relative to the entire view
+        // of the workspace, rather than relative to just the window itself.
+        // To do that, set relative-to="workspace-view".
+        //
+        // inactive-gradient from="#505050" to="#808080" angle=45 relative-to="workspace-view"
+    }
+
+    // You can also add a border. It's similar to the focus ring, but always visible.
+    border {
+        // The settings are the same as for the focus ring.
+        // If you enable the border, you probably want to disable the focus ring.
+        off
+
+        width 4
+        active-color "#ffc87f"
+        inactive-color "#505050"
+
+        // Color of the border around windows that request your attention.
+        urgent-color "#ff6e5e" // THEME:focus-urgent
+
+        // Gradients can use a few different interpolation color spaces.
+        // For example, this is a pastel rainbow gradient via in="oklch longer hue".
+        //
+        // active-gradient from="#e5989b" to="#ffb4a2" angle=45 relative-to="workspace-view" in="oklch longer hue"
+
+        // inactive-gradient from="#505050" to="#808080" angle=45 relative-to="workspace-view"
+    }
+
+    // You can enable drop shadows for windows.
+    shadow {
+        on
+
+        // By default, the shadow draws only around its window, and not behind it.
+        // Uncomment this setting to make the shadow draw behind its window.
+        //
+        // Note that niri has no way of knowing about the CSD window corner
+        // radius. It has to assume that windows have square corners, leading to
+        // shadow artifacts inside the CSD rounded corners. This setting fixes
+        // those artifacts.
+        //
+        // However, instead you may want to set prefer-no-csd and/or
+        // geometry-corner-radius. Then, niri will know the corner radius and
+        // draw the shadow correctly, without having to draw it behind the
+        // window. These will also remove client-side shadows if the window
+        // draws any.
+        //
+        // draw-behind-window true
+
+        // You can change how shadows look. The values below are in logical
+        // pixels and match the CSS box-shadow properties.
+
+        // Softness controls the shadow blur radius.
+        softness 30
+
+        // Spread expands the shadow.
+        spread 5
+
+        // Offset moves the shadow relative to the window.
+        offset x=0 y=5
+
+        // You can also change the shadow color and opacity.
+        color "#0007"
+    }
+
+    // Struts shrink the area occupied by windows, similarly to layer-shell panels.
+    // You can think of them as a kind of outer gaps. They are set in logical pixels.
+    // Left and right struts will cause the next window to the side to always be visible.
+    // Top and bottom struts will simply add outer gaps in addition to the area occupied by
+    // layer-shell panels and regular gaps.
+    struts {
+        // left 64
+        // right 64
+        // top 64
+        // bottom 64
+    }
+}
+
+// Add lines like this to spawn processes at startup.
+// Note that running niri as a session supports xdg-desktop-autostart,
+// which may be more convenient to use.
+// See the binds section below for more spawn examples.
+
+// This line starts waybar, a commonly used bar for Wayland compositors.
+spawn-at-startup "/home/tom/.config/waybar/launch.sh"
+
+// To run a shell command (with variables, pipes, etc.), use spawn-sh-at-startup:
+// Static wallpaper. For animated/video wallpapers instead, see
+// ~/.config/scripts/wallpaper.sh, which drives awww (the maintained successor
+// to swww) and mpvpaper -- stop swaybg first, they both want the background
+// layer.
+spawn-sh-at-startup "swaybg -i ~/Pictures/Wallpaper/default"
+
+// Notification daemon (config symlinked to ~/.config/themes/active/mako.ini).
+// swaync and fnott are installed as alternatives -- only one can own the
+// notification bus name at a time, so switch with
+// ~/.config/scripts/notify-daemon.sh rather than starting a second one here.
+spawn-at-startup "mako"
+
+// Night-light: shift the screen to a warmer colour after sunset. Coordinates
+// are Denver (matching the system timezone); wlsunset has no config file, so
+// location and temperatures are given as flags.
+//   -t low colour temp (night)   -T high colour temp (day)
+// Bump -t up towards 4500 if 3600 is too orange to work in.
+spawn-sh-at-startup "wlsunset -l 39.7 -L -105.0 -t 3600 -T 6500"
+
+// XWayland support (needed for X11 apps like the xscreensaver GL hacks).
+// Exposes an X server on DISPLAY=:12.
+spawn-at-startup "xwayland-satellite" ":12"
+
+// Run the xscreensaver "atlantis" GL hack on the built-in panel.
+// -window is required: rootless XWayland has no root window for -root.
+spawn-sh-at-startup "DISPLAY=:12 /usr/libexec/xscreensaver/atlantis -window"
+
+// Clipboard history: capture text and images into cliphist.
+// Browse with Mod+Semicolon (fuzzel picker).
+spawn-sh-at-startup "wl-paste --type text --watch cliphist store"
+spawn-sh-at-startup "wl-paste --type image --watch cliphist store"
+
+// Idle management, in stages:
+//
+//   10 min -> a vintage xscreensaver GL hack takes over EVERY monitor, each
+//             screen getting a different one; any input dismisses them and
+//             puts you straight back where you were
+//   45 min -> the hacks are stopped and the screen locks for real
+//   46 min -> screens off (battery only; idle-dpms.sh no-ops on AC)
+//   sleep  -> lock before suspending
+//
+// The screensaver stage is deliberately BEFORE the lock, not on top of it:
+// under ext-session-lock the compositor renders only the lock surface, so
+// nothing can be drawn over swaylock. See ~/.config/scripts/lock-screensaver.py
+// for the full explanation and for auditioning hacks.
+//
+// Every helper referenced below is committed in this repo under
+// .config/scripts/ (lock-screensaver.py, lock.sh, idle-dpms.sh) and is linked
+// into ~/.config/scripts by `make symlinks`.
+//
+// Note the DPMS stage sits just AFTER the lock rather than before it. With the
+// lock pushed out to 45 minutes, blanking the screens at the old 15 would have
+// left the machine dark but UNLOCKED for half an hour -- wiggle the mouse and
+// you're straight into the session. Powering them down a minute after the lock
+// keeps "screen off" and "locked" from ever disagreeing.
+//
+// The cost is that the GL hacks run for 35 minutes before the lock arrives,
+// which on battery is real power. idle-dpms.sh already no-ops on AC; if you
+// want the screens to blank earlier on battery specifically, move that timeout
+// down -- just be aware of the unlocked-but-dark window it reopens.
+spawn-sh-at-startup "swayidle -w timeout 600 '/home/tom/.config/scripts/lock-screensaver.py start' resume '/home/tom/.config/scripts/lock-screensaver.py stop' timeout 2700 '/home/tom/.config/scripts/lock.sh -f' timeout 2760 '/home/tom/.config/scripts/idle-dpms.sh off' resume '/home/tom/.config/scripts/idle-dpms.sh on' before-sleep '/home/tom/.config/scripts/lock.sh -f'"
+
+// PolicyKit authentication agent. Without one, any GUI app that needs elevated
+// rights (nm-connection-editor saving a system connection, gnome-disks,
+// blueman pairing, the firmware updater) fails silently with "not authorized"
+// -- there is nothing to show you the password prompt.
+spawn-sh-at-startup "/usr/lib/policykit-1-gnome/polkit-gnome-authentication-agent-1"
+
+// Grow the first window on an otherwise empty workspace to fill the output.
+// See the note next to `default-column-width` above.
+spawn-at-startup "/home/tom/.config/scripts/niri-expand-lonely-column.py"
+
+// Long-running workspace apps: VS Code Insiders and the Teams PWA. The script
+// only launches what isn't already running; the `open-on-output` window rules
+// further down decide which monitor each lands on.
+spawn-at-startup "/home/tom/.config/scripts/niri-autostart-apps.sh"
+
+hotkey-overlay {
+    // Uncomment this line to disable the "Important Hotkeys" pop-up at startup.
+    // skip-at-startup
+}
+
+// Uncomment this line to ask the clients to omit their client-side decorations if possible.
+// If the client will specifically ask for CSD, the request will be honored.
+// Additionally, clients will be informed that they are tiled, removing some client-side rounded corners.
+// This option will also fix border/focus ring drawing behind some semitransparent windows.
+// After enabling or disabling this, you need to restart the apps for this to take effect.
+// Ask clients to omit client-side decorations, giving consistent niri-drawn
+// borders/corners across apps (restart apps for it to take effect).
+prefer-no-csd
+
+// You can change the path where screenshots are saved.
+// A ~ at the front will be expanded to the home directory.
+// The path is formatted with strftime(3) to give you the screenshot date and time.
+screenshot-path "~/Pictures/Screenshots/Screenshot from %Y-%m-%d %H-%M-%S.png"
+
+// You can also set this to null to disable saving screenshots to disk.
+// screenshot-path null
+
+// Animation settings.
+// The wiki explains how to configure individual animations:
+// https://niri-wm.github.io/niri/Configuration:-Animations
+animations {
+    // Uncomment to turn off all animations.
+    // off
+
+    // Slow down all animations by this factor. Values below 1 speed them up instead.
+    // slowdown 3.0
+}
+
+// Window rules let you adjust behavior for individual windows.
+// Find more information on the wiki:
+// https://niri-wm.github.io/niri/Configuration:-Window-Rules
+
+// Work around WezTerm's initial configure bug
+// by setting an empty default-column-width.
+window-rule {
+    // This regular expression is intentionally made as specific as possible,
+    // since this is the default config, and we want no false positives.
+    // You can get away with just app-id="wezterm" if you want.
+    match app-id=r#"^org\.wezfurlong\.wezterm$"#
+    default-column-width {}
+}
+
+// Open the Firefox picture-in-picture player as floating by default.
+window-rule {
+    // This app-id regular expression will work for both:
+    // - host Firefox (app-id is "firefox")
+    // - Flatpak Firefox (app-id is "org.mozilla.firefox")
+    match app-id=r#"firefox$"# title="^Picture-in-Picture$"
+    open-floating true
+}
+
+// Example: block out two password managers from screen capture.
+// (This example rule is commented out with a "/-" in front.)
+/-window-rule {
+    match app-id=r#"^org\.keepassxc\.KeePassXC$"#
+    match app-id=r#"^org\.gnome\.World\.Secrets$"#
+
+    block-out-from "screen-capture"
+
+    // Use this instead if you want them visible on third-party screenshot tools.
+    // block-out-from "screencast"
+}
+
+// Rounded corners for all windows (matches the waybar/fuzzel pill look).
+window-rule {
+    geometry-corner-radius 12
+    clip-to-geometry true
+}
+
+// xscreensaver GL hacks open fullscreen.
+//
+// Match on TITLE, not app-id. Every hack sets its own app-id from its name --
+// "Atlantis", "Flurry", "GLMatrix", "UnknownPleasures", ... -- so an app-id
+// rule only ever covers the one hack it names, and every other hack from
+// lock-screensaver.py lands in a normal tiled column instead. All of them do
+// set a title of the form
+//     "<Name>: from the XScreenSaver 6.08 distribution (10-Oct-2023)"
+// so this one rule catches the lot, including hacks added to FAVOURITES later.
+window-rule {
+    match title=r#"from the XScreenSaver"#
+    open-fullscreen true
+}
+
+// The manually-toggled atlantis (Mod+Ctrl+Z) additionally gets pinned to the
+// built-in panel, so it doesn't take over a monitor you're working on. The
+// screensaver stage deliberately has no open-on-output: when it fires you are
+// idle, and it should cover whichever screen you were last using.
+window-rule {
+    match app-id="Atlantis"
+    open-on-output "eDP-1"
+}
+
+// Utility windows open floating instead of tiling.
+window-rule {
+    match app-id=r#"^org\.pulseaudio\.pavucontrol$"#
+    match app-id=r#"^pavucontrol$"#
+    match app-id=r#"^blueman-manager$"#
+    match app-id=r#"^nm-connection-editor$"#
+    open-floating true
+}
+
+// Waybar monitoring pop-ups (powertop, s-tui) launched by
+// ~/.config/scripts/monitor-toggle.sh open floating so toggling them never
+// reshuffles the tiling layout.
+window-rule {
+    match app-id=r#"^com\.waybar\."#
+    open-floating true
+    default-window-height { proportion 0.6; }
+    default-column-width { proportion 0.5; }
+}
+
+// --- Monitor assignments ----------------------------------------------------
+//
+// These pin the two "always open" apps to a physical monitor. If that monitor
+// isn't connected (laptop undocked) niri falls back to the focused output, so
+// nothing is lost when travelling.
+//
+// The rules deliberately match on app-id only, with no title match, so *every*
+// window of these apps lands on the right screen -- second editor windows,
+// Teams call popouts and meeting windows included.
+
+// VS Code Insiders -> left-most external.
+window-rule {
+    match app-id=r#"^code-insiders$"#
+    open-on-output "Dell Inc. DELL P2419H BJ4X5X2"
+}
+
+// Microsoft Teams PWA -> centre external (the right-most *external* panel).
+// Chrome derives the Wayland app-id of an installed web app from its extension
+// id: chrome-<app-id>-<profile>. Get it with `niri msg windows` if it ever
+// changes (e.g. after reinstalling the PWA).
+window-rule {
+    match app-id=r#"^chrome-cifhbcnohmdccbgoicgdjpfamggdegmo-Default$"#
+    open-on-output "Dell Inc. DELL P2419H 920C993"
+}
+
+// Screenshot annotation tools open floating, so editing a capture never
+// reshuffles the tiling layout of the windows that were just captured.
+window-rule {
+    match app-id=r#"^com\.gabm\.satty$"#
+    match app-id=r#"^org\.ksnip\.ksnip$"#
+    open-floating true
+    default-window-height { proportion 0.85; }
+    default-column-width { proportion 0.85; }
+}
+
+binds {
+    // Keys consist of modifiers separated by + signs, followed by an XKB key name
+    // in the end. To find an XKB name for a particular key, you may use a program
+    // like wev.
+    //
+    // "Mod" is a special modifier equal to Super when running on a TTY, and to Alt
+    // when running as a winit window.
+    //
+    // Most actions that you can bind here can also be invoked programmatically with
+    // `niri msg action do-something`.
+
+    // Mod-Shift-/, which is usually the same as Mod-?,
+    // shows a list of important hotkeys.
+    Mod+Shift+Slash { show-hotkey-overlay; }
+
+    // Suggested binds for running programs: terminal, app launcher, screen locker.
+    Mod+Return hotkey-overlay-title="Open a Terminal: ghostty" { spawn "ghostty"; }
+    Mod+T hotkey-overlay-title="Open a Terminal: foot (bash)" { spawn "foot" "bash"; }
+    Mod+D hotkey-overlay-title="Run an Application: fuzzel" { spawn "fuzzel"; }
+    // lock.sh picks the best available locker (swaylock-effects, falling back
+    // to swaylock then gtklock) and takes the pre-lock screenshot that the
+    // blur effect needs -- see the script for why niri needs that workaround.
+    // Override the choice with LOCKER=swaylock in ~/.extra.
+    Super+Alt+L hotkey-overlay-title="Lock the Screen" { spawn "/home/tom/.config/scripts/lock.sh"; }
+
+    // Custom launchers (fuzzel-based helpers in ~/.config/scripts).
+    Mod+X         hotkey-overlay-title="Power Menu" { spawn "/home/tom/.config/scripts/fuzzel-powermenu.sh"; }
+    Mod+Semicolon hotkey-overlay-title="Clipboard History" { spawn "/home/tom/.config/scripts/cliphist-fuzzel.sh"; }
+    Mod+Shift+A   hotkey-overlay-title="Ask AI" { spawn "/home/tom/.config/scripts/ask-ai.sh"; }
+    Mod+B         hotkey-overlay-title="Toggle Waybar" { spawn "/home/tom/.config/waybar/toggle.sh"; }
+    Mod+Ctrl+Z    hotkey-overlay-title="Toggle Atlantis Screensaver" { spawn "/home/tom/.config/scripts/toggle-atlantis.sh"; }
+    Mod+Ctrl+P    hotkey-overlay-title="Toggle Teams Keep-Active (anti-idle)" { spawn "/home/tom/.config/scripts/teams-keep-active.sh"; }
+    Mod+Shift+T   hotkey-overlay-title="Switch Global Theme" { spawn "/home/tom/.config/themes/theme-set"; }
+
+    // Notification centre. Only does anything while swaync is the running
+    // daemon (mako is the default); switch with
+    //   ~/.config/scripts/notify-daemon.sh swaync
+    Mod+N       hotkey-overlay-title="Toggle Notification Centre" { spawn "swaync-client" "-t"; }
+    Mod+Shift+N hotkey-overlay-title="Dismiss All Notifications"  { spawn-sh "swaync-client -C 2>/dev/null || makoctl dismiss --all"; }
+    // dnd.sh papers over mako and swaync spelling this completely differently
+    // -- mako has no toggle flag at all, only add/remove.
+    Mod+Ctrl+N  hotkey-overlay-title="Toggle Do Not Disturb"      { spawn "/home/tom/.config/scripts/dnd.sh"; }
+
+    // Use spawn-sh to run a shell command. Do this if you need pipes, multiple commands, etc.
+    // Note: the entire command goes as a single argument. It's passed verbatim to `sh -c`.
+    // For example, this is a standard bind to toggle the screen reader (orca).
+    Mod+Alt+O allow-when-locked=true hotkey-overlay-title=null { spawn-sh "pkill orca || exec orca"; }
+
+    // --- Volume / brightness / media ---------------------------------------
+    //
+    // The XF86* binds are the laptop's own dedicated keys. Since a 60% board
+    // has neither those nor an F-row, every one of them also has a Mod+letter
+    // or Mod+punctuation equivalent right below it.
+    //
+    // The allow-when-locked=true property makes them work even when the session is locked.
+    // Using spawn-sh allows to pass multiple arguments together with the command.
+    // "-l 1.0" limits the volume to 100%.
+    XF86AudioRaiseVolume allow-when-locked=true { spawn-sh "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.1+ -l 1.0"; }
+    XF86AudioLowerVolume allow-when-locked=true { spawn-sh "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.1-"; }
+    XF86AudioMute        allow-when-locked=true { spawn-sh "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"; }
+    XF86AudioMicMute     allow-when-locked=true { spawn-sh "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"; }
+
+    // 60%-friendly volume: Mod+Alt and the -/= pair, mute on the digits.
+    Mod+Alt+Equal allow-when-locked=true hotkey-overlay-title="Volume Up"   { spawn-sh "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.05+ -l 1.0"; }
+    Mod+Alt+Minus allow-when-locked=true hotkey-overlay-title="Volume Down" { spawn-sh "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.05-"; }
+    Mod+Alt+0     allow-when-locked=true hotkey-overlay-title="Mute Output" { spawn-sh "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"; }
+    Mod+Alt+9     allow-when-locked=true hotkey-overlay-title="Mute Mic"    { spawn-sh "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"; }
+
+    // Example media keys mapping using playerctl.
+    // This will work with any MPRIS-enabled media player.
+    XF86AudioPlay        allow-when-locked=true { spawn-sh "playerctl play-pause"; }
+    XF86AudioPause       allow-when-locked=true { spawn-sh "playerctl play-pause"; }
+    XF86AudioStop        allow-when-locked=true { spawn-sh "playerctl stop"; }
+    XF86AudioPrev        allow-when-locked=true { spawn-sh "playerctl previous"; }
+    XF86AudioNext        allow-when-locked=true { spawn-sh "playerctl next"; }
+
+    // 60%-friendly transport controls.
+    Mod+Alt+P            allow-when-locked=true hotkey-overlay-title="Play / Pause"    { spawn-sh "playerctl play-pause"; }
+    Mod+Alt+BracketLeft  allow-when-locked=true hotkey-overlay-title="Previous Track"  { spawn-sh "playerctl previous"; }
+    Mod+Alt+BracketRight allow-when-locked=true hotkey-overlay-title="Next Track"      { spawn-sh "playerctl next"; }
+
+    // Example brightness key mappings for brightnessctl.
+    // You can use regular spawn with multiple arguments too (to avoid going through "sh"),
+    // but you need to manually put each argument in separate "" quotes.
+    XF86MonBrightnessUp allow-when-locked=true { spawn "brightnessctl" "--class=backlight" "set" "+10%"; }
+    XF86MonBrightnessDown allow-when-locked=true { spawn "brightnessctl" "--class=backlight" "set" "10%-"; }
+
+    // 60%-friendly brightness: same -/= pair, one modifier over from volume.
+    Mod+Ctrl+Equal allow-when-locked=true hotkey-overlay-title="Brightness Up"   { spawn "brightnessctl" "--class=backlight" "set" "+10%"; }
+    Mod+Ctrl+Minus allow-when-locked=true hotkey-overlay-title="Brightness Down" { spawn "brightnessctl" "--class=backlight" "set" "10%-"; }
+
+    // Open/close the Overview: a zoomed-out view of workspaces and windows.
+    // You can also move the mouse into the top-left hot corner,
+    // or do a four-finger swipe up on a touchpad.
+    Mod+O repeat=false { toggle-overview; }
+
+    Mod+Q repeat=false { close-window; }
+
+    // ========================================================================
+    // Navigation -- bspwm/sxhkd-flavoured, and 60%-keyboard clean.
+    //
+    // Nothing below needs an arrow cluster, a nav cluster (Home/End/PageUp/
+    // PageDown/Insert), Print Screen, or an F-row. Letters, digits and
+    // punctuation only.
+    //
+    //   Mod            + h j k l   focus         (window / column)
+    //   Mod + Shift    + h j k l   MOVE window   (h/l = monitor, j/k = workspace)
+    //   Mod + Ctrl     + h j k l   rearrange     (within this workspace)
+    //   Mod + Alt      + h j k l   focus         (h/l = monitor, j/k = workspace)
+    //
+    // Mnemonic: plain = look around here, Shift = throw the window somewhere
+    // else, Ctrl = shuffle it in place, Alt = look somewhere else.
+    // ========================================================================
+
+    // --- Mod + hjkl: move focus -------------------------------------------
+    Mod+H { focus-column-left; }
+    Mod+J { focus-window-down; }
+    Mod+K { focus-window-up; }
+    Mod+L { focus-column-right; }
+
+    // Arrow keys kept as exact aliases, for when a full-size keyboard is
+    // attached. They are never the only way to do anything.
+    Mod+Left  { focus-column-left; }
+    Mod+Down  { focus-window-down; }
+    Mod+Up    { focus-window-up; }
+    Mod+Right { focus-column-right; }
+
+    // --- Mod + Shift + hjkl: send the window to another monitor/workspace ---
+    // Horizontal = monitors (they sit side by side), vertical = workspaces
+    // (niri stacks them vertically). This is the sxhkd "super + shift + {h,j,k,l}
+    // sends the window away" muscle memory.
+    Mod+Shift+H { move-column-to-monitor-left; }
+    Mod+Shift+J { move-column-to-workspace-down; }
+    Mod+Shift+K { move-column-to-workspace-up; }
+    Mod+Shift+L { move-column-to-monitor-right; }
+
+    Mod+Shift+Left  { move-column-to-monitor-left; }
+    Mod+Shift+Down  { move-column-to-workspace-down; }
+    Mod+Shift+Up    { move-column-to-workspace-up; }
+    Mod+Shift+Right { move-column-to-monitor-right; }
+
+    // Same, but taking only the focused window instead of the whole column.
+    Mod+Shift+Alt+H { move-window-to-monitor-left; }
+    Mod+Shift+Alt+J { move-window-to-workspace-down; }
+    Mod+Shift+Alt+K { move-window-to-workspace-up; }
+    Mod+Shift+Alt+L { move-window-to-monitor-right; }
+
+    // --- Mod + Ctrl + hjkl: rearrange within the current workspace ---------
+    Mod+Ctrl+H { move-column-left; }
+    Mod+Ctrl+J { move-window-down; }
+    Mod+Ctrl+K { move-window-up; }
+    Mod+Ctrl+L { move-column-right; }
+
+    Mod+Ctrl+Left  { move-column-left; }
+    Mod+Ctrl+Down  { move-window-down; }
+    Mod+Ctrl+Up    { move-window-up; }
+    Mod+Ctrl+Right { move-column-right; }
+
+    // --- Mod + Alt + hjkl: move focus to another monitor/workspace ---------
+    Mod+Alt+H { focus-monitor-left; }
+    Mod+Alt+J { focus-workspace-down; }
+    Mod+Alt+K { focus-workspace-up; }
+    Mod+Alt+L { focus-monitor-right; }
+
+    // --- Jump to the ends of the scrolling strip (vim's gg / G) ------------
+    Mod+G            { focus-column-first; }
+    Mod+Shift+G      { focus-column-last; }
+    Mod+Ctrl+G       { move-column-to-first; }
+    Mod+Ctrl+Shift+G { move-column-to-last; }
+
+    // Drag a whole workspace up/down the stack.
+    Mod+Ctrl+Shift+J { move-workspace-down; }
+    Mod+Ctrl+Shift+K { move-workspace-up; }
+
+    // Push a whole workspace onto another monitor.
+    Mod+Ctrl+Shift+H { move-workspace-to-monitor-left; }
+    Mod+Ctrl+Shift+L { move-workspace-to-monitor-right; }
+
+    // You can bind mouse wheel scroll ticks using the following syntax.
+    // These binds will change direction based on the natural-scroll setting.
+    //
+    // To avoid scrolling through workspaces really fast, you can use
+    // the cooldown-ms property. The bind will be rate-limited to this value.
+    // You can set a cooldown on any bind, but it's most useful for the wheel.
+    Mod+WheelScrollDown      cooldown-ms=150 { focus-workspace-down; }
+    Mod+WheelScrollUp        cooldown-ms=150 { focus-workspace-up; }
+    Mod+Ctrl+WheelScrollDown cooldown-ms=150 { move-column-to-workspace-down; }
+    Mod+Ctrl+WheelScrollUp   cooldown-ms=150 { move-column-to-workspace-up; }
+
+    Mod+WheelScrollRight      { focus-column-right; }
+    Mod+WheelScrollLeft       { focus-column-left; }
+    Mod+Ctrl+WheelScrollRight { move-column-right; }
+    Mod+Ctrl+WheelScrollLeft  { move-column-left; }
+
+    // Usually scrolling up and down with Shift in applications results in
+    // horizontal scrolling; these binds replicate that.
+    Mod+Shift+WheelScrollDown      { focus-column-right; }
+    Mod+Shift+WheelScrollUp        { focus-column-left; }
+    Mod+Ctrl+Shift+WheelScrollDown { move-column-right; }
+    Mod+Ctrl+Shift+WheelScrollUp   { move-column-left; }
+
+    // Similarly, you can bind touchpad scroll "ticks".
+    // Touchpad scrolling is continuous, so for these binds it is split into
+    // discrete intervals.
+    // These binds are also affected by touchpad's natural-scroll, so these
+    // example binds are "inverted", since we have natural-scroll enabled for
+    // touchpads by default.
+    // Mod+TouchpadScrollDown { spawn-sh "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.02+"; }
+    // Mod+TouchpadScrollUp   { spawn-sh "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.02-"; }
+
+    // You can refer to workspaces by index. However, keep in mind that
+    // niri is a dynamic workspace system, so these commands are kind of
+    // "best effort". Trying to refer to a workspace index bigger than
+    // the current workspace count will instead refer to the bottommost
+    // (empty) workspace.
+    //
+    // For example, with 2 workspaces + 1 empty, indices 3, 4, 5 and so on
+    // will all refer to the 3rd workspace.
+    Mod+1 { focus-workspace 1; }
+    Mod+2 { focus-workspace 2; }
+    Mod+3 { focus-workspace 3; }
+    Mod+4 { focus-workspace 4; }
+    Mod+5 { focus-workspace 5; }
+    Mod+6 { focus-workspace 6; }
+    Mod+7 { focus-workspace 7; }
+    Mod+8 { focus-workspace 8; }
+    Mod+9 { focus-workspace 9; }
+    Mod+Ctrl+1 { move-column-to-workspace 1; }
+    Mod+Ctrl+2 { move-column-to-workspace 2; }
+    Mod+Ctrl+3 { move-column-to-workspace 3; }
+    Mod+Ctrl+4 { move-column-to-workspace 4; }
+    Mod+Ctrl+5 { move-column-to-workspace 5; }
+    Mod+Ctrl+6 { move-column-to-workspace 6; }
+    Mod+Ctrl+7 { move-column-to-workspace 7; }
+    Mod+Ctrl+8 { move-column-to-workspace 8; }
+    Mod+Ctrl+9 { move-column-to-workspace 9; }
+
+    // Alternatively, there are commands to move just a single window:
+    // Mod+Ctrl+1 { move-window-to-workspace 1; }
+
+    // Switches focus between the current and the previous workspace.
+    Mod+Tab { focus-workspace-previous; }
+
+    // ========================================================================
+    // "Splitting" windows -- the closest thing niri has to bspwm's dwindle.
+    //
+    // Straight answer: niri CANNOT do a spiral/dwindle layout. bspwm is a binary
+    // *tree* -- every window is a leaf, every split node has a ratio, and the
+    // insertion point spirals. niri is a scrollable *strip*: an infinite row of
+    // columns, each column an optional vertical stack. There is no tree, so
+    // there is nothing to spiral. No config option or plugin adds one.
+    //
+    // What you can build by hand is one level of nesting, which covers the
+    // common bspwm cases:
+    //   * a vertical "split"  -> put two windows in one column (Mod+Comma)
+    //   * a horizontal "split"-> two adjacent columns (the default)
+    //   * unsplit             -> Mod+Period pushes a window back out
+    // A master/stack layout is therefore: one wide column on the left, one
+    // column on the right holding everything else stacked vertically.
+    // ========================================================================
+
+    // Pull the window to the side into the focused column / push it back out.
+    // If the window is alone, they will consume it into the nearby column to the side.
+    // If the window is already in a column, they will expel it out.
+    Mod+BracketLeft  { consume-or-expel-window-left; }
+    Mod+BracketRight { consume-or-expel-window-right; }
+
+    // Consume one window from the right to the bottom of the focused column
+    // -- i.e. "split the current column vertically and put the next window in it".
+    Mod+Comma  { consume-window-into-column; }
+    // Expel the bottom window from the focused column to the right ("unsplit").
+    Mod+Period { expel-window-from-column; }
+
+    // Cycle through widths set in preset-column-widths.
+    Mod+R { switch-preset-column-width; }
+    // Cycling through the presets in reverse order is also possible.
+    Mod+Shift+R { switch-preset-column-width-back; }
+
+    Mod+Ctrl+Shift+R { switch-preset-window-height; }
+    Mod+Ctrl+R { reset-window-height; }
+
+    Mod+F { maximize-column; }
+    Mod+Shift+F { fullscreen-window; }
+
+    // While maximize-column leaves gaps and borders around the window,
+    // maximize-window-to-edges doesn't: the window expands to the edges of the screen.
+    // This bind corresponds to normal window maximizing,
+    // e.g. by double-clicking on the titlebar.
+    Mod+M { maximize-window-to-edges; }
+
+    // Expand the focused column to space not taken up by other fully visible columns.
+    // Makes the column "fill the rest of the space".
+    Mod+Ctrl+F { expand-column-to-available-width; }
+
+    Mod+C { center-column; }
+
+    // Center all fully visible columns on screen.
+    Mod+Ctrl+C { center-visible-columns; }
+
+    // Finer width adjustments.
+    // This command can also:
+    // * set width in pixels: "1000"
+    // * adjust width in pixels: "-5" or "+5"
+    // * set width as a percentage of screen width: "25%"
+    // * adjust width as a percentage of screen width: "-10%" or "+10%"
+    // Pixel sizes use logical, or scaled, pixels. I.e. on an output with scale 2.0,
+    // set-column-width "100" will make the column occupy 200 physical screen pixels.
+    Mod+Minus { set-column-width "-10%"; }
+    Mod+Equal { set-column-width "+10%"; }
+
+    // Finer height adjustments when in column with other windows.
+    Mod+Shift+Minus { set-window-height "-10%"; }
+    Mod+Shift+Equal { set-window-height "+10%"; }
+
+    // Move the focused window between the floating and the tiling layout.
+    Mod+V       { toggle-window-floating; }
+    Mod+Shift+V { switch-focus-between-floating-and-tiling; }
+
+    // Toggle tabbed column display mode.
+    // Windows in this column will appear as vertical tabs,
+    // rather than stacked on top of each other.
+    Mod+W { toggle-column-tabbed-display; }
+
+    // Actions to switch layouts.
+    // Note: if you uncomment these, make sure you do NOT have
+    // a matching layout switch hotkey configured in xkb options above.
+    // Having both at once on the same hotkey will break the switching,
+    // since it will switch twice upon pressing the hotkey (once by xkb, once by niri).
+    // Mod+Space       { switch-layout "next"; }
+    // Mod+Shift+Space { switch-layout "prev"; }
+
+    // Screenshots and screen recording, all on the S cluster so none of this
+    // needs the Print key or the F-row (60% keyboard friendly).
+    //
+    // The bare `screenshot` action opens niri's own capture UI, which freezes
+    // the screen and can snap the selection to a window -- unlike grim+slurp,
+    // which grabs the pointer and so dismisses any open menu or tooltip.
+    Mod+S       hotkey-overlay-title="Screenshot: region or window" { screenshot; }
+    Mod+Shift+S hotkey-overlay-title="Screenshot: full screen"      { screenshot-screen; }
+    Mod+Ctrl+S  hotkey-overlay-title="Screenshot: focused window"   { screenshot-window; }
+
+    // Press again to stop; the script SIGINTs the recorder so the file is finalised.
+    Mod+Alt+S       repeat=false hotkey-overlay-title="Record region (toggle)"      { spawn "/home/tom/.config/scripts/screenrec.sh" "region"; }
+    Mod+Alt+Shift+S repeat=false hotkey-overlay-title="Record full screen (toggle)" { spawn "/home/tom/.config/scripts/screenrec.sh" "screen"; }
+
+    // Capture through niri's freeze/snap UI, then annotate in satty.
+    Mod+A      repeat=false hotkey-overlay-title="Screenshot + annotate (satty)" { spawn "/home/tom/.config/scripts/screenshot-annotate.sh"; }
+    // Escape hatch for anything more involved: tabs, OCR, delayed capture, upload.
+    Mod+Ctrl+A repeat=false hotkey-overlay-title="Screenshot GUI (ksnip)"        { spawn "ksnip"; }
+    // New screenshots are described and renamed automatically by
+    // screenshot-describe.service; this re-runs it on the newest one that still
+    // has a bare timestamp name, for when a description came out unhelpful.
+    Mod+Alt+A  repeat=false hotkey-overlay-title="Describe latest screenshot (AI)" { spawn "/home/tom/.config/scripts/screenshot-describe.sh" "--latest"; }
+
+    // Applications such as remote-desktop clients and software KVM switches may
+    // request that niri stops processing the keyboard shortcuts defined here
+    // so they may, for example, forward the key presses as-is to a remote machine.
+    // It's a good idea to bind an escape hatch to toggle the inhibitor,
+    // so a buggy application can't hold your session hostage.
+    //
+    // The allow-inhibiting=false property can be applied to other binds as well,
+    // which ensures niri always processes them, even when an inhibitor is active.
+    Mod+Escape allow-inhibiting=false { toggle-keyboard-shortcuts-inhibit; }
+
+    // The quit action will show a confirmation dialog to avoid accidental exits.
+    Mod+Shift+E { quit; }
+    Ctrl+Alt+Delete { quit; }
+
+    // Powers off the monitors. To turn them back on, do any input like
+    // moving the mouse or pressing any other key.
+    Mod+Shift+P { power-off-monitors; }
+}

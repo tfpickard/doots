@@ -1,0 +1,17 @@
+{
+  "name": "aura",
+  "bg": "#15141b",
+  "bg_dark": "#110f18",
+  "surface": "#29263c",
+  "overlay": "#4d4d4d",
+  "text": "#edecee",
+  "subtext": "#bdbdbd",
+  "accent": "#a277ff",
+  "accent2": "#61ffca",
+  "blue": "#82e2ff",
+  "green": "#61ffca",
+  "yellow": "#ffca85",
+  "orange": "#ffca85",
+  "red": "#ff6767",
+  "pink": "#f694ff"
+}

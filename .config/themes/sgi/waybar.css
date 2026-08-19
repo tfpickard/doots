@@ -1,0 +1,15 @@
+/* SGI — waybar color definitions (imported by themes/dope/style.css) */
+@define-color bg        #1c3a6b;
+@define-color bg_dark   #14294d;
+@define-color surface   #29558e;
+@define-color overlay   #6b8dbe;
+@define-color text      #ffffff;
+@define-color subtext   #c8d8ef;
+@define-color accent    #8fc0ff;
+@define-color accent2   #ffffff;
+@define-color blue      #5e9eff;
+@define-color green     #66c98a;
+@define-color yellow    #f0cd6b;
+@define-color orange    #f0a068;
+@define-color red       #e8706b;
+@define-color pink      #c99ad6;

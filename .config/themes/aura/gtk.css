@@ -1,0 +1,26 @@
+/* Aura accents for GTK4/libadwaita apps (symlinked to ~/.config/gtk-4.0/gtk.css) */
+@define-color accent_color #a277ff;
+@define-color accent_bg_color #a277ff;
+@define-color accent_fg_color #15141b;
+@define-color window_bg_color #15141b;
+@define-color window_fg_color #edecee;
+@define-color view_bg_color #110f18;
+@define-color view_fg_color #edecee;
+@define-color headerbar_bg_color #110f18;
+@define-color headerbar_fg_color #edecee;
+@define-color card_bg_color #29263c;
+@define-color card_fg_color #edecee;
+@define-color popover_bg_color #1b1a23;
+@define-color popover_fg_color #edecee;
+@define-color dialog_bg_color #1b1a23;
+@define-color dialog_fg_color #edecee;
+@define-color sidebar_bg_color #110f18;
+@define-color sidebar_fg_color #edecee;
+@define-color destructive_bg_color #ff6767;
+@define-color destructive_fg_color #15141b;
+@define-color success_bg_color #61ffca;
+@define-color success_fg_color #15141b;
+@define-color warning_bg_color #ffca85;
+@define-color warning_fg_color #15141b;
+@define-color error_bg_color #ff6767;
+@define-color error_fg_color #15141b;

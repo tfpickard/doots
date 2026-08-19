@@ -1,0 +1,252 @@
+{
+    "layer": "top",
+    "position": "top",
+    "height": 34,
+    "margin-top": 8,
+    "margin-left": 12,
+    "margin-right": 12,
+    "spacing": 8,
+    "reload_style_on_change": true,
+    "modules-left": [
+        "group/left"
+    ],
+    "modules-center": [
+        "clock"
+    ],
+    "modules-right": [
+        "group/info",
+        "group/sys",
+        "group/session"
+    ],
+    "group/left": {
+        "orientation": "horizontal",
+        "modules": [
+            "custom/logo",
+            "custom/niriws",
+            "custom/niriwindow"
+        ]
+    },
+    "group/info": {
+        "orientation": "horizontal",
+        "modules": [
+            "custom/weather",
+            "mpris"
+        ]
+    },
+    "group/sys": {
+        "orientation": "horizontal",
+        "modules": [
+            "pulseaudio",
+            "backlight",
+            "network",
+            "bluetooth",
+            "cpu",
+            "custom/cpufreq",
+            "temperature",
+            "memory",
+            "disk",
+            "power-profiles-daemon",
+            "custom/battery"
+        ]
+    },
+    "group/session": {
+        "orientation": "horizontal",
+        "modules": [
+            "idle_inhibitor",
+            "custom/clipboard",
+            "custom/ai",
+            "tray",
+            "custom/power"
+        ]
+    },
+    "custom/logo": {
+        "format": "󰏘",
+        "on-click": "~/.config/themes/theme-set",
+        "tooltip-format": "Switch global theme"
+    },
+    // These two follow niri's IPC event stream and emit Pango markup.
+    //
+    // No "escape" key is needed: waybar's escape option DEFAULTS TO FALSE
+    // (see waybar-custom(5)), so markup is passed through and the pills render
+    // styled. Setting "escape": true is what would break them.
+    //
+    // Under Hyprland there is no niri socket, so these helpers would exit at
+    // once and be respawned every 5s behind a blank bar. launch.sh detects
+    // that and generates a variant config substituting hyprland/workspaces and
+    // hyprland/window -- see ../../scripts/compositor-config.py.
+    "custom/niriws": {
+        "exec": "~/.config/waybar/scripts/niri-workspaces.py",
+        "return-type": "json",
+        "restart-interval": 5,
+        "tooltip": false
+    },
+    "custom/niriwindow": {
+        "exec": "~/.config/waybar/scripts/niri-window.py",
+        "return-type": "json",
+        "restart-interval": 5,
+        "tooltip": false
+    },
+    "clock": {
+        "format": "󰃭  {:%a %d %b   %H:%M}",
+        "format-alt": "󰃭  {:%Y-%m-%d   %H:%M:%S}",
+        "interval": 1,
+        "tooltip-format": "<tt><small>{calendar}</small></tt>",
+        "calendar": {
+            "mode": "month",
+            "weeks-pos": "left",
+            "format": {
+                "today": "<b><u>{}</u></b>",
+                "weeks": "<span alpha='60%'>{}</span>"
+            }
+        }
+    },
+    "custom/weather": {
+        "exec": "~/.config/scripts/weather.py",
+        "return-type": "json",
+        "interval": 900,
+        "on-click": "ghostty -e bash -c 'curl -s wttr.in | less -R'",
+        "tooltip": true
+    },
+    "mpris": {
+        "format": "{status_icon} {artist} — {title}",
+        "format-paused": "{status_icon} <i>{artist} — {title}</i>",
+        "status-icons": {
+            "playing": "󰐊",
+            "paused": "󰏤",
+            "stopped": "󰓛"
+        },
+        "artist-len": 16,
+        "title-len": 24,
+        "on-click": "playerctl play-pause",
+        "on-scroll-up": "playerctl next",
+        "on-scroll-down": "playerctl previous",
+        "tooltip-format": "{player}: {artist} — {title}"
+    },
+    "idle_inhibitor": {
+        "format": "{icon}",
+        "format-icons": {
+            "activated": "󰛨",
+            "deactivated": "󰖔"
+        },
+        "tooltip-format-activated": "Caffeine on — screen stays awake",
+        "tooltip-format-deactivated": "Caffeine off"
+    },
+    "custom/clipboard": {
+        "format": "󰆒",
+        "on-click": "~/.config/scripts/cliphist-fuzzel.sh",
+        "on-click-right": "~/.config/scripts/cliphist-fuzzel.sh d",
+        "on-click-middle": "~/.config/scripts/cliphist-fuzzel.sh w",
+        "tooltip-format": "Clipboard history\nLeft: pick · Right: delete · Middle: wipe"
+    },
+    "custom/ai": {
+        "format": "󰚩",
+        "on-click": "~/.config/scripts/ask-ai.sh",
+        "tooltip-format": "Ask AI (Mod+Shift+A)"
+    },
+    "pulseaudio": {
+        "format": "{icon}  {volume}%",
+        "format-muted": "󰖁  muted",
+        "format-icons": {
+            "default": [
+                "󰕿",
+                "󰖀",
+                "󰕾"
+            ],
+            "headphone": "󰋋",
+            "headset": "󰋍"
+        },
+        "on-click": "pavucontrol",
+        "on-click-right": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
+        "on-scroll-up": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.02+ -l 1.0",
+        "on-scroll-down": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.02-",
+        "tooltip": false
+    },
+    "backlight": {
+        "device": "nvidia_wmi_ec_backlight",
+        "format": "󰃠  {percent}%",
+        "on-scroll-up": "brightnessctl set +5%",
+        "on-scroll-down": "brightnessctl set 5%-",
+        "tooltip": false
+    },
+    "network": {
+        "format-wifi": "󰖩  {signalStrength}%",
+        "format-ethernet": "󰈀  {ifname}",
+        "format-disconnected": "󰤯  off",
+        "on-click": "ghostty -e nmtui",
+        "tooltip-format": "{ifname}: {ipaddr}\ngw {gwaddr} · ↑{bandwidthUpBits} ↓{bandwidthDownBits}",
+        "tooltip-format-disconnected": "disconnected"
+    },
+    "bluetooth": {
+        "format": "󰂯",
+        "format-connected": "󰂱 {num_connections}",
+        "format-disabled": "󰂲",
+        "on-click": "ghostty -e bluetoothctl",
+        "tooltip-format": "{controller_alias}\t{controller_address}",
+        "tooltip-format-connected": "{device_enumerate}"
+    },
+    "cpu": {
+        "format": "  {usage}%",
+        "interval": 2,
+        "on-click": "ghostty -e btm",
+        "tooltip": false
+    },
+    "temperature": {
+        "thermal-zone": 12,
+        "critical-threshold": 90,
+        "format": "{icon} {temperatureC}°",
+        "format-icons": [
+            "󱃃",
+            "󰔏",
+            "󱃂"
+        ],
+        "tooltip": false
+    },
+    "memory": {
+        "format": "  {percentage}%",
+        "interval": 5,
+        "on-click": "ghostty -e btm",
+        "tooltip-format": "{used:0.1f}G / {total:0.1f}G"
+    },
+    "disk": {
+        "format": "󰋊  {percentage_used}%",
+        "path": "/",
+        "interval": 60,
+        "tooltip-format": "{used} / {total} on {path}"
+    },
+    "power-profiles-daemon": {
+        "format": "{icon}",
+        "format-icons": {
+            "default": "󰗑",
+            "performance": "󰉁",
+            "balanced": "󰗑",
+            "power-saver": "󰌪"
+        },
+        "tooltip-format": "Power profile: {profile}\nClick to cycle"
+    },
+    "custom/cpufreq": {
+        "exec": "~/.config/waybar/scripts/cpu-freq.py",
+        "return-type": "json",
+        "interval": 3,
+        "signal": 9,
+        "on-click": "~/.config/scripts/cpu-governor-toggle.sh",
+        "on-click-right": "~/.config/scripts/monitor-toggle.sh com.waybar.cpumon s-tui"
+    },
+    "custom/battery": {
+        "exec": "~/.config/waybar/scripts/battery-power.py",
+        "return-type": "json",
+        "interval": 5,
+        "signal": 8,
+        "on-click": "~/.config/waybar/scripts/battery-click.sh",
+        "on-click-right": "~/.config/scripts/monitor-toggle.sh com.waybar.powermon sudo powertop",
+        "tooltip": true
+    },
+    "tray": {
+        "icon-size": 16,
+        "spacing": 10
+    },
+    "custom/power": {
+        "format": "󰐥",
+        "on-click": "~/.config/scripts/fuzzel-powermenu.sh",
+        "tooltip-format": "Power menu (Mod+X)"
+    }
+}

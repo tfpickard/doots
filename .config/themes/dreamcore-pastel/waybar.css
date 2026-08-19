@@ -1,0 +1,15 @@
+/* Dreamcore Pastel — waybar color definitions (imported by themes/dope/style.css) */
+@define-color bg        #1b1a26;
+@define-color bg_dark   #14131d;
+@define-color surface   #2a2839;
+@define-color overlay   #6f6b86;
+@define-color text      #e6e2f1;
+@define-color subtext   #b0aac6;
+@define-color accent    #c9a7ff;
+@define-color accent2   #a7f0e0;
+@define-color blue      #a7c8ff;
+@define-color green     #b6f0c2;
+@define-color yellow    #ffe6a7;
+@define-color orange    #ffc6a7;
+@define-color red       #ff9db0;
+@define-color pink      #ffb3e6;
