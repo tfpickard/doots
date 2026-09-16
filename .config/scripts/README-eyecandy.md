@@ -101,7 +101,53 @@ screen. `lock-screensaver.py` does the other half instead — and it now puts a
 ```sh
 lock-screensaver.py list        # installed hacks + the vintage shortlist
 lock-screensaver.py test pipes  # audition one on every screen
+lock-screensaver.py shuffle     # a new random hack on each screen
 ```
+
+### Driving it by hand
+
+| key | |
+|---|---|
+| `Mod+Z` | screensaver now, on every screen — exactly what the 10-minute timeout does |
+| `Mod+Shift+Z` | **new random animation on each screen, without dismissing it** |
+| `Mod+Ctrl+Shift+Z` / `Mod+Alt+Z` | walk the shortlist in order instead, forwards / back |
+| `Mod+Ctrl+Z` | atlantis on the built-in panel — and the off switch for any hack |
+| anything else | dismisses the screensaver, as always |
+
+All of these act on **every monitor**, one hack per screen; only `Mod+Ctrl+Z` is
+atlantis-specific. `shuffle` never hands back a hack that is already on screen,
+and the ordered walk moves a screenful at a time (position remembered in
+`$XDG_RUNTIME_DIR/lock-screensaver.cycle`), so with three monitors you see nine
+different hacks in three presses.
+
+There is no `xscreensaver-command -next` to bind: no xscreensaver daemon runs
+here, these are the bare GL hacks on rootless XWayland, so "next" means kill and
+relaunch. Cycling also clears the ambient atlantis, since otherwise the new hack
+just stacks on top of it.
+
+### How "every key except that one" works
+
+swayidle cannot tell the cycle keys from any other key: it only knows the
+session stopped being idle, and the keypress asking for a new animation is
+input like any other. So the decision is made in the script instead —
+`resume` runs `lock-screensaver.py wake`, not `stop`:
+
+1. the keybind runs `shuffle`, which first drops a marker file;
+2. `wake` waits ~350ms, long enough for that marker to appear whichever of the
+   two the compositor happens to run first;
+3. marker present → leave the hacks up, the cycle is already replacing them.
+   No marker → this was a real "I'm back", so stop.
+
+Dismissal after the first cycle is handled by a **second swayidle** with a
+one-second timeout, started alongside the hacks and killed with them. The main
+one fires `resume` only once per idle period, so from the first cycle onwards it
+is spent — without the watcher the screensaver would be up with no key left that
+could dismiss it.
+
+That watcher is killed with `SIGKILL` rather than `SIGTERM` on purpose: swayidle
+runs its `resume` command as it exits if it happens to be idle at the time, and
+a dying watcher's parting `wake` will otherwise land on the *next* screensaver a
+few seconds later and kill it on sight.
 
 Timings, set in the niri config's swayidle line:
 
@@ -130,6 +176,13 @@ niri rule can only fullscreen them generically — matching on *title*, which
 they all share. Which screen each lands on is then set with
 `niri msg action move-window-to-monitor --id <id> <output>`, one at a time so
 each new window can be identified before the next appears.
+
+**If the screensaver flashes up and vanishes**, the `:12` XWayland has wedged:
+the socket file is still there and even `xdpyinfo` answers, but no window ever
+reaches the screen, so every hack exits within a quarter of a second. The script
+detects a hack that dies before it has a window, replaces the server and retries
+once, so this should heal itself; `pkill -f 'xwayland-satellite :12'` is the
+manual version.
 
 ## Wallpaper
 

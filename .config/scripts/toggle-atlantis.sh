@@ -1,16 +1,25 @@
 #!/usr/bin/env bash
 # Toggle the xscreensaver "atlantis" GL hack on/off.
-# When starting, it ensures xwayland-satellite is running on DISPLAY=:12,
-# then launches atlantis. The niri window-rule (match app-id="Atlantis")
-# takes care of placing it fullscreen on eDP-1.
+#
+# It doubles as the off switch for the whole screensaver: if ANY hack is running
+# -- atlantis, or a set put up by `lock-screensaver.py next` (Mod+Ctrl+Shift+Z)
+# -- this stops all of them rather than adding one more. Otherwise it starts
+# atlantis, and the niri window-rule (match app-id="Atlantis") places it
+# fullscreen on eDP-1.
+#
+# When starting, it ensures xwayland-satellite is running on DISPLAY=:12.
 
 set -u
 
 DISPLAY_NUM=":12"
-ATLANTIS="/usr/libexec/xscreensaver/atlantis"
+HACK_DIR="/usr/libexec/xscreensaver"
+ATLANTIS="$HACK_DIR/atlantis"
 
-if pgrep -x atlantis >/dev/null 2>&1; then
-    pkill -x atlantis
+if pgrep -f "^$HACK_DIR/" >/dev/null 2>&1; then
+    # Go through the script for the ones it tracks, so its pidfile is cleaned
+    # up, then sweep anything it doesn't know about (this atlantis included).
+    "$HOME/.config/scripts/lock-screensaver.py" stop >/dev/null 2>&1
+    pkill -f "^$HACK_DIR/" >/dev/null 2>&1
     exit 0
 fi
 

@@ -471,7 +471,18 @@ spawn-sh-at-startup "wl-paste --type image --watch cliphist store"
 // which on battery is real power. idle-dpms.sh already no-ops on AC; if you
 // want the screens to blank earlier on battery specifically, move that timeout
 // down -- just be aware of the unlocked-but-dark window it reopens.
-spawn-sh-at-startup "swayidle -w timeout 600 '/home/tom/.config/scripts/lock-screensaver.py start' resume '/home/tom/.config/scripts/lock-screensaver.py stop' timeout 2700 '/home/tom/.config/scripts/lock.sh -f' timeout 2760 '/home/tom/.config/scripts/idle-dpms.sh off' resume '/home/tom/.config/scripts/idle-dpms.sh on' before-sleep '/home/tom/.config/scripts/lock.sh -f'"
+// The screensaver's `resume` runs `wake`, not `stop`. Any key should dismiss
+// the screensaver -- except the cycle keys (Mod+Shift+Z and friends), which
+// should swap the animations and leave it up. swayidle can't tell those apart:
+// it only knows the session stopped being idle. So `wake` pauses a moment and
+// looks for a cycle request from the keybind before deciding. See the
+// lock-screensaver.py docstring for the whole handshake.
+//
+// Dismissal after the FIRST cycle is handled by a second, short-timeout
+// swayidle that the script starts alongside the hacks -- this one has already
+// fired its `resume` by then, and wouldn't fire another until the next full
+// 10-minute idle period.
+spawn-sh-at-startup "swayidle -w timeout 600 '/home/tom/.config/scripts/lock-screensaver.py start' resume '/home/tom/.config/scripts/lock-screensaver.py wake' timeout 2700 '/home/tom/.config/scripts/lock.sh -f' timeout 2760 '/home/tom/.config/scripts/idle-dpms.sh off' resume '/home/tom/.config/scripts/idle-dpms.sh on' before-sleep '/home/tom/.config/scripts/lock.sh -f'"
 
 // PolicyKit authentication agent. Without one, any GUI app that needs elevated
 // rights (nm-connection-editor saving a system connection, gnome-disks,
@@ -669,7 +680,28 @@ binds {
     Mod+Semicolon hotkey-overlay-title="Clipboard History" { spawn "/home/tom/.config/scripts/cliphist-fuzzel.sh"; }
     Mod+Shift+A   hotkey-overlay-title="Ask AI" { spawn "/home/tom/.config/scripts/ask-ai.sh"; }
     Mod+B         hotkey-overlay-title="Toggle Waybar" { spawn "/home/tom/.config/waybar/toggle.sh"; }
-    Mod+Ctrl+Z    hotkey-overlay-title="Toggle Atlantis Screensaver" { spawn "/home/tom/.config/scripts/toggle-atlantis.sh"; }
+    // Screensaver by hand. Mod+Z puts it up on every screen exactly as the
+    // 10-minute idle timeout does; Mod+Ctrl+Z is the atlantis-on-the-laptop
+    // toggle, and doubles as the off switch for whatever else is running.
+    //
+    // While it's up, Mod+Shift+Z re-rolls a new random hack on each screen
+    // WITHOUT dismissing it, and Mod+Ctrl+Shift+Z / Mod+Alt+Z walk the shortlist
+    // in order instead. Every other key dismisses as usual.
+    //
+    // That distinction can't be made by the keybind alone: the keypress is
+    // input, so swayidle wakes no matter which key it was. Both paths go
+    // through lock-screensaver.py, which records the cycle request and has
+    // swayidle's `resume` (-> `wake`, below) check for it before deciding
+    // whether to stop the hacks. repeat=false so holding the key doesn't queue
+    // up a dozen re-rolls.
+    //
+    // There is no `xscreensaver-command -next` to bind here: no xscreensaver
+    // daemon is running, these are the bare GL hacks on rootless XWayland.
+    Mod+Z            repeat=false hotkey-overlay-title="Screensaver Now (all screens)"     { spawn "/home/tom/.config/scripts/lock-screensaver.py" "start"; }
+    Mod+Shift+Z      repeat=false hotkey-overlay-title="Screensaver: Shuffle Animations"   { spawn "/home/tom/.config/scripts/lock-screensaver.py" "shuffle"; }
+    Mod+Ctrl+Shift+Z repeat=false hotkey-overlay-title="Screensaver: Next Animation"       { spawn "/home/tom/.config/scripts/lock-screensaver.py" "next"; }
+    Mod+Alt+Z        repeat=false hotkey-overlay-title="Screensaver: Previous Animation"   { spawn "/home/tom/.config/scripts/lock-screensaver.py" "prev"; }
+    Mod+Ctrl+Z       repeat=false hotkey-overlay-title="Toggle Screensaver (atlantis / off)" { spawn "/home/tom/.config/scripts/toggle-atlantis.sh"; }
     Mod+Ctrl+P    hotkey-overlay-title="Toggle Teams Keep-Active (anti-idle)" { spawn "/home/tom/.config/scripts/teams-keep-active.sh"; }
     Mod+Shift+T   hotkey-overlay-title="Switch Global Theme" { spawn "/home/tom/.config/themes/theme-set"; }
 
