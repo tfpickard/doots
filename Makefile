@@ -41,7 +41,8 @@ HOME_FILES := .zshrc .tmux.conf .aliases .functions .gitignore .p10k.zsh \
 #   nvim-old - handled by its own special case further down.
 CONFIG_DIRS := nvim hypr ghostty waybar dunst rofi alacritty \
                niri themes scripts mako eww satty gptcommit paru \
-               swaylock swaylock-effects gtklock swaync fnott
+               swaylock swaylock-effects gtklock swaync fnott \
+               fuzzel gtk-3.0 gtk-4.0
 all: deps backup symlinks ghostty nvim
 	@echo "🎉 Dotfiles installation complete!"
 	@echo "💡 You may need to:"

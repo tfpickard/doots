@@ -227,10 +227,18 @@
         "on-click": "ghostty -e btm",
         "tooltip": false
     },
+    // Was "thermal-zone": 12, which is iwlwifi_1 (the WiFi card) on this
+    // machine -- thermal_zone numbering isn't stable across boots anyway.
+    // hwmon-path-abs pins to the coretemp *device* path, which survives a
+    // hwmonN renumber; input-filename picks "Package id 0" specifically
+    // (cpu-freq.py:102-116 resolves the same sensor the same way).
     "temperature": {
-        "thermal-zone": 12,
+        "hwmon-path-abs": "/sys/devices/platform/coretemp.0/hwmon",
+        "input-filename": "temp1_input",
         "critical-threshold": 90,
         "format": "{icon} {temperatureC:>2}°",
+        "on-click": "ghostty -e btm",
+        "tooltip-format": "CPU package: {temperatureC}°C",
         "format-icons": [
             "󱃃",
             "󰔏",

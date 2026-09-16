@@ -316,6 +316,15 @@ layout {
         // via a "focus_gradient" object in their palette.json.
         active-gradient from="#bd5eff" to="#5ef1ff" angle=45 relative-to="workspace-view" in="oklch longer hue" // THEME:focus-gradient
 
+        // Color of the ring around a window requesting attention (toggle-window-urgent,
+        // or a client raising xdg_activation).
+        //
+        // This lives here rather than in `border` below: the border block is
+        // off, and a color node inside a disabled block never draws. It used
+        // to sit there with its own THEME:focus-urgent marker, which meant
+        // theme-set was faithfully rewriting a value nothing ever displayed.
+        urgent-color "#ff6e5e" // THEME:focus-urgent
+
         // You can also use gradients. They take precedence over solid colors.
         // Gradients are rendered the same as CSS linear-gradient(angle, from, to).
         // The angle is the same as in linear-gradient, and is optional,
@@ -342,8 +351,8 @@ layout {
         active-color "#ffc87f"
         inactive-color "#505050"
 
-        // Color of the border around windows that request your attention.
-        urgent-color "#ff6e5e" // THEME:focus-urgent
+        // Urgent-window color lives on focus-ring above, not here -- see the
+        // comment there. This block is off, so a color set here would be inert.
 
         // Gradients can use a few different interpolation color spaces.
         // For example, this is a pastel rainbow gradient via in="oklch longer hue".
