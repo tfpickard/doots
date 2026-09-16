@@ -39,7 +39,7 @@ REPLACEMENTS: dict[str, tuple[str, dict]] = {
         "hyprland/window",
         {
             "format": "{title}",
-            "max-length": 60,
+            "max-length": 34,
             "separate-outputs": True,
         },
     ),

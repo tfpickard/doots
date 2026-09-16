@@ -10,6 +10,9 @@ so the bar never hammers the network:
 
 Output is a single line of Waybar JSON: {text, tooltip, class, alt}.
 
+Bar text is "{icon} {temp} {humidity} {wind}"; the tooltip adds feels-like,
+high/low, precipitation chance and sun times.
+
 Why not geoclue? Mozilla Location Service (geoclue's Wi-Fi backend) was shut
 down in 2024, so IP geolocation is now both simpler and more reliable.
 
@@ -175,7 +178,17 @@ def build_output(data):
     if loc.get("region"):
         place = f"{place}, {loc['region']}" if place else loc["region"]
 
-    text = f"{icon}  {temp}{unit}"
+    # Bar text carries the three readings worth a glance. Each value is padded
+    # as a whole "number+unit" token, left-justified so the unit stays welded
+    # to its number and the slack falls on the right -- padding the number
+    # alone would right-align the digits and leave a gap between "82" and "F".
+    # Total width is still constant, so the module never shifts.
+    temp_s = f"{temp}{unit}"
+    hum_s = f"{hum}%"
+    wind_s = f"{wind}"
+    text = (f"{icon}  {temp_s:<5}"
+            f"  {ICON_HUMIDITY} {hum_s:<4}"
+            f"  {ICON_WIND} {wind_s:<2}")
     pop_line = f"\n{ICON_UMBRELLA}  {pop}% precip" if pop is not None else ""
     tooltip = (
         f"<b>{desc}</b>  {temp}{unit}   {place}\n"

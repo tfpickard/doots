@@ -6,7 +6,7 @@ frequency picture for a many-core machine: the scaling governor and driver,
 the energy-performance preference (intel_pstate EPP), the average / peak / min
 core clock, and how many cores are actually busy right now.
 
-Bar text:  {icon} {avg}GHz
+Bar text:  {icon} {avg}GHz   (fixed width; the icon swaps when throttling)
 Tooltip:   governor, driver, EPP, avg/max/min GHz, active cores N/total,
            and a compact per-core clock grid.
 
@@ -197,15 +197,17 @@ def main():
     throttling, throttle_total, throttle_delta, throttle_cause = throttle_status()
 
     # --- bar text -----------------------------------------------------------
-    if governor == "performance":
+    # Width is pinned: a fixed-width clock reading and, when throttling, an
+    # icon swap rather than an extra glyph, so the bar never shifts.
+    if throttling:
+        icon = ICON_THROTTLE
+    elif governor == "performance":
         icon = ICON_PERF
     elif governor == "powersave":
         icon = ICON_SAVE
     else:
         icon = ICON_DEFAULT
-    text = f"{icon}  {avg:.1f}GHz"
-    if throttling:
-        text += f"  {ICON_THROTTLE}"
+    text = f"{icon}  {avg:>4.1f}GHz"
 
     classes = [governor] if governor and governor != "?" else []
     if busy >= max(1, total * 0.75):

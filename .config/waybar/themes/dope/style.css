@@ -14,7 +14,7 @@
 
 * {
     font-family: "JetBrainsMono Nerd Font Propo", "Symbols Nerd Font", sans-serif;
-    font-size: 13px;
+    font-size: 11px;
     font-weight: 600;
     min-height: 0;
     border: none;
@@ -45,8 +45,8 @@ tooltip label {
     background: alpha(@bg, 0.92);
     border: 1px solid alpha(@surface, 0.55);
     border-radius: 16px;
-    padding: 0 4px;
-    margin: 0 3px;
+    padding: 0 3px;
+    margin: 0 2px;
     box-shadow: 0 2px 6px alpha(@bg_dark, 0.55);
 }
 
@@ -56,8 +56,8 @@ tooltip label {
     color: @accent2;
     border: 1px solid alpha(@accent2, 0.25);
     border-radius: 16px;
-    padding: 0 16px;
-    margin: 0 3px;
+    padding: 0 12px;
+    margin: 0 2px;
     box-shadow: 0 2px 6px alpha(@bg_dark, 0.55);
     transition: background 0.2s ease-in-out;
 }
@@ -86,12 +86,74 @@ tooltip label {
 #idle_inhibitor,
 #custom-clipboard,
 #custom-ai,
+#custom-aiagents,
+#custom-github,
 #tray,
 #custom-power {
     background: transparent;
-    padding: 0 8px;
+    padding: 0 5px;
     margin: 0;
     transition: background 0.15s ease-in-out, color 0.15s ease-in-out;
+}
+
+/* ---- separators -----------------------------------------------------------
+   Horizontal padding used to do all the visual separating, which cost ~16px
+   between every pair of modules. These 1px rules do the same job for 1px, and
+   carry meaning: a dotted rule joins related readings, a solid rule marks the
+   boundary between unrelated clusters.
+
+   They are drawn as border-LEFT on the first module of each run, never
+   border-right on the last. Modules hide themselves when they have nothing to
+   say (mpris with no player, tray with no icons); anchoring the rule to the
+   left means a separator disappears along with the module it belongs to,
+   instead of being left dangling at the edge of an island.
+
+   Dotted gets more alpha than solid because a broken line reads fainter than
+   a continuous one at the same value. Both should whisper.
+
+   Both rules are painted as background gradients rather than with
+   `border-style`. Two reasons: GTK3 here draws a 1px `dotted` border as
+   nothing at all and a 1px `dashed` border as a solid line, so borders cannot
+   express "these two readings belong together"; and insetting a border needs
+   vertical margins, which push the module's minimum height past the bar's own
+   and make waybar warn. A gradient's height is set directly, so neither
+   problem arises. */
+#custom-niriws,
+#custom-niriwindow,
+#workspaces,
+#window,
+#mpris,
+#network,
+#cpu,
+#memory,
+#power-profiles-daemon,
+#idle_inhibitor,
+#tray,
+#custom-power {
+    background-image: linear-gradient(
+        alpha(@overlay, 0.30), alpha(@overlay, 0.30));
+    background-repeat: no-repeat;
+    background-size: 1px 20px;
+    background-position: left center;
+}
+
+#backlight,
+#bluetooth,
+#custom-cpufreq,
+#temperature,
+#disk,
+#battery,
+#custom-battery,
+#custom-aiagents,
+#custom-clipboard,
+#custom-ai {
+    background-image: repeating-linear-gradient(
+        to bottom,
+        alpha(@overlay, 0.60) 0px, alpha(@overlay, 0.60) 2px,
+        transparent 2px, transparent 5px);
+    background-repeat: no-repeat;
+    background-size: 1px 16px;
+    background-position: left center;
 }
 
 /* subtle rounded highlight on hover for clickable modules */
@@ -99,6 +161,8 @@ tooltip label {
 #custom-weather:hover,
 #custom-clipboard:hover,
 #custom-ai:hover,
+#custom-aiagents:hover,
+#custom-github:hover,
 #custom-power:hover,
 #idle_inhibitor:hover,
 #network:hover,
@@ -109,7 +173,9 @@ tooltip label {
 #custom-battery:hover,
 #memory:hover,
 #power-profiles-daemon:hover {
-    background: alpha(@surface, 0.8);
+    /* background-color, not the `background` shorthand: the shorthand would
+       reset background-image and wipe out the dotted separators on hover. */
+    background-color: alpha(@surface, 0.8);
     border-radius: 11px;
 }
 
@@ -187,6 +253,28 @@ tooltip label {
 #idle_inhibitor.activated { color: @yellow; }
 #custom-clipboard         { color: @accent2; }
 #custom-ai                { color: @accent; }
+
+/* Copilot agents — colour follows the most urgent live session.
+   min-width absorbs the differing advance widths of the state glyphs, so the
+   module holds its size whichever state it is showing. */
+#custom-aiagents             { color: @overlay; }
+#custom-aiagents.none        { color: @overlay; }
+#custom-aiagents.idle        { color: @subtext; }
+#custom-aiagents.working     { color: @accent2; }
+#custom-aiagents.done        { color: @green; }
+#custom-aiagents.blocked     { color: @red; font-weight: 700; }
+#custom-aiagents.error       { color: @orange; }
+
+/* GitHub review queue / PR activity */
+#custom-github            { color: @overlay; }
+#custom-github.clear      { color: @overlay; }
+#custom-github.ready      { color: @green; }
+#custom-github.cifail     { color: @orange; }
+#custom-github.activity   { color: @accent2; }
+#custom-github.review     { color: @accent; font-weight: 700; }
+#custom-github.stale      { color: @overlay; }
+#custom-github.error      { color: @overlay; }
+
 #cpu                      { color: @orange; }
 #custom-cpufreq           { color: @orange; }
 #custom-cpufreq.performance { color: @red; }
@@ -217,6 +305,37 @@ tooltip label {
 #custom-battery.charging  { color: @green; }
 #custom-power             { color: @red; }
 
+/* ---- stable widths --------------------------------------------------------
+   The bar used to twitch every time a reading gained or lost a digit, which
+   shifted every module to the left of it.
+
+   Two mechanisms fix it, and both are needed:
+
+   1. Fixed character counts. The config pads numeric fields (`{usage:>3}`)
+      and sets `min-length` where a module has alternate formats of different
+      lengths. JetBrainsMono renders every digit and the space at exactly the
+      same advance, so equal character counts really are equal widths.
+
+   2. min-width floors, below. Nerd Font *icons* are not uniform width -- the
+      set used here ranges from 9px to 16px -- so a module that swaps its icon
+      still resizes even with the character count pinned. These floors are the
+      measured width of each module's widest variant, which parks the module
+      at that size permanently.
+
+   When adding a module whose icon or text length varies, measure its widest
+   rendering and add it here rather than eyeballing the number. These values
+   are font-size dependent -- re-measure if the size above changes.
+   -------------------------------------------------------------------------- */
+#pulseaudio            { min-width: 74px; }
+#network               { min-width: 67px; }
+#bluetooth             { min-width: 29px; }
+#power-profiles-daemon { min-width: 12px; }
+#idle_inhibitor        { min-width: 13px; }
+#custom-weather        { min-width: 218px; }
+#custom-cpufreq        { min-width: 94px; }
+#custom-aiagents       { min-width: 53px; }
+#custom-github         { min-width: 52px; }
+
 @keyframes blink {
     to { color: @bg; background: @red; }
 }
@@ -225,6 +344,11 @@ tooltip label {
 }
 #custom-battery.critical:not(.charging) {
     animation: blink 1s steps(2) infinite alternate;
+}
+
+/* An agent blocked on you is the one thing here worth interrupting for. */
+#custom-aiagents.blocked {
+    animation: blink 1.6s steps(2) infinite alternate;
 }
 
 #tray > .passive { -gtk-icon-effect: dim; }

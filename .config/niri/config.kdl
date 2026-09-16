@@ -161,6 +161,36 @@ input {
     focus-follows-mouse
 }
 
+// Pixel-art cursor theme, generated from DMZ-White by
+// ~/.config/scripts/pixelate-cursors.py: every cursor is reduced to a 16x16
+// grid with hard alpha and a 16-colour palette, then scaled back up by whole
+// numbers so one source pixel becomes a crisp square block.
+//
+// Regenerate with:
+//   .config/scripts/pixelate-cursors.py DMZ-White --name dmz-white-4bit
+//
+// Keep xcursor-size a whole-number multiple of that 16px grid (16, 32, 48,
+// 64). Any other size makes Xcursor rescale a sprite it cannot divide evenly
+// and the blocks come out ragged.
+cursor {
+    xcursor-theme "dmz-white-4bit"
+    xcursor-size 32
+}
+
+// Hand the same cursor theme to every client niri spawns.
+//
+// Toolkits read XCURSOR_THEME at process start and cache the result for the
+// process lifetime -- there is no "the cursor theme changed" notification a
+// Chromium or Electron app will act on. Naming the theme explicitly here means
+// a newly launched app gets it directly, rather than resolving the indirection
+// through ~/.icons/default and picking up whatever that happened to inherit
+// when it launched. Already-running apps still need a full restart (a VS Code
+// *window reload* is not enough; it reuses the same process).
+environment {
+    XCURSOR_THEME "dmz-white-4bit"
+    XCURSOR_SIZE "32"
+}
+
 // You can configure outputs by their name, which you can find
 // by running `niri msg outputs` while inside a niri instance.
 // The built-in laptop monitor is usually called "eDP-1".

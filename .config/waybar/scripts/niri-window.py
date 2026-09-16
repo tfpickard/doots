@@ -13,7 +13,7 @@ import sys
 import threading
 import time
 
-MAX_LEN = 60
+MAX_LEN = 34
 
 
 def exit_when_orphaned():

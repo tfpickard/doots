@@ -170,20 +170,22 @@ def main():
 
     # Show the live rate next to the percent so it's visible at a glance.
     # Left-click toggles between wattage and current+voltage (mode file).
+    # Every numeric field is padded to its widest form so the module keeps a
+    # constant width as the readings move.
     mode = bar_mode()
     if status in ("Charging", "Discharging") and (watts or amps):
         arrow = "" if charging else ""
         if mode == "vi" and amps is not None:
-            detail = f"{amps:.2f}A"
+            detail = f"{amps:>5.2f}A"
             if volts is not None:
-                detail += f" {volts:.1f}V"
-            text = f"{icon}  {capacity}% {arrow}{detail}"
+                detail += f" {volts:>4.1f}V"
+            text = f"{icon}  {capacity:>3}% {arrow}{detail}"
         elif watts is not None:
-            text = f"{icon}  {capacity}% {arrow}{watts:.0f}W"
+            text = f"{icon}  {capacity:>3}% {arrow}{watts:>3.0f}W"
         else:
-            text = f"{icon}  {capacity}%"
+            text = f"{icon}  {capacity:>3}%"
     else:
-        text = f"{icon}  {capacity}%"
+        text = f"{icon}  {capacity:>3}%"
 
     # --- css class ----------------------------------------------------------
     classes = []
