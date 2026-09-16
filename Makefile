@@ -243,22 +243,57 @@ systemd:
 sddm:
 	@echo "🖥️  Installing SDDM theme..."
 	@# SDDM only looks in /usr/share/sddm/themes, and it runs as the `sddm`
-	@# user, so the theme has to be reachable from outside $$HOME. A symlink
-	@# keeps edits live; if your home is ever mode 0700 the greeter can't
-	@# traverse it, in which case copy instead of linking (see below).
+	@# user, so the theme has to be reachable from outside $$HOME.
+	@#
+	@# This used to be a symlink into the repo, which kept edits live. It
+	@# can't be any more. The theme is upstream Sugar Candy QML plus a patch
+	@# series, and patching through a symlink would rewrite the tracked files
+	@# and leave the repo permanently dirty -- the same trap the gtklock
+	@# target already designs around. So the theme is COPIED and then patched
+	@# in place. The cost is that edits under .config/sddm are no longer live:
+	@# re-run `make sddm` to see them.
+	@#
+	@# Keeping the QML pristine with the changes in patches/ is what preserves
+	@# the upstream-refresh path: drop a newer Sugar Candy in, re-run this,
+	@# and the patches either apply or say exactly which hunk moved.
+	@#
+	@# SDDM reads *every* file in /etc/sddm.conf.d, whatever its extension,
+	@# in sorted order, and the last Current= wins. A backup left next to the
+	@# real config therefore shadows it -- theme.conf.user.bak-simple-sddm
+	@# sorts after theme.conf.user and silently held the greeter on the stock
+	@# mountain theme. Backups go in /etc/sddm.conf.d.backups, outside the
+	@# read path, and any other file setting Current= is moved there too.
 	@if [ -d $(DOTFILES_DIR)/.config/sddm/sgi-sddm ]; then \
-		sudo ln -sfn $(DOTFILES_DIR)/.config/sddm/sgi-sddm /usr/share/sddm/themes/sgi-sddm; \
-		echo "Linked /usr/share/sddm/themes/sgi-sddm"; \
+		sudo rm -rf /usr/share/sddm/themes/sgi-sddm; \
+		sudo cp -rL $(DOTFILES_DIR)/.config/sddm/sgi-sddm /usr/share/sddm/themes/sgi-sddm; \
+		sudo rm -rf /usr/share/sddm/themes/sgi-sddm/patches; \
+		echo "Copied /usr/share/sddm/themes/sgi-sddm"; \
+		for p in $(DOTFILES_DIR)/.config/sddm/sgi-sddm/patches/*.patch; do \
+			[ -f "$$p" ] || continue; \
+			if sudo patch -d /usr/share/sddm/themes/sgi-sddm -p1 \
+					--batch --forward <"$$p" >/dev/null; then \
+				echo "🩹 applied $$(basename $$p)"; \
+			else \
+				echo "❌ $$(basename $$p) did not apply; see *.rej under the theme"; \
+				exit 1; \
+			fi; \
+		done; \
 		if sudo -u sddm test -r /usr/share/sddm/themes/sgi-sddm/Main.qml; then \
 			echo "✅ readable by the sddm user"; \
 		else \
-			echo "⚠️  sddm cannot read it through the symlink; copying instead"; \
-			sudo rm -f /usr/share/sddm/themes/sgi-sddm; \
-			sudo cp -r $(DOTFILES_DIR)/.config/sddm/sgi-sddm /usr/share/sddm/themes/sgi-sddm; \
+			echo "⚠️  the sddm user cannot read the installed theme"; \
 		fi; \
 		sudo mkdir -p /etc/sddm.conf.d; \
 		printf '[Theme]\nCurrent=sgi-sddm\n' | sudo tee /etc/sddm.conf.d/theme.conf.user >/dev/null; \
 		echo "🖥️  SDDM theme set to sgi-sddm"; \
+		for f in /etc/sddm.conf.d/*; do \
+			[ -f "$$f" ] || continue; \
+			[ "$$f" = /etc/sddm.conf.d/theme.conf.user ] && continue; \
+			grep -q '^[[:space:]]*Current=' "$$f" || continue; \
+			sudo mkdir -p /etc/sddm.conf.d.backups; \
+			sudo mv "$$f" /etc/sddm.conf.d.backups/; \
+			echo "⚠️  moved $$f aside: it also sets Current= and would shadow ours"; \
+		done; \
 	else \
 		echo "❌ SDDM theme not found"; \
 	fi
