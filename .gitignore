@@ -11,3 +11,13 @@
 # Active theme selection, created by `make theme` / `theme-set` (per-machine)
 .config/themes/active
 __pycache__/
+
+# Electron runtime state that Slack drops into whatever directory it was
+# launched from -- which, once, was this one. The Singleton* entries are
+# symlinks into /run/user and a PID-named lock, so they are already dangling;
+# userData/ is its per-user profile. All of it is machine-local and recreated
+# on demand.
+SingletonCookie
+SingletonLock
+SingletonSocket
+userData/
