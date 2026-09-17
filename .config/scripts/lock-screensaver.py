@@ -42,6 +42,22 @@ XWayland at all. EXTRA_PROVIDERS carries their launch recipes; everything
 else in this file that used to assume "a hack is HACK_DIR/name -window"
 now checks that table first.
 
+AUTO-SHUFFLE
+------------
+Once the screensaver is up, it reshuffles itself every SHUFFLE_INTERVAL
+(5 minutes) on its own, no input involved -- start_shuffler() spawns a
+detached loop (`_autoshuffle_loop`) that sleeps, calls `shuffle`, repeats,
+and exits on its own once the screensaver stops. This is a genuinely
+separate mechanism from swayidle's idle/resume machinery above: it runs on
+a wall-clock timer regardless of activity, for as long as the screensaver
+is up, and the `shuffle` it calls goes through the exact same cycle() as
+the manual keybind -- nothing special-cased for the automatic case.
+
+The same tick also fires screensaver-generate-phrases.py, fire-and-forget,
+which grows the text pool's phrase list in batches every few days (see
+that file). It gates its own timing and is a no-op the rest of the time,
+so calling it every 5 minutes is cheap.
+
 CYCLING, AND "ANY KEY BUT THIS ONE"
 -----------------------------------
 There is no `xscreensaver` daemon here to talk to with `xscreensaver-command
@@ -101,6 +117,22 @@ CURRENTFILE = os.path.join(RUNTIME, "lock-screensaver.current")
 # as they come up; `wake` treats its presence as "leave the screensaver alone".
 REQUESTFILE = os.path.join(RUNTIME, "lock-screensaver.request")
 WATCHERFILE = os.path.join(RUNTIME, "lock-screensaver.watcher")
+# Companion process that reshuffles every SHUFFLE_INTERVAL while the
+# screensaver is up (see start_shuffler() / stop_shuffler() below).
+SHUFFLERFILE = os.path.join(RUNTIME, "lock-screensaver.shuffler")
+
+# How often the screensaver reshuffles itself with no input at all -- a
+# request, not a guess: "shuffle the program every 5 minutes" while idle.
+# Applies uniformly to every screen, pinned clock/text monitors included
+# (cycle() already re-picks a dedicated screen's own pool on any cycle call).
+SHUFFLE_INTERVAL = 300
+
+# screensaver-generate-phrases.py grows the text pool's phrase list in
+# batches every few days (see that file for the actual schedule/model) --
+# called here on the same 5-minute tick, fire-and-forget, since it gates its
+# own timing internally and exits in a stat() the rest of the time.
+GENERATE_PHRASES_SCRIPT = os.path.join(
+    os.path.dirname(SELF), "screensaver-generate-phrases.py")
 
 # How long `wake` waits for a cycle request to show up before concluding there
 # isn't one and dismissing the screensaver. The keypress reaches niri's bind and
@@ -513,6 +545,83 @@ def stop_watcher() -> None:
         pass
 
 
+def shuffler_alive() -> bool:
+    try:
+        with open(SHUFFLERFILE) as fh:
+            pid = int(fh.read().strip())
+    except (OSError, ValueError):
+        return False
+    return os.path.exists(f"/proc/{pid}")
+
+
+def start_shuffler() -> None:
+    """Reshuffle every SHUFFLE_INTERVAL with no input at all.
+
+    A plain background loop, not another swayidle: this has nothing to do
+    with idle detection (it runs on a wall-clock interval regardless of
+    activity, for as long as the screensaver itself is up) so swayidle's
+    idle/resume machinery doesn't apply here. `_autoshuffle_loop` is this
+    same script re-invoked as a detached subprocess; see main() for it.
+    """
+    if shuffler_alive():
+        return
+    try:
+        proc = subprocess.Popen(
+            [SELF, "_autoshuffle_loop"],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            start_new_session=True,
+        )
+    except OSError:
+        return
+    try:
+        with open(SHUFFLERFILE, "w") as fh:
+            fh.write(f"{proc.pid}\n")
+    except OSError:
+        pass
+
+
+def stop_shuffler() -> None:
+    try:
+        with open(SHUFFLERFILE) as fh:
+            pid = int(fh.read().strip())
+    except (OSError, ValueError):
+        pid = None
+    if pid is not None:
+        # Plain SIGTERM is fine here (unlike stop_watcher's SIGKILL): this
+        # loop has no dying-gasp side effect to worry about, it just sleeps
+        # and occasionally shells out.
+        kill_pids([pid], group=False, sig=signal.SIGTERM)
+    try:
+        os.unlink(SHUFFLERFILE)
+    except OSError:
+        pass
+
+
+def autoshuffle_loop() -> int:
+    """Body of the detached `_autoshuffle_loop` subprocess started by
+    start_shuffler(). Sleeps SHUFFLE_INTERVAL, reshuffles, repeats -- until
+    the screensaver itself stops (PIDFILE gone), at which point this exits
+    on its own rather than waiting to be killed."""
+    while True:
+        time.sleep(SHUFFLE_INTERVAL)
+        if not os.path.exists(PIDFILE):
+            return 0
+        subprocess.run([SELF, "shuffle"], stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL)
+        # Fire-and-forget: this script gates its own 3-day interval and
+        # exits in a single stat() when it isn't due, so calling it every
+        # SHUFFLE_INTERVAL is cheap. Detached so a slow (or hung) generation
+        # run can never delay the next reshuffle.
+        try:
+            subprocess.Popen(
+                [GENERATE_PHRASES_SCRIPT],
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                start_new_session=True,
+            )
+        except OSError:
+            pass
+
+
 X_SOCKET = f"/tmp/.X11-unix/X{DISPLAY_NUM.lstrip(':')}"
 
 
@@ -622,6 +731,7 @@ def spawn(hack: str) -> int | None:
 
 def stop() -> int:
     stop_watcher()
+    stop_shuffler()
     kill_pids(read_pids())
     for path in (PIDFILE, CURRENTFILE):
         try:
@@ -764,6 +874,8 @@ def start(only: str | None = None) -> int:
         return 1
 
     rc = launch(picks, watch=True)
+    if rc == 0:
+        start_shuffler()
     if rc == 0 and shared_screens and vintage_pool:
         # Leave the cycle where the random pick landed, so the first Mod+Ctrl+
         # Shift+Z after an idle screensaver moves on from what you're looking
@@ -895,6 +1007,10 @@ def main() -> int:
     sub.add_parser("list", help="list installed hacks and the shortlist")
     t = sub.add_parser("test", help="run one hack by name on every monitor")
     t.add_argument("name")
+    # Internal: the detached loop start_shuffler() spawns. Not meant to be
+    # run by hand -- undocumented in the module docstring's USAGE list on
+    # purpose, same reasoning as swayidle's own watcher subprocess.
+    sub.add_parser("_autoshuffle_loop")
     args = ap.parse_args()
 
     if args.cmd == "stop":
@@ -912,6 +1028,8 @@ def main() -> int:
     if args.cmd == "test":
         stop()
         return start(args.name)
+    if args.cmd == "_autoshuffle_loop":
+        return autoshuffle_loop()
 
     available = installed_hacks()
     print(f"{len(available)} hacks in {HACK_DIR}")
