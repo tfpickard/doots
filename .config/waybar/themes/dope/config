@@ -110,7 +110,7 @@
         "exec": "~/.config/scripts/weather.py",
         "return-type": "json",
         "interval": 900,
-        "min-length": 20,
+        "min-length": 12,
         "align": 0,
         "on-click": "ghostty -e bash -c 'curl -s wttr.in | less -R'",
         "tooltip": true

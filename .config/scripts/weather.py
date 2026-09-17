@@ -178,17 +178,14 @@ def build_output(data):
     if loc.get("region"):
         place = f"{place}, {loc['region']}" if place else loc["region"]
 
-    # Bar text carries the three readings worth a glance. Each value is padded
-    # as a whole "number+unit" token, left-justified so the unit stays welded
-    # to its number and the slack falls on the right -- padding the number
-    # alone would right-align the digits and leave a gap between "82" and "F".
-    # Total width is still constant, so the module never shifts.
+    # Bar text carries the three readings worth a glance, single-spaced and
+    # unpadded -- this module isn't part of the fixed-width convention the
+    # CPU/battery modules use (see AGENTS.md), so there's no reason to
+    # reserve slack for alignment stability at the cost of bar width.
     temp_s = f"{temp}{unit}"
     hum_s = f"{hum}%"
     wind_s = f"{wind}"
-    text = (f"{icon}  {temp_s:<5}"
-            f"  {ICON_HUMIDITY} {hum_s:<4}"
-            f"  {ICON_WIND} {wind_s:<2}")
+    text = f"{icon} {temp_s} {ICON_HUMIDITY}{hum_s} {ICON_WIND}{wind_s}"
     pop_line = f"\n{ICON_UMBRELLA}  {pop}% precip" if pop is not None else ""
     tooltip = (
         f"<b>{desc}</b>  {temp}{unit}   {place}\n"
