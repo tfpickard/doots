@@ -87,14 +87,15 @@ EMPTY = "\u00b7"     # · empty
 
 # Short labels for the ten fixed-desk workspaces -- their full names ("agents",
 # "term1") are fine in binds and window rules, but ten of them plus whatever
-# empty scratch workspaces niri creates (empty-workspace-above-first, plus the
-# trailing empty one niri always keeps) is enough text to overflow the bar
-# when they all collapse onto one output (undocked, or before docking spreads
-# them across three). Unknown names fall back to their first 4 characters,
-# so a future workspace added without updating this map still degrades
-# gracefully instead of blowing up the bar.
+# ad-hoc dynamic workspaces accumulate beyond the fixed desk is enough text to
+# overflow the bar when they all collapse onto one output (undocked, or
+# before docking spreads them across three). Single letters for the four
+# word-based names; web/term already compress to 2 characters on their own.
+# Unknown names fall back to their first 2 characters, so a future workspace
+# added without updating this map still degrades gracefully instead of
+# blowing up the bar again.
 SHORT_NAMES = {
-    "code": "code", "agents": "agt", "chat": "chat", "mail": "mail",
+    "code": "C", "agents": "A", "chat": "H", "mail": "M",
     "web1": "w1", "web2": "w2", "web3": "w3",
     "term1": "t1", "term2": "t2", "term3": "t3",
 }
@@ -120,20 +121,22 @@ def render(workspaces, pal, output=None):
     pills = []
     for w in workspaces:
         name = w.get("name")
-        label = SHORT_NAMES.get(name, name[:4]) if name else w.get("idx", "?")
+        label = SHORT_NAMES.get(name, name[:2]) if name else w.get("idx", "?")
+        # No space between glyph and label, and (below) a single-space
+        # separator between pills rather than two -- every character here is
+        # multiplied by up to ten pills, so both add up fast. The focused
+        # pill used to also render at size='large'; that cost more width
+        # than it was worth once labels themselves got this short, so focus
+        # is now colour+weight only, same size as everything else.
         if w.get("is_urgent"):
-            pills.append(
-                f"<span color='{pal['red']}' weight='bold'>{FOCUSED} {label}</span>"
-            )
+            pills.append(f"<span color='{pal['red']}' weight='bold'>{FOCUSED}{label}</span>")
         elif w.get("is_focused"):
-            pills.append(
-                f"<span color='{pal['accent']}' weight='bold' size='large'>{FOCUSED} {label}</span>"
-            )
+            pills.append(f"<span color='{pal['accent']}' weight='bold'>{FOCUSED}{label}</span>")
         elif w.get("active_window_id") is not None:
-            pills.append(f"<span color='{pal['text']}'>{OCCUPIED} {label}</span>")
+            pills.append(f"<span color='{pal['text']}'>{OCCUPIED}{label}</span>")
         else:
-            pills.append(f"<span color='{pal['overlay']}'>{EMPTY} {label}</span>")
-    return "  ".join(pills)
+            pills.append(f"<span color='{pal['overlay']}'>{EMPTY}{label}</span>")
+    return " ".join(pills)
 
 
 def emit(text, last):
