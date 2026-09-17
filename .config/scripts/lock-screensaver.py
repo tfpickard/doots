@@ -677,6 +677,21 @@ def launch(picks: dict[str, str], watch: bool = True,
         placements[screen] = hack
         if new_id is not None and screen != "<none>":
             niri_action("move-window-to-monitor", "--id", str(new_id), screen)
+            # move-window-to-monitor relocates the window but does NOT bring
+            # it into view. niri's fullscreen is "fill the screen when this
+            # column is what's being scrolled to", not "force the compositor
+            # to show this column regardless of scroll position" -- those are
+            # orthogonal. If the target workspace already had another column
+            # (a real window left over from before the screensaver kicked
+            # in), the viewport can stay right where it was, and the new
+            # screensaver window sits fullscreen just off-screen to the side,
+            # invisible. Explicitly focusing it is what actually scrolls it
+            # into view. Confirmed via photos of the live desktop: without
+            # this, xdaliclock/apple2-text were correctly placed and
+            # genuinely fullscreen, but sitting one column over from
+            # pre-existing Teams/terminal/browser windows that stayed
+            # visible instead.
+            niri_action("focus-window", "--id", str(new_id))
 
     if not pids:
         return 1
