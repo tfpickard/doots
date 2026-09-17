@@ -157,8 +157,12 @@ input {
     // warp-mouse-to-focus
 
     // Focus windows and outputs automatically when moving the mouse into them.
-    // Setting max-scroll-amount="0%" makes it work only on windows already fully on screen.
-    focus-follows-mouse
+    // max-scroll-amount="0%" limits this to windows already fully on screen --
+    // without it, the strip scrolling under a *stationary* pointer on a
+    // three-monitor setup can steal focus onto a column that's only
+    // partially visible, which feels like the desktop grabbing focus back
+    // from you mid-navigation.
+    focus-follows-mouse max-scroll-amount="0%"
 }
 
 // Pixel-art cursor theme, generated from DMZ-White by
@@ -490,6 +494,28 @@ layout {
         // top 64
         // bottom 64
     }
+}
+
+// Hot corners (top-left opens the Overview by default) are off. The
+// left-most external monitor is the "code" workspace -- exactly where a
+// mouse gets thrown when reaching for a menu bar or a tab, and the overview
+// popping up uninvited while you're editing is worse than the corner being
+// gone. Mod+O still opens it on purpose.
+gestures {
+    hot-corners {
+        off
+    }
+}
+
+// niri already turns the built-in panel on/off with the lid automatically;
+// this just re-sorts the fixed-desk workspaces afterwards. Undocking
+// collapses all ten onto eDP-1 (expected, and fine short-term); re-opening
+// the lid after a dock cycle is exactly the moment windows can end up on
+// the wrong monitor, so nudge niri-replace.py rather than leaving it until
+// the next manual fix. Only `spawn` is supported here, and switch-events
+// fire even while locked -- both per the niri wiki.
+switch-events {
+    lid-open { spawn "/home/tom/.config/scripts/niri-replace.py"; }
 }
 
 // Add lines like this to spawn processes at startup.
@@ -919,10 +945,10 @@ binds {
 
     // Arrow keys kept as exact aliases, for when a full-size keyboard is
     // attached. They are never the only way to do anything.
-    Mod+Left  { focus-column-left; }
-    Mod+Down  { focus-window-down; }
-    Mod+Up    { focus-window-up; }
-    Mod+Right { focus-column-right; }
+    Mod+Left  hotkey-overlay-title=null { focus-column-left; }
+    Mod+Down  hotkey-overlay-title=null { focus-window-down; }
+    Mod+Up    hotkey-overlay-title=null { focus-window-up; }
+    Mod+Right hotkey-overlay-title=null { focus-column-right; }
 
     // --- Mod + Shift + hjkl: send the window to another monitor/workspace ---
     // Horizontal = monitors (they sit side by side), vertical = workspaces
@@ -933,10 +959,10 @@ binds {
     Mod+Shift+K { move-column-to-workspace-up; }
     Mod+Shift+L { move-column-to-monitor-right; }
 
-    Mod+Shift+Left  { move-column-to-monitor-left; }
-    Mod+Shift+Down  { move-column-to-workspace-down; }
-    Mod+Shift+Up    { move-column-to-workspace-up; }
-    Mod+Shift+Right { move-column-to-monitor-right; }
+    Mod+Shift+Left  hotkey-overlay-title=null { move-column-to-monitor-left; }
+    Mod+Shift+Down  hotkey-overlay-title=null { move-column-to-workspace-down; }
+    Mod+Shift+Up    hotkey-overlay-title=null { move-column-to-workspace-up; }
+    Mod+Shift+Right hotkey-overlay-title=null { move-column-to-monitor-right; }
 
     // Same, but taking only the focused window instead of the whole column.
     Mod+Shift+Alt+H { move-window-to-monitor-left; }
@@ -950,16 +976,27 @@ binds {
     Mod+Ctrl+K { move-window-up; }
     Mod+Ctrl+L { move-column-right; }
 
-    Mod+Ctrl+Left  { move-column-left; }
-    Mod+Ctrl+Down  { move-window-down; }
-    Mod+Ctrl+Up    { move-window-up; }
-    Mod+Ctrl+Right { move-column-right; }
+    Mod+Ctrl+Left  hotkey-overlay-title=null { move-column-left; }
+    Mod+Ctrl+Down  hotkey-overlay-title=null { move-window-down; }
+    Mod+Ctrl+Up    hotkey-overlay-title=null { move-window-up; }
+    Mod+Ctrl+Right hotkey-overlay-title=null { move-column-right; }
 
     // --- Mod + Alt + hjkl: move focus to another monitor/workspace ---------
     Mod+Alt+H { focus-monitor-left; }
     Mod+Alt+J { focus-workspace-down; }
     Mod+Alt+K { focus-workspace-up; }
     Mod+Alt+L { focus-monitor-right; }
+
+    // Jump to a specific monitor by name, rather than walking left/right.
+    // Useful with three fixed monitors where "which direction" isn't always
+    // obvious muscle memory the way it is with two.
+    Mod+Alt+1 { focus-monitor "Dell Inc. DELL P2419H BJ4X5X2"; }
+    Mod+Alt+2 { focus-monitor "Dell Inc. DELL P2419H 920C993"; }
+    Mod+Alt+3 { focus-monitor "eDP-1"; }
+
+    // Back to whichever monitor had focus before this one -- the monitor
+    // equivalent of Mod+Tab below.
+    Mod+Alt+Tab { focus-monitor-previous; }
 
     // --- Jump to the ends of the scrolling strip (vim's gg / G) ------------
     Mod+G            { focus-column-first; }
@@ -1048,6 +1085,13 @@ binds {
     // Switches focus between the current and the previous workspace.
     Mod+Tab { focus-workspace-previous; }
 
+    // Real alt-tab: back to whichever WINDOW had focus before this one,
+    // regardless of column/workspace/monitor. Mod+Tab above is the
+    // workspace-level equivalent; this is the one actually missing before --
+    // ten fixed workspaces make "go back to what I was just looking at"
+    // come up constantly.
+    Mod+Grave { focus-window-previous; }
+
     // ========================================================================
     // "Splitting" windows -- the closest thing niri has to bspwm's dwindle.
     //
@@ -1072,6 +1116,14 @@ binds {
     Mod+BracketLeft  { consume-or-expel-window-left; }
     Mod+BracketRight { consume-or-expel-window-right; }
 
+    // Swap the focused window with its left/right neighbor in place --
+    // different from consume-or-expel above (which moves a window between
+    // columns): this trades two windows' positions without changing column
+    // membership. Ctrl, matching the "shuffle in place" half of the
+    // mnemonic scheme documented above (move-column-left/right also use it).
+    Mod+Ctrl+BracketLeft  { swap-window-left; }
+    Mod+Ctrl+BracketRight { swap-window-right; }
+
     // Consume one window from the right to the bottom of the focused column
     // -- i.e. "split the current column vertically and put the next window in it".
     Mod+Comma  { consume-window-into-column; }
@@ -1089,6 +1141,12 @@ binds {
     Mod+F { maximize-column; }
     Mod+Shift+F { fullscreen-window; }
 
+    // "Fake" fullscreen: the window believes it's fullscreen (games/video
+    // players that change behavior when told, e.g. disabling a UI overlay)
+    // but it stays in the tiled layout instead of covering the output. Handy
+    // for screen-sharing a single window without also full-screening it.
+    Mod+Ctrl+Shift+F { toggle-windowed-fullscreen; }
+
     // While maximize-column leaves gaps and borders around the window,
     // maximize-window-to-edges doesn't: the window expands to the edges of the screen.
     // This bind corresponds to normal window maximizing,
@@ -1100,6 +1158,11 @@ binds {
     Mod+Ctrl+F { expand-column-to-available-width; }
 
     Mod+C { center-column; }
+
+    // Center just the focused WINDOW, distinct from center-column above --
+    // matters in a multi-window column (Mod+Comma), where the column as a
+    // whole can already be centered while one window inside it isn't.
+    Mod+Shift+C { center-window; }
 
     // Center all fully visible columns on screen.
     Mod+Ctrl+C { center-visible-columns; }

@@ -80,6 +80,9 @@
         "exec": "~/.config/waybar/scripts/niri-workspaces.py",
         "return-type": "json",
         "restart-interval": 5,
+        "on-click": "niri msg action toggle-overview",
+        "on-scroll-up": "niri msg action focus-workspace-up",
+        "on-scroll-down": "niri msg action focus-workspace-down",
         "tooltip": false
     },
     "custom/niriwindow": {
