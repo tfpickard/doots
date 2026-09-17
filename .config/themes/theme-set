@@ -249,6 +249,44 @@ apply_bottom() {
     done < "$cfg" >"$t" && mv "$t" "$cfg"
 }
 
+# satty's [color-palette] is just quick-select swatches for annotation, not
+# UI chrome, but it was hard-pinned to Catppuccin regardless of the active
+# theme -- the one config in the repo with a fixed palette while everything
+# else followed theme-set. Same marker-block mechanism as apply_bottom above.
+apply_satty() {
+    local cfg="$HOME/.config/satty/config.toml" block t
+    grep -q "# >>> theme-set:colors" "$cfg" || return 0
+    block=$(jq -r '
+        "palette = [",
+        "    \"\(.red)\",",
+        "    \"\(.orange)\",",
+        "    \"\(.yellow)\",",
+        "    \"\(.green)\",",
+        "    \"\(.blue)\",",
+        "    \"\(.accent)\",",
+        "    \"\(.text)\",",
+        "    \"\(.bg_dark)\",",
+        "]"
+    ' "$PALETTE")
+    local line skip=0
+    t=$(mktemp "$cfg.XXXXXX") || return 1
+    while IFS= read -r line || [ -n "$line" ]; do
+        case "$line" in
+            *'# >>> theme-set:colors'*)
+                printf '%s\n%s\n' "$line" "$block"
+                skip=1
+                ;;
+            *'# <<< theme-set:colors'*)
+                printf '%s\n' "$line"
+                skip=0
+                ;;
+            *)
+                [ "$skip" -eq 1 ] || printf '%s\n' "$line"
+                ;;
+        esac
+    done < "$cfg" >"$t" && mv "$t" "$cfg"
+}
+
 apply_fastfetch() {
     local cfg="$HOME/.config/fastfetch/config.jsonc" keys_ansi title_ansi
     keys_ansi=$(hex2ansi "$(pal accent)")
@@ -364,6 +402,7 @@ swaylock-fx|swaylock|$HOME/.config/swaylock-effects/config|apply_swaylock_effect
 fnott|fnott|$HOME/.config/fnott/fnott.ini|apply_fnott
 swaync|swaync-client|$HOME/.config/swaync|apply_swaync
 nvim|nvim|$HOME/.config/nvim|apply_nvim
+satty|satty|$HOME/.config/satty/config.toml|apply_satty
 EOF
 }
 

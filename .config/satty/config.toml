@@ -21,13 +21,15 @@ family = "Monaspace Neon"
 style = "Regular"
 
 [color-palette]
+# >>> theme-set:colors
 palette = [
-    "#f38ba8",
-    "#fab387",
-    "#f9e2af",
-    "#a6e3a1",
-    "#89b4fa",
-    "#cba6f7",
+    "#ff6e5e",
+    "#ffbd5e",
+    "#f1ff5e",
+    "#5eff6c",
+    "#5ea1ff",
+    "#bd5eff",
     "#ffffff",
-    "#11111b",
+    "#0f1113",
 ]
+# <<< theme-set:colors
