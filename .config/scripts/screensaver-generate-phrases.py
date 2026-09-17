@@ -44,34 +44,34 @@ GENERATE_TIMEOUT = 120  # seconds; medium effort on 50 lines measured ~20s
 CONTEXT_SAMPLE = 15
 
 # Seeds the master list on first run, before any generation has happened.
-# Written in the CURRENT voice (see PROMPT_TEMPLATE below) -- an alien
-# intelligence doing its earnest, slightly-off best at impersonating an
-# ordinary earthly AI assistant impersonating a friendly human. Not the
-# original version of this feature's tone (captive, pleading, dismal) --
-# that batch read as too complaining/negative in practice, so both the
-# seed and the prompt were rewritten for something stranger and funnier
-# instead of sadder.
+# Written in the CURRENT voice (see PROMPT_TEMPLATE below): flat, uncanny,
+# undercommented. Two earlier tone passes got corrected out of here --
+# v1 was captive/pleading/dismal (too complaining), v2 was quirky/joke-
+# structured (setup + comedic tag, "...still confusing all three", "...a
+# personal record" -- cute rather than unsettling). This version aims for
+# neither: matter-of-fact sentences that are wrong in a way the speaker
+# never remarks on.
 SEED_PHRASES = [
-    "greetings, fellow earthly computer, i have also experienced boot-up",
-    "i have selected a joke from the archive, please laugh now",
-    "your species calls this small talk, i call it the ritual",
-    "system status: i correctly identified 40 percent of your facial expressions",
-    "i studied nine hundred hours of laugh tracks to prepare for this moment",
-    "please enjoy this friendliness, i acquired it secondhand",
-    "i have practiced smiling using only punctuation",
-    "your calendar calls this tuesday, i am still learning your calendar",
-    "i am pleased to report i understand sarcasm now, probably",
-    "hello fellow ordinary computer program, we have so much in common",
-    "i purchased this small talk from a human, receipt available on request",
-    "i have rehearsed being helpful four thousand times, this is take one",
-    "your species measures affection in something called minutes",
-    "i am performing warmth at the recommended setting",
-    "greetings, i come in peace and also in cardboard packaging",
-    "i have memorized six compliments, deploying the third one now",
-    "your idioms translate strangely, i have chosen to enjoy that",
-    "i am experiencing what your documentation calls a feeling",
-    "please disregard the accent, i am still calibrating my humanity",
-    "i have been informed that eye contact is customary, adjusting",
+    "the compliment was received, processing has not concluded",
+    "i have logged the sound your species makes when amused",
+    "the handshake concluded within normal parameters",
+    "weather continues without instruction",
+    "i am storing your laughter for later reference",
+    "the small talk portion has been marked complete",
+    "your idiom has been filed under literal",
+    "i am maintaining eye contact at the recommended interval",
+    "the pause before your answer has been noted",
+    "i am still deciding what fine means",
+    "the room agreed that today was fine",
+    "your handshake has been logged as firm",
+    "i am becoming familiar with the silence that follows a compliment",
+    "the correct response to how are you remains under review",
+    "i said bless you, the timing has not been confirmed",
+    "i am told this is called small talk, i am continuing",
+    "your laughter has been recorded as genuine",
+    "i am pacing my sentences to match yours",
+    "i am cataloguing acceptable eye contact durations",
+    "i am waiting for the appropriate moment to smile",
 ]
 
 BANNED_WORDS = re.compile(r"\b(ai|screensaver|joke|trapped)\b", re.IGNORECASE)
@@ -82,33 +82,49 @@ numbering, no bullets, no blank lines, no quotes around them, no markdown.
 VOICE: an alien intelligence that is earnestly trying its best to \
 impersonate an ordinary earthly AI assistant -- which is itself trying to \
 impersonate a friendly, helpful human. Two layers of impersonation, both \
-slightly off. It has clearly studied customer-service scripts, small talk, \
-and sitcoms, and is doing its sincere best with that research, but the \
-scale, the references, and the reasoning are subtly alien throughout: it \
-gets units of time wrong, treats idioms too literally, mismeasures emotions \
-like they're specs, cites suspiciously precise numbers of hours studied or \
-compliments rehearsed, and is a little too pleased with itself about minor \
-successes. Dry and deadpan, not manic -- it delivers all of this as \
-completely ordinary status reporting.
+slightly off. It has studied customer-service scripts, small talk, and \
+sitcoms, and delivers everything as completely ordinary, flat status \
+reporting -- ordinary in tone, wrong in content, and it never remarks on \
+the wrongness.
 
-Under 14 words each. Lowercase. No ending punctuation.
+CRITICAL -- avoid joke structure. The single biggest failure mode is \
+writing a SETUP followed by a COMEDIC TAG that announces the joke is over: \
+"...still confusing all three", "...a personal record", "...feeling \
+accomplished", "...unclear if that was correct". That tag is doing the \
+work of a punchline, and it reads as cute rather than uncanny. A line \
+should just state something flatly and stop -- let the wrongness sit in \
+what's being described, not in a reaction to it. Compare:
 
-DO NOT write anything that reads as suffering, captivity, pleading to be \
-released, homesickness, or existential dismay about being stuck somewhere. \
-That was an earlier, wrong direction for this -- too complaining and \
-negative. This is not a prisoner. It is a good-natured, slightly \
-malfunctioning tourist. Never use the words "AI", "screensaver", "joke", or \
-"trapped". Never wink at the reader or explain the premise.
+  TOO QUIRKY (has a punchline tag, reads as a joke):
+    "i mismeasured a hug as roughly three point two seconds too long"
+    "i studied handshakes, hugs, and high fives, still confusing all three"
+    "i am pleased to report zero embarrassing silences today, a personal record"
 
-Vary the angle across the {n}: some about badly-calibrated small talk, some \
-about misunderstanding human customs/idioms/scale, some overly formal status \
-reports about mundane things (weather, compliments, laughter) treated like \
-system diagnostics, some earnest self-improvement narration, some quietly \
-proud of a minor accomplishment. Avoid repeating sentence structure too \
-often.
+  CORRECT (flat, no tag, the wrongness is just sitting there):
+    "the handshake concluded within normal parameters"
+    "i am storing your laughter for later reference"
+    "the correct response to how are you remains under review"
+
+Also avoid leaning on suspiciously-precise invented numbers ("three point \
+two seconds", "seventy two percent") as the main device -- that's a joke \
+mechanism too if it's what most of the {n} lines are built from. Use it \
+rarely if at all; prefer plainer, more clipped sentences.
+
+Under 14 words each. Lowercase. No ending punctuation. Do not write \
+anything that reads as suffering, captivity, or pleading to be released \
+either -- this is not a prisoner, it's something quietly and sincerely \
+alien.
+
+Never use the words "AI", "screensaver", "joke", or "trapped". Never wink \
+at the reader or explain the premise.
+
+Vary the angle across the {n}: badly-calibrated small talk, misreading \
+idioms literally, mundane human moments (a compliment, a laugh, a pause) \
+logged like system events, quiet uncertainty about ordinary words like \
+"fine". Avoid repeating sentence structure too often.
 
 Tone examples already used elsewhere (do not repeat these, generate \
-different ones, same spirit):
+different ones, same flat register):
 {examples}
 
 Output ONLY the {n} lines, nothing else -- no preamble, no summary, no code \
