@@ -191,6 +191,10 @@ apply_niri() {
         -e "s|\(inactive-color \)\"[^\"]*\"\( // THEME:focus-inactive\)|\1\"$overlay\"\2|" \
         -e "s|\(urgent-color \)\"[^\"]*\"\( // THEME:focus-urgent\)|\1\"$red\"\2|" \
         -e "s|\(backdrop-color \)\"[^\"]*\"\( // THEME:overview-backdrop\)|\1\"$bg_dark\"\2|" \
+        -e "s|\(active-color \)\"[^\"]*\"\( // THEME:tab-active\)|\1\"$accent\"\2|" \
+        -e "s|\(inactive-color \)\"[^\"]*\"\( // THEME:tab-inactive\)|\1\"$overlay\"\2|" \
+        -e "s|\(urgent-color \)\"[^\"]*\"\( // THEME:tab-urgent\)|\1\"$red\"\2|" \
+        -e "s|\(color \)\"[^\"]*\"\( // THEME:insert-hint\)|\1\"${accent}80\"\2|" \
         -e "s|^.*// THEME:focus-gradient\$|$grad_line|"
     niri msg action load-config-file >/dev/null 2>&1 || true
 }

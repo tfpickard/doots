@@ -506,6 +506,26 @@ layout {
         color "#0007"
     }
 
+    // Tabbed columns (Mod+W toggles a column into this mode) show a small
+    // bar of tabs instead of stacking windows visibly. Themed to match the
+    // focus-ring/border palette rather than niri's default red/gray/blue, and
+    // placed within the column so it's counted in the column's width instead
+    // of overlaying into the gap toward the next one.
+    tab-indicator {
+        place-within-column
+        hide-when-single-tab
+        active-color "#bd5eff" // THEME:tab-active
+        inactive-color "#7b8496" // THEME:tab-inactive
+        urgent-color "#ff6e5e" // THEME:tab-urgent
+    }
+
+    // The drop-target hint shown while interactively moving a window
+    // (Mod+drag). Default is niri's own orange; themed to the accent color
+    // at 50% alpha so it reads as "this theme" rather than "niri's default".
+    insert-hint {
+        color "#bd5eff80" // THEME:insert-hint
+    }
+
     // Struts shrink the area occupied by windows, similarly to layer-shell panels.
     // You can think of them as a kind of outer gaps. They are set in logical pixels.
     // Left and right struts will cause the next window to the side to always be visible.
