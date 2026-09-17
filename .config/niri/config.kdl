@@ -259,6 +259,14 @@ output "eDP-1" {
     scale 1
     transform "normal"
     position x=3840 y=0
+
+    // The panel supports VRR (confirmed via `niri msg outputs`) but it was
+    // sitting unused. on-demand=true keeps the refresh rate fixed at 120Hz
+    // normally, and only enables VRR when a window opted in by the
+    // variable-refresh-rate window rule below is actually displayed here --
+    // avoids the modeset flicker some panels have with VRR left on
+    // constantly, for the windows (video, meetings) that actually benefit.
+    variable-refresh-rate on-demand=true
 }
 
 // ============================================================================
@@ -819,6 +827,16 @@ window-rule {
 window-rule {
     match app-id=r#"^chrome-cifhbcnohmdccbgoicgdjpfamggdegmo-Default$"#
     open-on-workspace "chat"
+}
+
+// Opt Teams into on-demand VRR (eDP-1's output block above) -- it's the one
+// app on the fixed desk actually doing continuous video, and enabling VRR
+// for all of google-chrome instead would apply it to every browser tab,
+// defeating the point of "on-demand". Add a rule here for any other
+// video/meeting app that ends up in regular use (mpv, another PWA, ...).
+window-rule {
+    match app-id=r#"^chrome-cifhbcnohmdccbgoicgdjpfamggdegmo-Default$"#
+    variable-refresh-rate true
 }
 
 // Slack. Its .desktop advertises StartupWMClass=Slack, but the Wayland
