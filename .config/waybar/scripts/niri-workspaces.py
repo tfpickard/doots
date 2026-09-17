@@ -85,16 +85,42 @@ FOCUSED = "\u25cf"   # ● focused workspace
 OCCUPIED = "\u2022"  # • holds windows
 EMPTY = "\u00b7"     # · empty
 
+# Short labels for the ten fixed-desk workspaces -- their full names ("agents",
+# "term1") are fine in binds and window rules, but ten of them plus whatever
+# empty scratch workspaces niri creates (empty-workspace-above-first, plus the
+# trailing empty one niri always keeps) is enough text to overflow the bar
+# when they all collapse onto one output (undocked, or before docking spreads
+# them across three). Unknown names fall back to their first 4 characters,
+# so a future workspace added without updating this map still degrades
+# gracefully instead of blowing up the bar.
+SHORT_NAMES = {
+    "code": "code", "agents": "agt", "chat": "chat", "mail": "mail",
+    "web1": "w1", "web2": "w2", "web3": "w3",
+    "term1": "t1", "term2": "t2", "term3": "t3",
+}
+
+
+def is_empty_scratch(w):
+    """An unnamed, unoccupied workspace with no claim on your attention --
+    the auto-created scratch space above/after the fixed desk. Showing these
+    is pure noise unless you're actually on one right now."""
+    return (
+        not w.get("name")
+        and w.get("active_window_id") is None
+        and not w.get("is_focused")
+        and not w.get("is_urgent")
+    )
+
 
 def render(workspaces, pal, output=None):
     if output:
         workspaces = [w for w in workspaces if w.get("output") == output]
+    workspaces = [w for w in workspaces if not is_empty_scratch(w)]
     workspaces.sort(key=lambda w: ((w.get("output") or ""), w.get("idx") or 0))
     pills = []
     for w in workspaces:
-        # Named workspaces (the ten-workspace fixed desk) show their name;
-        # unnamed dynamic ones fall back to the index, as before.
-        label = w.get("name") or w.get("idx", "?")
+        name = w.get("name")
+        label = SHORT_NAMES.get(name, name[:4]) if name else w.get("idx", "?")
         if w.get("is_urgent"):
             pills.append(
                 f"<span color='{pal['red']}' weight='bold'>{FOCUSED} {label}</span>"
