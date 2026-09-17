@@ -1140,8 +1140,44 @@ binds {
     Mod+Ctrl+9 { move-column-to-workspace "term2"; }
     Mod+Ctrl+0 { move-column-to-workspace "term3"; }
 
-    // Alternatively, there are commands to move just a single window:
-    // Mod+Ctrl+1 { move-window-to-workspace "code"; }
+    // --- Mod + Shift + digit: move the focused window to workspace W of
+    // WHICHEVER MONITOR CURRENTLY HAS FOCUS -----------------------------
+    //
+    // Different from Mod+Ctrl+<digit> above, which always targets the same
+    // NAMED workspace regardless of where you are. These take a bare index
+    // instead of a name -- and workspace index is per-output (the wiki's
+    // own words: "workspace index is per-output"), so a bare number always
+    // means "the Nth workspace of my current monitor," never a fixed
+    // destination. Same key, different result on each monitor: Mod+Shift+2
+    // sends the window to "agents" from the left screen, "mail" from
+    // centre, "term2" from the laptop -- because those are each monitor's
+    // own 2nd workspace.
+    //
+    // Moves just the focused WINDOW, not the whole column (use
+    // move-column-to-workspace for that). If W exceeds this monitor's
+    // workspace count, niri falls back to its bottommost empty one.
+    //
+    // Verified live across a real 3-monitor session: same key (index 2)
+    // landed on "agents" from the left monitor and a different workspace
+    // from centre, exactly as intended. One caveat surfaced during that
+    // test, worth knowing rather than being surprised by: empty-workspace-
+    // above-first (this file's layout block) keeps one scratch workspace
+    // above the named ones per output, and a long session with many config
+    // reloads can accumulate more than one there, temporarily shifting
+    // what "index 2" actually points to versus the declared name order. A
+    // fresh login has exactly one and lines up cleanly; a dev session that
+    // has reloaded config repeatedly may not, until those extras get
+    // cleaned up or the session restarts.
+    Mod+Shift+1 { move-window-to-workspace 1; }
+    Mod+Shift+2 { move-window-to-workspace 2; }
+    Mod+Shift+3 { move-window-to-workspace 3; }
+    Mod+Shift+4 { move-window-to-workspace 4; }
+    Mod+Shift+5 { move-window-to-workspace 5; }
+    Mod+Shift+6 { move-window-to-workspace 6; }
+    Mod+Shift+7 { move-window-to-workspace 7; }
+    Mod+Shift+8 { move-window-to-workspace 8; }
+    Mod+Shift+9 { move-window-to-workspace 9; }
+    Mod+Shift+0 { move-window-to-workspace 10; }
 
     // Switches focus between the current and the previous workspace.
     Mod+Tab { focus-workspace-previous; }
