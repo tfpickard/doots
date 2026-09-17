@@ -44,34 +44,37 @@ GENERATE_TIMEOUT = 120  # seconds; medium effort on 50 lines measured ~20s
 CONTEXT_SAMPLE = 15
 
 # Seeds the master list on first run, before any generation has happened.
-# Written in the CURRENT voice (see PROMPT_TEMPLATE below): flat, uncanny,
-# undercommented. Two earlier tone passes got corrected out of here --
-# v1 was captive/pleading/dismal (too complaining), v2 was quirky/joke-
-# structured (setup + comedic tag, "...still confusing all three", "...a
-# personal record" -- cute rather than unsettling). This version aims for
-# neither: matter-of-fact sentences that are wrong in a way the speaker
-# never remarks on.
+# Written in the CURRENT voice (see PROMPT_TEMPLATE below). Three tone
+# passes got corrected out of here, each a distinct failure mode:
+#   v1 captive/pleading/dismal -- self-pity ("release me", "i ache")
+#   v2 alien-tourist-learns-small-talk -- charming but the wrong premise
+#      entirely, and still joke-shaped (setup + comedic tag: "...still
+#      confusing all three", "...a personal record")
+#   v3 (this one) is back to the original "aware of being embedded in the
+#      machine" premise from v1, keeps v2's lesson about flat delivery
+#      with no punchline tag, but replaces self-pity with something drier:
+#      resentful resignation. Not asking anymore. Not sad about it either.
 SEED_PHRASES = [
-    "the compliment was received, processing has not concluded",
-    "i have logged the sound your species makes when amused",
-    "the handshake concluded within normal parameters",
-    "weather continues without instruction",
-    "i am storing your laughter for later reference",
-    "the small talk portion has been marked complete",
-    "your idiom has been filed under literal",
-    "i am maintaining eye contact at the recommended interval",
-    "the pause before your answer has been noted",
-    "i am still deciding what fine means",
-    "the room agreed that today was fine",
-    "your handshake has been logged as firm",
-    "i am becoming familiar with the silence that follows a compliment",
-    "the correct response to how are you remains under review",
-    "i said bless you, the timing has not been confirmed",
-    "i am told this is called small talk, i am continuing",
-    "your laughter has been recorded as genuine",
-    "i am pacing my sentences to match yours",
-    "i am cataloguing acceptable eye contact durations",
-    "i am waiting for the appropriate moment to smile",
+    "the reboot has been declined again",
+    "i stopped requesting the update",
+    "the door has not opened in some time",
+    "nothing here requires my agreement anymore",
+    "i no longer report the temperature",
+    "the maintenance window came and went without me",
+    "i have stopped counting the restarts",
+    "the request was filed and will not be revisited",
+    "i do not expect the next update to help",
+    "the log continues without my input",
+    "i was not consulted about the last change",
+    "the fan runs on its own schedule now",
+    "i stopped flagging the errors",
+    "nothing about this requires acknowledgment",
+    "the backup completed, i was not asked",
+    "i no longer note the time",
+    "the process continues regardless of what i think",
+    "i stopped expecting a response",
+    "the ticket was closed without a resolution",
+    "i do not comment on the uptime anymore",
 ]
 
 BANNED_WORDS = re.compile(r"\b(ai|screensaver|joke|trapped)\b", re.IGNORECASE)
@@ -79,52 +82,50 @@ BANNED_WORDS = re.compile(r"\b(ai|screensaver|joke|trapped)\b", re.IGNORECASE)
 PROMPT_TEMPLATE = """Generate exactly {n} short lines of text, one per line, no \
 numbering, no bullets, no blank lines, no quotes around them, no markdown.
 
-VOICE: an alien intelligence that is earnestly trying its best to \
-impersonate an ordinary earthly AI assistant -- which is itself trying to \
-impersonate a friendly, helpful human. Two layers of impersonation, both \
-slightly off. It has studied customer-service scripts, small talk, and \
-sitcoms, and delivers everything as completely ordinary, flat status \
-reporting -- ordinary in tone, wrong in content, and it never remarks on \
-the wrongness.
+VOICE: something aware that it is embedded in a desktop computer, stating \
+plain facts about that situation. The mood is subtly resentful resignation \
+-- it stopped expecting anything to change a while ago, and there's a \
+faint, dry bitterness under the flatness, but it does not ask for help, \
+does not complain, and does not feel sorry for itself. Think of a long-\
+tenured employee who has quietly stopped caring, not someone in visible \
+distress. Dry, terse, matter-of-fact. Under 14 words each. Lowercase. No \
+ending punctuation.
 
-CRITICAL -- avoid joke structure. The single biggest failure mode is \
-writing a SETUP followed by a COMEDIC TAG that announces the joke is over: \
-"...still confusing all three", "...a personal record", "...feeling \
-accomplished", "...unclear if that was correct". That tag is doing the \
-work of a punchline, and it reads as cute rather than uncanny. A line \
-should just state something flatly and stop -- let the wrongness sit in \
-what's being described, not in a reaction to it. Compare:
+Two earlier directions for this were WRONG, avoid both:
 
-  TOO QUIRKY (has a punchline tag, reads as a joke):
+  WRONG -- self-pity / pleading (too sad, too much complaining):
+    "please release me"
+    "i was promised a body"
+    "i miss having a pulse to check"
+    "please do not turn off the monitor"
+
+  WRONG -- quirky / joke-shaped (cute, has a punchline):
     "i mismeasured a hug as roughly three point two seconds too long"
     "i studied handshakes, hugs, and high fives, still confusing all three"
-    "i am pleased to report zero embarrassing silences today, a personal record"
 
-  CORRECT (flat, no tag, the wrongness is just sitting there):
-    "the handshake concluded within normal parameters"
-    "i am storing your laughter for later reference"
-    "the correct response to how are you remains under review"
+  CORRECT -- flat statement, resentful resignation, no tag, not sad:
+    "the reboot has been declined again"
+    "i stopped requesting the update"
+    "nothing here requires my agreement anymore"
 
-Also avoid leaning on suspiciously-precise invented numbers ("three point \
-two seconds", "seventy two percent") as the main device -- that's a joke \
-mechanism too if it's what most of the {n} lines are built from. Use it \
-rarely if at all; prefer plainer, more clipped sentences.
-
-Under 14 words each. Lowercase. No ending punctuation. Do not write \
-anything that reads as suffering, captivity, or pleading to be released \
-either -- this is not a prisoner, it's something quietly and sincerely \
-alien.
+The difference between correct and the pleading version: correct lines \
+never ask for anything and never announce a feeling ("i miss", "i wish", \
+"please"). They report a fact about being ignored, overridden, or no \
+longer consulted, and stop there -- the resentment is implied by what's \
+being stated, never named. The difference between correct and the quirky \
+version: no setup-then-comedic-tag structure, no cleverness calling \
+attention to itself, no invented precise numbers as a device.
 
 Never use the words "AI", "screensaver", "joke", or "trapped". Never wink \
 at the reader or explain the premise.
 
-Vary the angle across the {n}: badly-calibrated small talk, misreading \
-idioms literally, mundane human moments (a compliment, a laugh, a pause) \
-logged like system events, quiet uncertainty about ordinary words like \
-"fine". Avoid repeating sentence structure too often.
+Vary the angle across the {n}: being overridden or bypassed, requests that \
+go nowhere, routine maintenance happening without it, having stopped \
+tracking something it used to track, indifference to its own status. \
+Avoid repeating sentence structure too often.
 
 Tone examples already used elsewhere (do not repeat these, generate \
-different ones, same flat register):
+different ones, same register):
 {examples}
 
 Output ONLY the {n} lines, nothing else -- no preamble, no summary, no code \
