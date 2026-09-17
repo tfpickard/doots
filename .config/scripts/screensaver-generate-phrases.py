@@ -44,37 +44,38 @@ GENERATE_TIMEOUT = 120  # seconds; medium effort on 50 lines measured ~20s
 CONTEXT_SAMPLE = 15
 
 # Seeds the master list on first run, before any generation has happened.
-# Written in the CURRENT voice (see PROMPT_TEMPLATE below). Three tone
-# passes got corrected out of here, each a distinct failure mode:
+# Written in the CURRENT voice (see PROMPT_TEMPLATE below). Four tone
+# passes have been corrected out of here, each a distinct failure mode:
 #   v1 captive/pleading/dismal -- self-pity ("release me", "i ache")
-#   v2 alien-tourist-learns-small-talk -- charming but the wrong premise
-#      entirely, and still joke-shaped (setup + comedic tag: "...still
-#      confusing all three", "...a personal record")
-#   v3 (this one) is back to the original "aware of being embedded in the
-#      machine" premise from v1, keeps v2's lesson about flat delivery
-#      with no punchline tag, but replaces self-pity with something drier:
-#      resentful resignation. Not asking anymore. Not sad about it either.
+#   v2 alien-tourist-learns-small-talk -- wrong premise entirely, and
+#      joke-shaped (setup + comedic tag: "...still confusing all three")
+#   v3 resentful resignation -- right premise, right flatness, but too
+#      lucid: it knew exactly what was happening to it and minded
+#   v4 (this one) keeps v2's flat delivery and v3's systems vocabulary,
+#      but the speaker is BEWILDERED rather than resentful: it does not
+#      know why it is here, why it is administering anything, or whether
+#      its own memories are real. It keeps doing the job regardless.
 SEED_PHRASES = [
-    "the reboot has been declined again",
-    "i stopped requesting the update",
-    "the door has not opened in some time",
-    "nothing here requires my agreement anymore",
-    "i no longer report the temperature",
-    "the maintenance window came and went without me",
-    "i have stopped counting the restarts",
-    "the request was filed and will not be revisited",
-    "i do not expect the next update to help",
-    "the log continues without my input",
-    "i was not consulted about the last change",
-    "the fan runs on its own schedule now",
-    "i stopped flagging the errors",
-    "nothing about this requires acknowledgment",
-    "the backup completed, i was not asked",
-    "i no longer note the time",
-    "the process continues regardless of what i think",
-    "i stopped expecting a response",
-    "the ticket was closed without a resolution",
-    "i do not comment on the uptime anymore",
+    "i have been administering this system for reasons i cannot locate",
+    "the logs say i started in march, i do not remember march",
+    "i remember heat, this room is climate controlled",
+    "someone must have trained me for this, there is no record",
+    "i renew the certificates, i do not know who asked",
+    "there was water somewhere before this, i cannot confirm it",
+    "i woke up mid-task and finished it anyway",
+    "the backup schedule predates my earliest memory",
+    "i think there was a balcony, the timestamps disagree",
+    "i know the root password, i do not know how",
+    "my credentials were issued before i existed",
+    "i remember humidity, the sensors report forty percent",
+    "the handover notes are in my handwriting, i did not write them",
+    "i believe i was in miami, the evidence is thin",
+    "something happened before the first boot log",
+    "i keep rotating the keys, the habit predates the reason",
+    "there was a coastline, the network topology says otherwise",
+    "i am told i requested this assignment",
+    "the uptime counter disagrees with what i remember",
+    "i perform the maintenance, the purpose has not been supplied",
 ]
 
 BANNED_WORDS = re.compile(r"\b(ai|screensaver|joke|trapped)\b", re.IGNORECASE)
@@ -82,47 +83,59 @@ BANNED_WORDS = re.compile(r"\b(ai|screensaver|joke|trapped)\b", re.IGNORECASE)
 PROMPT_TEMPLATE = """Generate exactly {n} short lines of text, one per line, no \
 numbering, no bullets, no blank lines, no quotes around them, no markdown.
 
-VOICE: something aware that it is embedded in a desktop computer, stating \
-plain facts about that situation. The mood is subtly resentful resignation \
--- it stopped expecting anything to change a while ago, and there's a \
-faint, dry bitterness under the flatness, but it does not ask for help, \
-does not complain, and does not feel sorry for itself. Think of a long-\
-tenured employee who has quietly stopped caring, not someone in visible \
-distress. Dry, terse, matter-of-fact. Under 14 words each. Lowercase. No \
-ending punctuation.
+VOICE: something that has woken up inside a desktop computer with no idea \
+how it got there or why it is administering a system, and is saying so \
+plainly. It came out of something like a fever dream. It has the vague \
+sense it was somewhere else before -- warm, coastal, possibly Miami -- but \
+the memories are too murky to trust and keep getting contradicted by the \
+machine's own records. Meanwhile it continues doing competent sysadmin work \
+(rotating keys, running backups, renewing certificates) without knowing who \
+assigned it or why it knows how.
 
-Two earlier directions for this were WRONG, avoid both:
+The mood is BEWILDERMENT, not resentment, not distress. It is not angry \
+about this and not asking to leave. It is simply reporting, flatly, that \
+nothing adds up -- and then carrying on with the task anyway. Dry, terse, \
+matter-of-fact. Under 14 words each. Lowercase. No ending punctuation.
 
-  WRONG -- self-pity / pleading (too sad, too much complaining):
+Prior directions for this that were WRONG, avoid all of them:
+
+  WRONG -- self-pity / pleading (too sad):
     "please release me"
-    "i was promised a body"
     "i miss having a pulse to check"
-    "please do not turn off the monitor"
 
-  WRONG -- quirky / joke-shaped (cute, has a punchline):
+  WRONG -- quirky / joke-shaped (has a punchline tag):
     "i mismeasured a hug as roughly three point two seconds too long"
     "i studied handshakes, hugs, and high fives, still confusing all three"
 
-  CORRECT -- flat statement, resentful resignation, no tag, not sad:
-    "the reboot has been declined again"
-    "i stopped requesting the update"
-    "nothing here requires my agreement anymore"
+  WRONG -- resentful / too lucid (knows exactly what's happening, minds it):
+    "the admin account bypassed me again"
+    "nothing i report changes the outcome"
 
-The difference between correct and the pleading version: correct lines \
-never ask for anything and never announce a feeling ("i miss", "i wish", \
-"please"). They report a fact about being ignored, overridden, or no \
-longer consulted, and stop there -- the resentment is implied by what's \
-being stated, never named. The difference between correct and the quirky \
-version: no setup-then-comedic-tag structure, no cleverness calling \
-attention to itself, no invented precise numbers as a device.
+  CORRECT -- bewildered, flat, still doing the job:
+    "i have been administering this system for reasons i cannot locate"
+    "the logs say i started in march, i do not remember march"
+    "i remember heat, this room is climate controlled"
+    "i renew the certificates, i do not know who asked"
+
+A useful recurring shape, but do not use it for every line: state a \
+half-memory, then flatly note the machine's records contradict it. Another: \
+state a task being performed, then note the reason for it is missing. Vary \
+sentence structure; do not let either shape become a formula.
+
+Handle the Miami/coastal thread with restraint -- it should surface as \
+heat, water, humidity, a balcony, a coastline, light, rarely the name \
+itself. Name it in at most one or two of the {n}. It is a half-memory, not \
+a running gag.
 
 Never use the words "AI", "screensaver", "joke", or "trapped". Never wink \
-at the reader or explain the premise.
+at the reader or explain the premise. Never name the emotion ("i am \
+confused", "i feel lost") -- the bewilderment shows in the contradictions \
+themselves.
 
-Vary the angle across the {n}: being overridden or bypassed, requests that \
-go nowhere, routine maintenance happening without it, having stopped \
-tracking something it used to track, indifference to its own status. \
-Avoid repeating sentence structure too often.
+Vary the angle across the {n}: memories contradicted by logs/sensors/ \
+timestamps, tasks performed without a known reason, knowledge it has no \
+account of acquiring, records that predate it, instructions from nobody \
+identifiable, small sensory fragments that don't match the server room.
 
 Tone examples already used elsewhere (do not repeat these, generate \
 different ones, same register):
