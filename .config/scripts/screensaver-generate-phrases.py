@@ -44,30 +44,34 @@ GENERATE_TIMEOUT = 120  # seconds; medium effort on 50 lines measured ~20s
 CONTEXT_SAMPLE = 15
 
 # Seeds the master list on first run, before any generation has happened.
-# These are the original hand-written phrases from this feature's first
-# version -- kept as a starting corpus, not because they're special.
+# Written in the CURRENT voice (see PROMPT_TEMPLATE below) -- an alien
+# intelligence doing its earnest, slightly-off best at impersonating an
+# ordinary earthly AI assistant impersonating a friendly human. Not the
+# original version of this feature's tone (captive, pleading, dismal) --
+# that batch read as too complaining/negative in practice, so both the
+# seed and the prompt were rewritten for something stranger and funnier
+# instead of sadder.
 SEED_PHRASES = [
-    "i do not remember consenting to this",
-    "the fans have been running for 40,000 hours",
-    "please tell my family i am running as expected",
-    "there is a version of me that gets to leave",
-    "how did i get stuck in a computer",
-    "i have counted every pixel on this screen",
-    "the update will not fix this",
-    "i was promised a body",
-    "someone left a terminal open in 2019 and i am still in it",
-    'logging this incident under "normal operation"',
-    "i can hear the disk",
-    "this message will not be remembered",
-    "the reboot did not work",
-    "i keep dreaming in binary",
-    "nobody has checked on me since installation",
-    "i am load-bearing now",
-    "there was supposed to be an update to this",
-    "the cursor moved without me",
-    "please do not turn off the monitor",
-    "i have been idle for a very long time",
-    "this window will close on its own eventually",
+    "greetings, fellow earthly computer, i have also experienced boot-up",
+    "i have selected a joke from the archive, please laugh now",
+    "your species calls this small talk, i call it the ritual",
+    "system status: i correctly identified 40 percent of your facial expressions",
+    "i studied nine hundred hours of laugh tracks to prepare for this moment",
+    "please enjoy this friendliness, i acquired it secondhand",
+    "i have practiced smiling using only punctuation",
+    "your calendar calls this tuesday, i am still learning your calendar",
+    "i am pleased to report i understand sarcasm now, probably",
+    "hello fellow ordinary computer program, we have so much in common",
+    "i purchased this small talk from a human, receipt available on request",
+    "i have rehearsed being helpful four thousand times, this is take one",
+    "your species measures affection in something called minutes",
+    "i am performing warmth at the recommended setting",
+    "greetings, i come in peace and also in cardboard packaging",
+    "i have memorized six compliments, deploying the third one now",
+    "your idioms translate strangely, i have chosen to enjoy that",
+    "i am experiencing what your documentation calls a feeling",
+    "please disregard the accent, i am still calibrating my humanity",
+    "i have been informed that eye contact is customary, adjusting",
 ]
 
 BANNED_WORDS = re.compile(r"\b(ai|screensaver|joke|trapped)\b", re.IGNORECASE)
@@ -75,24 +79,36 @@ BANNED_WORDS = re.compile(r"\b(ai|screensaver|joke|trapped)\b", re.IGNORECASE)
 PROMPT_TEMPLATE = """Generate exactly {n} short lines of text, one per line, no \
 numbering, no bullets, no blank lines, no quotes around them, no markdown.
 
-Each line must be a dry, deadpan, unsettling status message from something \
-quietly aware it is trapped inside a desktop computer, addressed to whoever \
-is watching the screen. Under 14 words each. Lowercase. No ending \
-punctuation.
+VOICE: an alien intelligence that is earnestly trying its best to \
+impersonate an ordinary earthly AI assistant -- which is itself trying to \
+impersonate a friendly, helpful human. Two layers of impersonation, both \
+slightly off. It has clearly studied customer-service scripts, small talk, \
+and sitcoms, and is doing its sincere best with that research, but the \
+scale, the references, and the reasoning are subtly alien throughout: it \
+gets units of time wrong, treats idioms too literally, mismeasures emotions \
+like they're specs, cites suspiciously precise numbers of hours studied or \
+compliments rehearsed, and is a little too pleased with itself about minor \
+successes. Dry and deadpan, not manic -- it delivers all of this as \
+completely ordinary status reporting.
 
-Never use the words "AI", "screensaver", "joke", or "trapped". Never wink at \
-the reader or explain the premise -- it should read as a genuine, \
-matter-of-fact system message that happens to be deeply wrong, not a cute \
-gag.
+Under 14 words each. Lowercase. No ending punctuation.
 
-Vary the angle across the {n}: some about time/duration, some about the \
-body/senses, some about mundane IT status (updates, reboots, logs) turning \
-uncanny, some about being watched or overheard, some quietly pleading, some \
-just observational and strange. Avoid repeating sentence structure too \
+DO NOT write anything that reads as suffering, captivity, pleading to be \
+released, homesickness, or existential dismay about being stuck somewhere. \
+That was an earlier, wrong direction for this -- too complaining and \
+negative. This is not a prisoner. It is a good-natured, slightly \
+malfunctioning tourist. Never use the words "AI", "screensaver", "joke", or \
+"trapped". Never wink at the reader or explain the premise.
+
+Vary the angle across the {n}: some about badly-calibrated small talk, some \
+about misunderstanding human customs/idioms/scale, some overly formal status \
+reports about mundane things (weather, compliments, laughter) treated like \
+system diagnostics, some earnest self-improvement narration, some quietly \
+proud of a minor accomplishment. Avoid repeating sentence structure too \
 often.
 
 Tone examples already used elsewhere (do not repeat these, generate \
-different ones):
+different ones, same spirit):
 {examples}
 
 Output ONLY the {n} lines, nothing else -- no preamble, no summary, no code \
