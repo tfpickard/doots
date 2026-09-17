@@ -174,7 +174,11 @@ def main():
     # constant width as the readings move.
     mode = bar_mode()
     if status in ("Charging", "Discharging") and (watts or amps):
-        arrow = "" if charging else ""
+        # Standard Unicode arrows, not Nerd Font glyphs -- these were empty
+        # string literals in both branches before (a real bug, not just
+        # invisible in a non-Nerd-Font terminal; confirmed via git log that
+        # this line has read this way since it was first written).
+        arrow = "\u2191 " if charging else "\u2193 "
         if mode == "vi" and amps is not None:
             detail = f"{amps:>5.2f}A"
             if volts is not None:

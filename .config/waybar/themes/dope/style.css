@@ -335,12 +335,37 @@ tooltip label {
 #custom-aiagents       { min-width: 53px; }
 #custom-github         { min-width: 52px; }
 
+/* custom-battery's widest case is "vi" mode with both current and voltage
+   shown: 1 icon + "  100% ↑ 99.99A 99.9V" = 1 icon + 21 regular characters.
+   Not directly re-measured (no bar instance available to screenshot pixel-
+   for-pixel here) -- cross-calibrated instead against the three floors
+   above that share this module's icon style: custom-cpufreq is 94px for
+   1 icon + 9 chars, custom-aiagents/custom-github are ~52-53px for 2 icons
+   + 3 chars. Both solve consistently to ~8px/character and ~9-12px/icon
+   (including this module's own padding), which projects to ~190-195px for
+   battery's 22-codepoint worst case. If this turns out visibly wrong,
+   re-derive the same way rather than eyeballing a replacement -- the
+   method is more durable than any specific number here. */
+#custom-battery         { min-width: 195px; }
+
 /* custom-weather deliberately has NO min-width floor, unlike its neighbours
    above: it refreshes every 900s (weather.py's interval), so the jitter a
    floor exists to prevent is not a real problem in practice -- the module
    can just hug its (now much shorter, unpadded) content. The old 218px
    floor was measured against the previous double-spaced, padded text
    format and was holding the box open long after that text shrank. */
+
+/* mpris ALSO deliberately has no min-width floor, for a related but
+   distinct reason: artist-len/title-len (waybar config) cap it at 1 icon +
+   44 characters in the theoretical worst case (both fields fully
+   truncated), which would want a ~400px floor by the same method used for
+   custom-battery above -- but track metadata changes once per song, not
+   every few seconds like CPU/battery readings do. Paying ~400px of
+   permanently reserved bar space to prevent jitter that happens once
+   every few minutes, for content that's normally much shorter than the
+   cap, is the same mistake custom-weather's old floor made. Let it hug
+   its content; an occasional between-track width change is the right
+   trade against a permanently oversized module. */
 
 @keyframes blink {
     to { color: @bg; background: @red; }
