@@ -181,6 +181,29 @@ cursor {
     xcursor-size 32
 }
 
+// Overview: the zoomed-out view of all workspaces (Mod+O). Backdrop color
+// is themed (THEME:overview-backdrop, matching bg_dark in palette.json) so
+// it agrees with the rest of the dark palette instead of niri's default
+// grey. zoom is left at its 0.5 default -- with ten fixed workspaces spread
+// across three physical monitors, shrinking further would make individual
+// windows hard to identify at a glance, which defeats the point of looking.
+overview {
+    zoom 0.5
+    backdrop-color "#0f1113" // THEME:overview-backdrop
+
+    // Workspace shadows in the overview are a separate setting from window
+    // shadows (layout.shadow below) and are normalized to a 1080px-tall
+    // workspace before zooming, so they want noticeably bigger numbers to
+    // read the same -- these roughly mirror the window shadow's proportions
+    // scaled up, per the wiki's own guidance.
+    workspace-shadow {
+        softness 40
+        spread 10
+        offset x=0 y=8
+        color "#00000050"
+    }
+}
+
 // Hand the same cursor theme to every client niri spawns.
 //
 // Toolkits read XCURSOR_THEME at process start and cache the result for the

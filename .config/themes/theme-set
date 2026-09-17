@@ -167,10 +167,11 @@ apply_tmux() {
 # niri has no include mechanism, so its color lines carry // THEME: markers
 # that get rewritten in place.
 apply_niri() {
-    local accent overlay red grad grad_line
+    local accent overlay red bg_dark grad grad_line
     accent=$(pal accent)
     overlay=$(pal overlay)
     red=$(pal red)
+    bg_dark=$(pal bg_dark)
 
     # A theme opts into a focus-ring gradient by adding a "focus_gradient"
     # object to palette.json. The tagged line becomes either a live
@@ -189,6 +190,7 @@ apply_niri() {
         -e "s|\(active-color \)\"[^\"]*\"\( // THEME:focus-active\)|\1\"$accent\"\2|" \
         -e "s|\(inactive-color \)\"[^\"]*\"\( // THEME:focus-inactive\)|\1\"$overlay\"\2|" \
         -e "s|\(urgent-color \)\"[^\"]*\"\( // THEME:focus-urgent\)|\1\"$red\"\2|" \
+        -e "s|\(backdrop-color \)\"[^\"]*\"\( // THEME:overview-backdrop\)|\1\"$bg_dark\"\2|" \
         -e "s|^.*// THEME:focus-gradient\$|$grad_line|"
     niri msg action load-config-file >/dev/null 2>&1 || true
 }
