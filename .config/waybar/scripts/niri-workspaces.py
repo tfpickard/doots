@@ -6,7 +6,13 @@ interpreter 86k times a day), this runs once as a long-lived process, follows
 `niri msg event-stream`, and prints a new JSON line only when workspaces
 actually change. Colors come from the global theme system
 (~/.config/themes/active/palette.json) with Catppuccin fallbacks.
+
+With --output NAME, only that output's workspaces are shown -- used when
+waybar draws one bar per monitor (see launch.sh and compositor-config.py's
+niri-outputs mode); without it, every workspace on every output is shown,
+which is the previous single-bar behaviour.
 """
+import argparse
 import json
 import os
 import subprocess
@@ -80,23 +86,27 @@ OCCUPIED = "\u2022"  # • holds windows
 EMPTY = "\u00b7"     # · empty
 
 
-def render(workspaces, pal):
+def render(workspaces, pal, output=None):
+    if output:
+        workspaces = [w for w in workspaces if w.get("output") == output]
     workspaces.sort(key=lambda w: ((w.get("output") or ""), w.get("idx") or 0))
     pills = []
     for w in workspaces:
-        idx = w.get("idx", "?")
+        # Named workspaces (the ten-workspace fixed desk) show their name;
+        # unnamed dynamic ones fall back to the index, as before.
+        label = w.get("name") or w.get("idx", "?")
         if w.get("is_urgent"):
             pills.append(
-                f"<span color='{pal['red']}' weight='bold'>{FOCUSED} {idx}</span>"
+                f"<span color='{pal['red']}' weight='bold'>{FOCUSED} {label}</span>"
             )
         elif w.get("is_focused"):
             pills.append(
-                f"<span color='{pal['accent']}' weight='bold' size='large'>{FOCUSED} {idx}</span>"
+                f"<span color='{pal['accent']}' weight='bold' size='large'>{FOCUSED} {label}</span>"
             )
         elif w.get("active_window_id") is not None:
-            pills.append(f"<span color='{pal['text']}'>{OCCUPIED} {idx}</span>")
+            pills.append(f"<span color='{pal['text']}'>{OCCUPIED} {label}</span>")
         else:
-            pills.append(f"<span color='{pal['overlay']}'>{EMPTY} {idx}</span>")
+            pills.append(f"<span color='{pal['overlay']}'>{EMPTY} {label}</span>")
     return "  ".join(pills)
 
 
@@ -107,6 +117,10 @@ def emit(text, last):
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--output", help="only show this output's workspaces")
+    args = parser.parse_args()
+
     exit_when_orphaned()
     last = [None]
     proc = subprocess.Popen(
@@ -142,7 +156,7 @@ def main():
                     w["active_window_id"] = ev["WorkspaceActiveWindowChanged"]["active_window_id"]
         else:
             continue
-        emit(render(list(workspaces), palette()), last)
+        emit(render(list(workspaces), palette(), args.output), last)
 
 
 if __name__ == "__main__":

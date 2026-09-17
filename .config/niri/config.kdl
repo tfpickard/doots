@@ -234,12 +234,93 @@ output "eDP-1" {
     position x=3840 y=0
 }
 
+// ============================================================================
+// Named workspaces -- a fixed desk, not a dynamic scratch space.
+//
+// Unlike normal (dynamic) workspaces, a `workspace "name"` always exists,
+// even with no windows, and "sticks" to the output it names (niri wiki,
+// Configuration:-Named-Workspaces, "Since: 25.02"). Declaration order sets
+// each output's vertical stack, which is what Mod+Alt+J/K and Mod+WheelScroll
+// walk -- hence the grouping below, not simple Mod+1..0 numeric order.
+//
+// Placement of the six windows that share an app-id with their siblings
+// (3 Chrome, 3 ghostty -- niri window rules can't tell them apart) is NOT
+// done here. It's done by ~/.config/scripts/niri-autostart-apps.py over IPC
+// at startup; see the comment there for the placement algorithm. This block
+// only fixes the *destinations* those windows get moved to.
+//
+//   Left external (BJ4X5X2):  code, agents           -- VS Code, full-bleed
+//   Centre external (920C993): chat, mail, web1, web2, term1
+//   Laptop (eDP-1):           web3, term2, term3
+//
+// Mod+1..0 focus these by name (focus-workspace takes a name, not just an
+// index -- important, since workspace *index* is per-output, so "Mod+3"
+// on an unnamed setup means a different thing depending which monitor has
+// focus). Mod+Ctrl+1..0 move the focused column to them. See `binds`.
+workspace "code" {
+    open-on-output "Dell Inc. DELL P2419H BJ4X5X2"
+
+    // Edge-to-edge: this is a single full-screen editor, not a tiled column
+    // among others, so the usual gaps/focus-ring inset just wastes pixels.
+    layout {
+        gaps 0
+        default-column-width { proportion 1.0; }
+    }
+}
+
+workspace "agents" {
+    open-on-output "Dell Inc. DELL P2419H BJ4X5X2"
+
+    layout {
+        gaps 0
+        default-column-width { proportion 1.0; }
+    }
+}
+
+workspace "chat" {
+    open-on-output "Dell Inc. DELL P2419H 920C993"
+}
+
+workspace "mail" {
+    open-on-output "Dell Inc. DELL P2419H 920C993"
+}
+
+workspace "web1" {
+    open-on-output "Dell Inc. DELL P2419H 920C993"
+}
+
+workspace "web2" {
+    open-on-output "Dell Inc. DELL P2419H 920C993"
+}
+
+workspace "term1" {
+    open-on-output "Dell Inc. DELL P2419H 920C993"
+}
+
+workspace "web3" {
+    open-on-output "eDP-1"
+}
+
+workspace "term2" {
+    open-on-output "eDP-1"
+}
+
+workspace "term3" {
+    open-on-output "eDP-1"
+}
+
 // Settings that influence how windows are positioned and sized.
 // Find more information on the wiki:
 // https://niri-wm.github.io/niri/Configuration:-Layout
 layout {
     // Set gaps around windows in logical pixels.
     gaps 16
+
+    // Always keep one empty workspace above the first on every output, not
+    // just after it. With ten named workspaces pinned to specific outputs,
+    // this is the scratch space above `code`/`chat`/`web3` for something
+    // that doesn't belong on the fixed desk.
+    empty-workspace-above-first
 
     // When to center a column when changing focus, options are:
     // - "never", default behavior, focusing an off-screen column will keep at the left
@@ -417,7 +498,11 @@ layout {
 // See the binds section below for more spawn examples.
 
 // This line starts waybar, a commonly used bar for Wayland compositors.
+// launch.sh draws one bar per connected output (see compositor-config.py's
+// niri-outputs mode); the watcher below restarts it when outputs change,
+// since niri's IPC has no OutputsChanged event to bind directly.
 spawn-at-startup "/home/tom/.config/waybar/launch.sh"
+spawn-at-startup "/home/tom/.config/waybar/scripts/output-watch.py"
 
 // To run a shell command (with variables, pipes, etc.), use spawn-sh-at-startup:
 // Static wallpaper. For animated/video wallpapers instead, see
@@ -503,10 +588,12 @@ spawn-sh-at-startup "/usr/lib/policykit-1-gnome/polkit-gnome-authentication-agen
 // See the note next to `default-column-width` above.
 spawn-at-startup "/home/tom/.config/scripts/niri-expand-lonely-column.py"
 
-// Long-running workspace apps: VS Code Insiders and the Teams PWA. The script
-// only launches what isn't already running; the `open-on-output` window rules
-// further down decide which monitor each lands on.
-spawn-at-startup "/home/tom/.config/scripts/niri-autostart-apps.sh"
+// The ten fixed-desk workspace apps: VS Code, Teams, Slack, Outlook, 3 Chrome
+// windows, 3 terminals. The script only launches what isn't already running
+// (idempotent across config reloads), then places each on its named
+// workspace -- by window-rule where the app-id is unambiguous, over IPC
+// where it isn't (see niri_placement.py for why and how).
+spawn-at-startup "/home/tom/.config/scripts/niri-autostart-apps.py"
 
 hotkey-overlay {
     // Uncomment this line to disable the "Important Hotkeys" pop-up at startup.
@@ -624,30 +711,60 @@ window-rule {
     default-column-width { proportion 0.5; }
 }
 
-// --- Monitor assignments ----------------------------------------------------
+// --- Fixed-desk placement ---------------------------------------------------
 //
-// These pin the two "always open" apps to a physical monitor. If that monitor
-// isn't connected (laptop undocked) niri falls back to the focused output, so
-// nothing is lost when travelling.
+// These route each app to its named workspace (see the `workspace` block
+// near the top, which pins each name to a physical output). Using
+// open-on-workspace rather than open-on-output means a window lands in the
+// right *place in the scrolling strip*, not just on the right screen -- and
+// if that workspace's output isn't connected (laptop undocked), the named
+// workspace itself falls back to an available output, so nothing is lost.
 //
-// The rules deliberately match on app-id only, with no title match, so *every*
-// window of these apps lands on the right screen -- second editor windows,
+// Rules match on app-id only, with no title match (except VS Code below), so
+// *every* window of these apps lands correctly -- second editor windows,
 // Teams call popouts and meeting windows included.
+//
+// The three apps below never share an app-id between windows, so a plain
+// rule is enough. Six other windows (3 Chrome, 3 ghostty) DO share an app-id
+// with siblings meant for different workspaces -- rules can't disambiguate
+// those, so they're placed over IPC by
+// ~/.config/scripts/niri-autostart-apps.py instead. See the comment there.
 
-// VS Code Insiders -> left-most external.
+// VS Code Insiders: both windows share a PID and neither runs through a
+// rule-visible launch flag (the "agents" window comes back via VS Code's own
+// session restore), so they're told apart by title. Order matters -- the
+// general rule must come first; niri applies rules top-to-bottom and a later
+// matching rule overrides the property, so "Agents" gets the last word.
 window-rule {
     match app-id=r#"^code-insiders$"#
-    open-on-output "Dell Inc. DELL P2419H BJ4X5X2"
+    open-on-workspace "code"
+}
+window-rule {
+    match app-id=r#"^code-insiders$"# title=r#"Agents"#
+    open-on-workspace "agents"
 }
 
-// Microsoft Teams PWA -> centre external (the right-most *external* panel).
-// Chrome derives the Wayland app-id of an installed web app from its extension
-// id: chrome-<app-id>-<profile>. Get it with `niri msg windows` if it ever
-// changes (e.g. after reinstalling the PWA).
+// Microsoft Teams PWA. Chrome derives the Wayland app-id of an installed web
+// app from its extension id: chrome-<app-id>-<profile>. Get it with
+// `niri msg windows` if it ever changes (e.g. after reinstalling the PWA).
 window-rule {
     match app-id=r#"^chrome-cifhbcnohmdccbgoicgdjpfamggdegmo-Default$"#
-    open-on-output "Dell Inc. DELL P2419H 920C993"
+    open-on-workspace "chat"
 }
+
+// Slack. Its .desktop advertises StartupWMClass=Slack, but the Wayland
+// app-id it actually reports is lowercase -- confirmed via `niri msg windows`.
+window-rule {
+    match app-id=r#"^slack$"#
+    open-on-workspace "chat"
+}
+
+// Outlook PWA, same chrome-<id>-<profile> shape as Teams above.
+window-rule {
+    match app-id=r#"^chrome-faolnafnngnfdaknnbpnkhgohbobgegn-Default$"#
+    open-on-workspace "mail"
+}
+
 
 // Screenshot annotation tools open floating, so editing a capture never
 // reshuffles the tiling layout of the windows that were just captured.
@@ -890,35 +1007,43 @@ binds {
     // Mod+TouchpadScrollDown { spawn-sh "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.02+"; }
     // Mod+TouchpadScrollUp   { spawn-sh "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.02-"; }
 
-    // You can refer to workspaces by index. However, keep in mind that
-    // niri is a dynamic workspace system, so these commands are kind of
-    // "best effort". Trying to refer to a workspace index bigger than
-    // the current workspace count will instead refer to the bottommost
-    // (empty) workspace.
+    // The ten workspaces are named and pinned (see the `workspace` blocks
+    // near the top), so these refer to them BY NAME, not index. That matters:
+    // workspace *index* is per-output, so on an unnamed setup "Mod+3" means a
+    // different workspace depending which monitor has focus. A name means
+    // the same thing from anywhere.
     //
-    // For example, with 2 workspaces + 1 empty, indices 3, 4, 5 and so on
-    // will all refer to the 3rd workspace.
-    Mod+1 { focus-workspace 1; }
-    Mod+2 { focus-workspace 2; }
-    Mod+3 { focus-workspace 3; }
-    Mod+4 { focus-workspace 4; }
-    Mod+5 { focus-workspace 5; }
-    Mod+6 { focus-workspace 6; }
-    Mod+7 { focus-workspace 7; }
-    Mod+8 { focus-workspace 8; }
-    Mod+9 { focus-workspace 9; }
-    Mod+Ctrl+1 { move-column-to-workspace 1; }
-    Mod+Ctrl+2 { move-column-to-workspace 2; }
-    Mod+Ctrl+3 { move-column-to-workspace 3; }
-    Mod+Ctrl+4 { move-column-to-workspace 4; }
-    Mod+Ctrl+5 { move-column-to-workspace 5; }
-    Mod+Ctrl+6 { move-column-to-workspace 6; }
-    Mod+Ctrl+7 { move-column-to-workspace 7; }
-    Mod+Ctrl+8 { move-column-to-workspace 8; }
-    Mod+Ctrl+9 { move-column-to-workspace 9; }
+    //   1 code   2 agents                    -- left external, VS Code
+    //   3 chat   4 mail   5 web1   6 web2   8 term1   -- centre external
+    //   7 web3   9 term2   0 term3                    -- laptop panel
+    //
+    // (8 and 9 look out of numeric order against the monitor grouping above
+    // deliberately -- the digits are grouped by APP, "web" on 5/6/7 and
+    // "term" on 8/9/0, so the muscle memory is "which app" rather than
+    // "which screen".)
+    Mod+1 { focus-workspace "code"; }
+    Mod+2 { focus-workspace "agents"; }
+    Mod+3 { focus-workspace "chat"; }
+    Mod+4 { focus-workspace "mail"; }
+    Mod+5 { focus-workspace "web1"; }
+    Mod+6 { focus-workspace "web2"; }
+    Mod+7 { focus-workspace "web3"; }
+    Mod+8 { focus-workspace "term1"; }
+    Mod+9 { focus-workspace "term2"; }
+    Mod+0 { focus-workspace "term3"; }
+    Mod+Ctrl+1 { move-column-to-workspace "code"; }
+    Mod+Ctrl+2 { move-column-to-workspace "agents"; }
+    Mod+Ctrl+3 { move-column-to-workspace "chat"; }
+    Mod+Ctrl+4 { move-column-to-workspace "mail"; }
+    Mod+Ctrl+5 { move-column-to-workspace "web1"; }
+    Mod+Ctrl+6 { move-column-to-workspace "web2"; }
+    Mod+Ctrl+7 { move-column-to-workspace "web3"; }
+    Mod+Ctrl+8 { move-column-to-workspace "term1"; }
+    Mod+Ctrl+9 { move-column-to-workspace "term2"; }
+    Mod+Ctrl+0 { move-column-to-workspace "term3"; }
 
     // Alternatively, there are commands to move just a single window:
-    // Mod+Ctrl+1 { move-window-to-workspace 1; }
+    // Mod+Ctrl+1 { move-window-to-workspace "code"; }
 
     // Switches focus between the current and the previous workspace.
     Mod+Tab { focus-workspace-previous; }

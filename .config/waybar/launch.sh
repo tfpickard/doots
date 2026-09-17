@@ -42,25 +42,48 @@ style_file="style.css"
 
 CONFIG_PATH="$WAYBAR_DIR/themes$theme/$config_file"
 
-# --- Compositor-aware left group ------------------------------------------
+# --- Compositor/output-aware left group -----------------------------------
 #
 # The committed themes drive their workspace/window indicators with
 # custom/niriws and custom/niriwindow, which follow `niri msg event-stream`.
-# Under Hyprland there is no niri IPC socket, so those helpers exit
-# immediately, waybar's restart-interval respawns them every few seconds, and
-# the left side of the bar just sits there blank.
+# Two things derive from the same source config at launch time rather than
+# needing a second hand-written theme (which is how configs drift):
 #
-# Rather than maintain a second near-identical copy of the theme (which drifts),
-# derive a Hyprland variant from the same source config at launch time, swapping
-# only the two niri modules for their hyprland/* equivalents.
+#   niri, N outputs   Waybar draws one identical bar per output by default,
+#                      and the committed custom/niriws would show every
+#                      workspace from every output on all of them -- with
+#                      one named workspace per app across three monitors,
+#                      that's unreadable. compositor-config.py's
+#                      "niri-outputs" mode expands the single bar config
+#                      into an array, one per connected output, each filtered
+#                      to just that output.
+#
+#   Hyprland           There is no niri IPC socket, so custom/niriws and
+#                      custom/niriwindow exit immediately, restart-interval
+#                      respawns them every few seconds, and the left side of
+#                      the bar just sits there blank. "hyprland" mode swaps
+#                      those two modules for the built-in hyprland/workspaces
+#                      and hyprland/window, which do their own
+#                      separate-outputs -- so no per-output loop is needed on
+#                      this path.
 if [ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ] && [ -z "${NIRI_SOCKET:-}" ]; then
     GENERATED="${XDG_RUNTIME_DIR:-/tmp}/waybar-config-hyprland.json"
     if python3 "$WAYBAR_DIR/scripts/compositor-config.py" \
-           "$CONFIG_PATH" "$GENERATED" 2>>"$LOG"; then
+           hyprland "$CONFIG_PATH" "$GENERATED" 2>>"$LOG"; then
         CONFIG_PATH="$GENERATED"
         echo ":: waybar: Hyprland detected, using generated config"
     else
         echo ":: waybar: could not generate Hyprland config, using theme as-is" >&2
+    fi
+elif [ -n "${NIRI_SOCKET:-}" ]; then
+    GENERATED="${XDG_RUNTIME_DIR:-/tmp}/waybar-bars.json"
+    if python3 "$WAYBAR_DIR/scripts/compositor-config.py" \
+           niri-outputs "$CONFIG_PATH" "$GENERATED" 2>>"$LOG"; then
+        CONFIG_PATH="$GENERATED"
+        n=$(python3 -c "import json;print(len(json.load(open('$GENERATED'))))" 2>/dev/null || echo '?')
+        echo ":: waybar: niri detected, $n output(s), using generated per-output config"
+    else
+        echo ":: waybar: could not generate per-output config, using theme as-is" >&2
     fi
 fi
 
