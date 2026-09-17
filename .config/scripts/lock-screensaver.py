@@ -28,6 +28,20 @@ then moves it to its intended output with
 
     niri msg action move-window-to-monitor --id <id> <output>
 
+PINNED OUTPUTS
+--------------
+Two physical monitors don't participate in the random shortlist at all: the
+centre external always gets a clock (xdaliclock or dclock), the left external
+always gets rotating text (phosphor or apple2, fed a random phrase from
+screensaver-phrases.txt via screensaver-phrase.sh). See OUTPUT_POOLS, matched
+by monitor serial the same way niri/config.kdl's own `output` blocks are.
+
+xdaliclock and dclock aren't xscreensaver hacks -- they don't live in
+HACK_DIR and (xdaliclock especially) don't necessarily go through the :12
+XWayland at all. EXTRA_PROVIDERS carries their launch recipes; everything
+else in this file that used to assume "a hack is HACK_DIR/name -window"
+now checks that table first.
+
 CYCLING, AND "ANY KEY BUT THIS ONE"
 -----------------------------------
 There is no `xscreensaver` daemon here to talk to with `xscreensaver-command
@@ -169,6 +183,64 @@ VINTAGE = [
 # automatically -- `test` still runs them if you ask.
 SCREEN_GRABBERS = {"decayscreen", "slidescreen", "xanalogtv"}
 
+# --- Per-output pinning: two monitors always show a specific category -----
+#
+# The centre external always gets a clock; the left external always gets
+# rotating text (both wired into this idle-screensaver system, not run as
+# separate always-on apps -- they still start at 10 min idle and stop on any
+# input, same as everything else here). Matched by monitor SERIAL, the same
+# "Dell Inc. DELL P2419H <serial>" identity niri/config.kdl's own `output`
+# blocks use, not connector name -- connector names change when cables move
+# between ports, serials don't.
+#
+# xdaliclock and dclock are not xscreensaver hacks (they don't live in
+# HACK_DIR), so they need their own launch recipe. Empirically checked which
+# display mechanism each actually uses:
+#
+#   xdaliclock  the modern GTK rewrite -- runs as a NATIVE WAYLAND client
+#               (confirmed via `niri msg windows`: app-id "xdaliclock",
+#               unaffected by DISPLAY). No xwayland-satellite involved at all.
+#   dclock      an old Xt/Motif app with no Wayland backend -- genuinely
+#               needs :12 like the vintage hacks (app-id comes through as
+#               "Dclock" via xwayland-satellite).
+#
+# phosphor-text and apple2-text ARE real xscreensaver hacks (phosphor and
+# apple2 respectively) -- their windows carry the usual "from the
+# XScreenSaver" title, so screensaver_window_ids() below needs no changes for
+# them. They're just invoked with --program pointed at a script that prints
+# one random phrase and exits; both hacks relaunch --program a few seconds
+# after it exits (5s for phosphor, 3s for apple2), which is what gives the
+# rotation -- the picker script itself has no loop.
+PHRASE_SCRIPT = os.path.join(os.path.dirname(SELF), "screensaver-phrase.sh")
+
+EXTRA_PROVIDERS: dict[str, dict] = {
+    "xdaliclock": {"argv": ["xdaliclock"], "native_wayland": True},
+    "dclock": {"argv": ["dclock"]},
+    "phosphor-text": {
+        "argv": [os.path.join(HACK_DIR, "phosphor"), "-window",
+                 "-program", PHRASE_SCRIPT],
+    },
+    "apple2-text": {
+        "argv": [os.path.join(HACK_DIR, "apple2"), "-window", "-text",
+                 "-program", PHRASE_SCRIPT],
+    },
+}
+
+# app-ids that identify a spawned EXTRA_PROVIDERS window when its title
+# doesn't carry "from the XScreenSaver" (xdaliclock, dclock). phosphor-text /
+# apple2-text need no entry: they already match on title like any other hack.
+EXTRA_APP_IDS = {"xdaliclock", "Dclock"}
+
+CLOCK_POOL = ["xdaliclock", "dclock"]
+TEXT_POOL = ["phosphor-text", "apple2-text"]
+
+# Monitor serial -> the pool that output always draws from, instead of the
+# shared VINTAGE one.
+OUTPUT_POOLS: dict[str, list[str]] = {
+    "920C993": CLOCK_POOL,   # centre external: always a clock
+    "BJ4X5X2": TEXT_POOL,    # left external: always rotating text
+}
+
 
 def installed_hacks() -> list[str]:
     try:
@@ -180,6 +252,40 @@ def installed_hacks() -> list[str]:
         )
     except OSError:
         return []
+
+
+def available_providers(names: list[str]) -> list[str]:
+    """Filter a provider list (hack names or EXTRA_PROVIDERS keys) down to
+    what's actually runnable right now -- a pool with a not-installed
+    provider should degrade, not error."""
+    installed = set(installed_hacks())
+    out = []
+    for name in names:
+        provider = EXTRA_PROVIDERS.get(name)
+        if provider is not None:
+            if shutil.which(provider["argv"][0]):
+                out.append(name)
+        elif name in installed:
+            out.append(name)
+    return out
+
+
+def resolve_output_pools() -> dict[str, list[str]]:
+    """connector -> its pinned pool (pre-filtered to available providers),
+    for every currently-connected output whose serial has one in
+    OUTPUT_POOLS. An output with no pinned pool, or whose pinned pool has
+    nothing installed, is simply absent here -- callers fall back to the
+    shared vintage pool for it."""
+    data = niri_json("outputs") or {}
+    result = {}
+    for connector, info in data.items():
+        pool = OUTPUT_POOLS.get(info.get("serial"))
+        if not pool:
+            continue
+        avail = available_providers(pool)
+        if avail:
+            result[connector] = avail
+    return result
 
 
 def niri_json(*args: str):
@@ -473,22 +579,39 @@ def restart_xwayland() -> bool:
 
 
 def screensaver_window_ids() -> dict[int, str]:
-    """Map window id -> app_id for every xscreensaver window currently open."""
+    """Map window id -> app_id for every currently-open screensaver window --
+    a vintage hack (title carries "from the XScreenSaver") or one of the
+    EXTRA_PROVIDERS that don't set that title (app-id in EXTRA_APP_IDS)."""
     data = niri_json("windows") or []
     found = {}
     for w in data:
-        if "from the XScreenSaver" in (w.get("title") or ""):
-            found[w["id"]] = w.get("app_id") or ""
+        title = w.get("title") or ""
+        app_id = w.get("app_id") or ""
+        if "from the XScreenSaver" in title or app_id in EXTRA_APP_IDS:
+            found[w["id"]] = app_id
     return found
 
 
 def spawn(hack: str) -> int | None:
-    env = dict(os.environ, DISPLAY=DISPLAY_NUM)
-    try:
+    provider = EXTRA_PROVIDERS.get(hack)
+    if provider:
+        argv = list(provider["argv"])
+        env = dict(os.environ)
+        if provider.get("native_wayland"):
+            # Let it run on the real Wayland session, not the disposable :12
+            # X server -- an inherited DISPLAY pointing at :12 would make GTK
+            # try (and, per testing, fail with a benign but noisy assertion)
+            # to use X11 instead of picking Wayland up on its own.
+            env.pop("DISPLAY", None)
+        else:
+            env["DISPLAY"] = DISPLAY_NUM
+    else:
         # -window, not -root: rootless XWayland has no root window to draw on.
+        argv = [os.path.join(HACK_DIR, hack), "-window"]
+        env = dict(os.environ, DISPLAY=DISPLAY_NUM)
+    try:
         proc = subprocess.Popen(
-            [os.path.join(HACK_DIR, hack), "-window"],
-            env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            argv, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
             start_new_session=True,
         )
     except OSError as err:
@@ -508,9 +631,10 @@ def stop() -> int:
     return 0
 
 
-def launch(picks: list[str], screens: list[str], watch: bool = True,
+def launch(picks: dict[str, str], watch: bool = True,
            retried: bool = False) -> int:
-    """Spawn one hack per screen, place each on its output, record the pids."""
+    """Spawn one hack per screen (screen -> hack name), place each on its
+    output, record the pids."""
     if not ensure_xwayland():
         return 1
 
@@ -519,8 +643,8 @@ def launch(picks: list[str], screens: list[str], watch: bool = True,
     before = set(screensaver_window_ids())
 
     pids = []
-    placements = []
-    for screen, hack in zip(screens, picks):
+    placements: dict[str, str] = {}
+    for screen, hack in picks.items():
         pid = spawn(hack)
         if pid is None:
             continue
@@ -545,12 +669,12 @@ def launch(picks: list[str], screens: list[str], watch: bool = True,
             # server and try the whole set once more. Only worth doing for the
             # first one: if later hacks die, X is evidently fine.
             if not pids and not retried and restart_xwayland():
-                return launch(picks, screens, watch, retried=True)
+                return launch(picks, watch, retried=True)
             print(f"{hack} exited immediately", file=sys.stderr)
             continue
 
         pids.append(pid)
-        placements.append((screen, hack))
+        placements[screen] = hack
         if new_id is not None and screen != "<none>":
             niri_action("move-window-to-monitor", "--id", str(new_id), screen)
 
@@ -558,10 +682,10 @@ def launch(picks: list[str], screens: list[str], watch: bool = True,
         return 1
 
     write_pids(pids)
-    write_current([hack for _, hack in placements])
+    write_current(list(placements.values()))
     if watch:
         start_watcher()
-    for screen, hack in placements:
+    for screen, hack in placements.items():
         print(f"{hack} -> {screen}")
     return 0
 
@@ -584,33 +708,56 @@ def start(only: str | None = None) -> int:
     if read_pids():
         return 0  # already running; don't stack them
 
-    available = set(installed_hacks())
     if only:
+        available = set(installed_hacks()) | set(EXTRA_PROVIDERS)
         if only not in available:
             print(f"no such hack: {only}", file=sys.stderr)
             return 1
-        pool = [only]
-    else:
-        pool = cycle_pool()
-        if not pool:
-            print(f"no hacks from the shortlist found in {HACK_DIR}",
-                  file=sys.stderr)
-            return 1
+        screens = outputs() or ["<none>"]
+        picks = {s: only for s in screens}
+        # No dismiss-on-input watcher when auditioning a named hack: `test` is
+        # run from a terminal, and a screensaver that vanishes the moment you
+        # type the next command is not much use for looking at one.
+        return launch(picks, watch=False)
 
     screens = outputs() or ["<none>"]
-    # A different hack per screen where possible, so three monitors don't all
-    # show the same thing.
-    picks = [only] * len(screens) if only else pick_random(pool, len(screens), [])
+    dedicated = resolve_output_pools()
+    vintage_pool = cycle_pool()
 
-    # No dismiss-on-input watcher when auditioning a named hack: `test` is run
-    # from a terminal, and a screensaver that vanishes the moment you type the
-    # next command is not much use for looking at one.
-    rc = launch(picks, screens, watch=not only)
-    if rc == 0 and not only:
+    # Dedicated screens (the pinned clock/text monitors) pick independently
+    # of the shared vintage pool and of each other.
+    picks: dict[str, str] = {
+        screen: random.choice(pool)
+        for screen, pool in dedicated.items()
+        if screen in screens
+    }
+    shared_screens = [s for s in screens if s not in picks]
+
+    if shared_screens:
+        if not vintage_pool:
+            print(f"no hacks from the shortlist found in {HACK_DIR}",
+                  file=sys.stderr)
+            if not picks:
+                return 1
+        else:
+            # A different hack per screen where possible, so multiple shared
+            # monitors don't all show the same thing.
+            shared_picks = pick_random(vintage_pool, len(shared_screens), [])
+            picks.update(zip(shared_screens, shared_picks))
+
+    if not picks:
+        return 1
+
+    rc = launch(picks, watch=True)
+    if rc == 0 and shared_screens and vintage_pool:
         # Leave the cycle where the random pick landed, so the first Mod+Ctrl+
-        # Shift+Z after an idle screensaver moves on from what you're looking at
-        # rather than jumping back to the top of the list.
-        write_cycle(pool.index(picks[0]))
+        # Shift+Z after an idle screensaver moves on from what you're looking
+        # at rather than jumping back to the top of the list. Indexed off the
+        # first SHARED screen -- a dedicated screen's pick isn't in this pool
+        # at all.
+        first_shared = shared_screens[0]
+        if first_shared in picks:
+            write_cycle(vintage_pool.index(picks[first_shared]))
     return rc
 
 
@@ -621,6 +768,12 @@ def cycle(step: int | None) -> int:
     screen's worth at a time, so repeated presses eventually show you everything
     instead of the same few favourites.
 
+    Dedicated screens (the pinned clock/text monitors) always re-roll at
+    random within their own small pool regardless of step -- an "ordered
+    walk" through 2-3 items isn't meaningfully different from a random pick,
+    and this keeps them from ever showing something outside their pool no
+    matter which cycle key was pressed.
+
     There is no daemon to ask for the next animation -- `xscreensaver-command
     -next` needs a running xscreensaver, and these are the bare hacks -- so this
     is kill-and-relaunch. Which makes the request marker the important part: the
@@ -630,25 +783,45 @@ def cycle(step: int | None) -> int:
     """
     note_request()
 
-    pool = cycle_pool()
-    if not pool:
-        print(f"no hacks from the shortlist found in {HACK_DIR}",
-              file=sys.stderr)
-        clear_request()
-        return 1
-
     screens = outputs() or ["<none>"]
-    if step is None:
-        picks = pick_random(pool, len(screens), read_current())
-        index = pool.index(picks[0])
-    else:
-        span = min(len(screens), len(pool))  # how far one press moves the list
-        current = read_cycle()
-        index = 0 if step > 0 else -span
-        if 0 <= current < len(pool):
-            index = current + step * span
-        index %= len(pool)
-        picks = [pool[(index + n) % len(pool)] for n in range(len(screens))]
+    dedicated = resolve_output_pools()
+    vintage_pool = cycle_pool()
+    current = read_current()  # flat list; best-effort avoid-repeat, see below
+
+    picks: dict[str, str] = {}
+    for screen, pool in dedicated.items():
+        if screen not in screens:
+            continue
+        fresh = [h for h in pool if h not in current]
+        picks[screen] = random.choice(fresh or pool)
+
+    shared_screens = [s for s in screens if s not in picks]
+    index = read_cycle()
+
+    if shared_screens:
+        if not vintage_pool:
+            print(f"no hacks from the shortlist found in {HACK_DIR}",
+                  file=sys.stderr)
+            clear_request()
+            if not picks:
+                return 1
+        else:
+            if step is None:
+                shared_picks = pick_random(vintage_pool, len(shared_screens), current)
+                index = vintage_pool.index(shared_picks[0])
+            else:
+                span = min(len(shared_screens), len(vintage_pool))
+                cur = read_cycle()
+                index = 0 if step > 0 else -span
+                if 0 <= cur < len(vintage_pool):
+                    index = cur + step * span
+                index %= len(vintage_pool)
+                shared_picks = [vintage_pool[(index + n) % len(vintage_pool)]
+                                for n in range(len(shared_screens))]
+            picks.update(zip(shared_screens, shared_picks))
+
+    if not picks:
+        return 1
 
     running = read_pids()
     strays = stray_hack_pids()
@@ -665,7 +838,7 @@ def cycle(step: int | None) -> int:
         time.sleep(RESUME_SETTLE)
         note_request()
 
-    rc = launch(picks, screens)
+    rc = launch(picks)
     if rc == 0:
         write_cycle(index)
     else:
@@ -729,12 +902,20 @@ def main() -> int:
     print(f"{len(available)} hacks in {HACK_DIR}")
     print(f"outputs: {', '.join(outputs()) or '(niri not running)'}\n")
 
+    dedicated = resolve_output_pools()
+    if dedicated:
+        print("pinned outputs (always this pool, never the shared shortlist):")
+        for screen, pool in dedicated.items():
+            print(f"  {screen}: {', '.join(pool)}")
+        print()
+
     picks = [h for h in VINTAGE if h in available and h not in SCREEN_GRABBERS]
     missing = [h for h in VINTAGE if h not in available]
     skipped = [h for h in VINTAGE if h in available and h in SCREEN_GRABBERS]
     position = read_cycle()
 
-    print("vintage shortlist used by `start`, walked in order by `next`:")
+    print("vintage shortlist used on every non-pinned output, walked in "
+          "order by `next`:")
     for i, name in enumerate(picks):
         print(f"  {'->' if i == position else '  '} {name}")
     if skipped:

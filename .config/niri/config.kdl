@@ -760,6 +760,16 @@ window-rule {
     open-fullscreen true
 }
 
+// xdaliclock and dclock (lock-screensaver.py's pinned clock pool for the
+// centre monitor) aren't xscreensaver hacks, so they don't set that title --
+// matched by app-id instead. dclock's is exactly "Dclock" (capital D,
+// confirmed via `niri msg windows`); xdaliclock's is lowercase.
+window-rule {
+    match app-id=r#"^xdaliclock$"#
+    match app-id=r#"^Dclock$"#
+    open-fullscreen true
+}
+
 // The manually-toggled atlantis (Mod+Ctrl+Z) additionally gets pinned to the
 // built-in panel, so it doesn't take over a monitor you're working on. The
 // screensaver stage deliberately has no open-on-output: when it fires you are
