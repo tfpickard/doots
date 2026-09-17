@@ -48,7 +48,7 @@ all: deps backup symlinks ghostty nvim
 	@echo "💡 You may need to:"
 	@echo "   - Restart your shell: exec zsh"
 	@echo "   - Install Neovim plugins: nvim +Lazy"
-	@echo "   - Configure Hyprland for your displays"
+	@echo "   - Configure niri for your displays (.config/niri/config.kdl)"
 
 help:
 	@echo "Available targets:"

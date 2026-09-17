@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-This is a personal dotfiles repository for macOS (with some Linux/Hyprland configs). The repo is managed with git and deployed by symlinking or copying files to their target locations in `$HOME`.
+This is a personal dotfiles repository, primarily for a Linux/niri desktop with some macOS configs (zsh, tmux, ghostty) that also apply there. The repo is managed with git and deployed by symlinking or copying files to their target locations in `$HOME`.
 
 ## Repository Structure
 
@@ -14,12 +14,38 @@ This is a personal dotfiles repository for macOS (with some Linux/Hyprland confi
 | `.aliases` | Shell aliases (sourced by `.zshrc`) |
 | `.tmux.conf` | Tmux configuration |
 | `.config/ghostty/` | Ghostty terminal emulator config |
-| `.config/hypr/` | Hyprland window manager (Linux) |
+| `.config/niri/` | niri window manager (Linux) -- the live WM; see below |
+| `.config/hypr/` | Hyprland window manager config -- **dormant**, not the active WM (see note below) |
 | `.config/nvim/` | Neovim configuration |
-| `.config/eww/` | Eww widget system |
+| `.config/eww/` | Eww widget system -- **dormant**, not installed, no niri binding (see note below) |
 | `.config/waybar/` | Waybar status bar (Linux) |
 
 ## Key Architectural Patterns
+
+### niri is the live window manager; hypr/eww are dormant, not deleted
+This repo was originally built around Hyprland (see `.config/hypr/`, a full preset-based config with 25 scripts) with an eww sidebar. The desktop now runs **niri**, and neither of those is wired into it: `niri/config.kdl` never references `hypr/` or `eww/`, and `eww` itself isn't installed (its sidebar calls `hypr/scripts/*.sh`, which is Hyprland-only anyway). They're kept in the repo deliberately rather than deleted -- if you ever go back to Hyprland, the preset system in `hypr/conf/` is a complete, working config, not an abandoned fragment. `waybar/scripts/compositor-config.py`'s "hyprland" mode is the one live bridge between the two setups: it derives a Hyprland-compatible bar config from the same niri theme source, for exactly the day this might get used again.
+
+`dunst` is genuinely stale rather than dormant-by-design: it's not in the notification-daemon switcher (`scripts/notify-daemon.sh`), not in `theme-set`'s applier table, and its only callers are inside the dormant `hypr/` tree. `mako`/`swaync`/`fnott` are the three real, switchable options.
+
+### niri: a fixed desk, not ad-hoc tiling
+`niri/config.kdl` declares ten **named workspaces** (`workspace "name" { open-on-output "..." }`), each pinned to a physical monitor, rather than letting dynamic workspaces accumulate however they land:
+
+| Workspace | Output | Contents |
+|---|---|---|
+| `code`, `agents` | left external (`BJ4X5X2`) | VS Code, two windows, full-bleed (per-workspace `layout{}` override: `gaps 0`) |
+| `chat`, `mail`, `web1`, `web2`, `term1` | centre external (`920C993`) | Teams+Slack, Outlook, browsing, one terminal |
+| `web3`, `term2`, `term3` | laptop panel (`eDP-1`) | remaining browsing/terminals |
+
+`Mod+1`..`Mod+0` focus these **by name**, not index -- workspace index is per-output, so on an unnamed setup the same key means a different workspace depending which monitor has focus. Window-rules (`open-on-workspace`) place Teams/Slack/Outlook/VS Code, since their app-ids are unambiguous (VS Code's two windows are told apart by title). Three plain Chrome windows and three ghostty windows are NOT distinguishable this way -- they share an app-id with their siblings -- so `scripts/niri_placement.py` places those six over IPC at startup, by serializing launches so "the newest matching window nobody has claimed yet" is unambiguous even though the windows themselves are identical. `scripts/niri-autostart-apps.py` and `scripts/niri-replace.py` are two thin entry points into that one engine (launch vs. re-place-only, for after a dock cycle).
+
+**A real trap hit while building this:** `layer-rule { match namespace="^wallpaper$"; place-within-backdrop true }` looks like it should make the wallpaper additionally visible in the Overview -- it actually redirects the surface into backdrop-compositing *instead of* its normal spot, replacing the desktop background with flat grey outside the Overview. niri auto-reloads `config.kdl` on save (no explicit `load-config-file` needed), so this went live immediately and was only caught by a screenshot. Not currently used in this config for that reason.
+
+### Waybar draws one bar per output, generated from a single source
+The committed theme (`waybar/themes/dope/config`) is one bar definition; `launch.sh` calls `compositor-config.py niri-outputs` to expand it into an array, one entry per connected monitor, before waybar ever sees it. Both `custom/niriws` and `custom/niriwindow` take a `--output <connector>` flag so each bar shows only its own monitor's workspaces and focused window -- without this, all ten named workspaces (and whichever window is globally focused) would show identically on every bar.
+
+**The trap:** waybar's `"output"` config key matches the Wayland *connector* name (`DP-2`, `eDP-1`), which is exactly what `niri/config.kdl`'s `output` blocks deliberately do NOT key on (they use `"make model serial"`, because connector names change when cables move between ports). The generator resolves serial -> current connector from `niri msg -j outputs` at launch time, not at config-write time. `output-watch.py` restarts waybar when the connected-output set changes (inferred from `WorkspacesChanged`, since niri's IPC has no dedicated output-change event), debounced 1s since docking fires a burst of these.
+
+The Hyprland-conversion mode described in "Waybar status modules" below is the other branch of this same generator, not a separate code path.
 
 ### Ghostty config is modular
 `.config/ghostty/config` uses `config-file =` directives to compose from sub-directories:
@@ -44,8 +70,8 @@ Custom keybindings of note:
 - `prefix + h` — open sidechat pane
 - `prefix + j` — open sc-picker popup
 
-### Hyprland config uses switchable presets
-`.config/hypr/conf/` contains named preset files for animations, decorations, layouts, monitors, and window borders. The active preset for each category is referenced from the parent `.conf` file (e.g., `animation.conf` sources one of `conf/animations/*.conf`).
+### Hyprland config uses switchable presets (dormant)
+`.config/hypr/conf/` contains named preset files for animations, decorations, layouts, monitors, and window borders. The active preset for each category is referenced from the parent `.conf` file (e.g., `animation.conf` sources one of `conf/animations/*.conf`). Not currently read by anything -- see "niri is the live window manager" above.
 
 ### Waybar layout is deliberately compact
 The bar is sized to survive its worst case: a long window title used to push the right-hand island clean off the screen. Guards against that:
@@ -57,7 +83,9 @@ The bar is sized to survive its worst case: a long window title used to push the
 The bar used to shift horizontally whenever a reading gained or lost a digit. Two conventions prevent that, and new modules are expected to follow both:
 
 1. **Fixed character counts.** Numeric fields are padded in `themes/dope/config` (`{usage:>3}`, `{temperatureC:>2}`), and modules with alternate formats of differing length set `min-length`. JetBrains Mono gives every digit and the space the same advance width, so equal character counts are equal pixel widths.
-2. **`min-width` floors in `style.css`.** Nerd Font *icons* are not uniform width (9-16px in the set used here), so a module that swaps its icon still resizes even with the character count pinned. The floors at the bottom of `style.css` are measured from each module's widest variant -- measure rather than guess when adding one.
+2. **`min-width` floors in `style.css`.** Nerd Font *icons* are not uniform width (9-16px in the set used here), so a module that swaps its icon still resizes even with the character count pinned. The floors at the bottom of `style.css` are measured (or, where a live bar wasn't available to screenshot, cross-calibrated against modules that were) from each module's widest variant -- measure/derive rather than guess when adding one.
+
+   **The floor is not automatic, though.** `custom/weather` and `mpris` deliberately have none: a floor exists to stop *frequent* jitter (a value that updates every few seconds), and both of these change on a much longer cadence (15 minutes; once per track) where an occasional width change is the better trade against permanently reserving space for a worst case that's rarely hit. `custom-battery` (updates every 5s, state cycles constantly) is the shape that does want one. Ask "how often does this actually change" before adding a floor, not just "what's the widest it gets."
 
 Custom scripts emit their own text, so they pad it themselves (see `scripts/cpu-freq.py`, `scripts/battery-power.py`) and swap icons in place rather than appending an extra glyph.
 
@@ -96,6 +124,7 @@ Two things to keep in mind:
 - **The generated theme lives in `~/.icons/` and is not in this repo** -- it is derived, so regenerate it after a re-image. The generator and both config files that point at it *are* tracked. `~/.icons` rather than `~/.local/share/icons` because only the former is in the search path compiled into libXcursor and libwayland-cursor; `$XDG_DATA_HOME/icons` is a newer addition that not every build has.
 - **Toolkits cache the cursor theme at process start.** There is no "theme changed" notification a GTK, Qt or Chromium app will act on, so a running app keeps whatever it loaded at launch -- and for Electron, a *window* reload is not enough, since it reuses the same process. If a cursor change looks like it did nothing, check the app's start time before suspecting the theme. `pixelate-cursors.py --verify` reports what libXcursor actually resolves right now, which separates "theme is wrong" from "app is stale".
 - Cursor size must stay a whole-number multiple of the grid (16/32/48/64, currently 32). Any other size makes Xcursor rescale a sprite it cannot divide evenly and the blocks come out ragged.
+- **A third place this gets set, easy to miss:** `gtk-4.0/settings.ini` and `gtk-3.0/settings.ini` each carry their own `gtk-cursor-theme-name`/`-size`, independent of the niri and `.icons/default/index.theme` settings below. All three used to disagree (a stray `Yaru@24` sat in an untracked `gtk-4.0/settings.ini`), which is exactly the "mix" symptom described above but coming from a GTK-specific override rather than a missing CSS alias.
 
 It is selected in two places, because they cover different clients: `cursor { xcursor-theme }` in `.config/niri/config.kdl` for Wayland, and `.icons/default/index.theme` (`Inherits=`) for XWayland and legacy X11 apps. Change both together, plus `gsettings set org.gnome.desktop.interface cursor-theme`.
 

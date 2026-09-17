@@ -9,7 +9,7 @@ Welcome to the most fascinating project you'll ever encounter. This repository i
 3. [Usage](#usage)
 4. [Configuration](#configuration)
 5. [Neovim Configuration](#neovim-configuration)
-6. [Hyprland Configuration](#hyprland-configuration)
+6. [niri Configuration](#niri-configuration)
 7. [Zsh Configuration](#zsh-configuration)
 8. [Tmux Configuration](#tmux-configuration)
 9. [Contributing](#contributing)
@@ -61,9 +61,11 @@ The Neovim setup is a dope concoction of plugins and custom settings designed to
 
 The configuration files are located in `.config/nvim/lua/plugins/` and are organized by functionality, such as `completion.lua` for autocompletion settings and `lualine.lua` for status line customization. Each file is meticulously crafted to ensure a cohesive and efficient development environment.
 
-## Hyprland Configuration
+## niri Configuration
 
-Hyprland is configured to provide a visually appealing and efficient window management experience. The configuration files are located in `.config/hypr/conf/` and include settings for window decorations, animations, and keybindings. The `autostart.conf` file ensures that essential services and applications are launched at startup, while `keybindings/default.conf` defines the keyboard shortcuts for window management and application launching.
+niri is the window manager that's actually running the show these days -- a scrollable-tiling compositor that trades Hyprland's eye candy for a dead-simple mental model: an infinite horizontal strip of columns, no workspaces to remember, just scroll. The configuration lives in `.config/niri/config.kdl` and covers everything from input devices to a fixed set of named workspaces pinned to physical monitors, so `code` always means "VS Code, left screen" no matter what else is running.
+
+Hyprland's config is still sitting in `.config/hypr/` -- not deleted, just dormant, kept intact in case the pendulum swings back. If it does, the preset system in `conf/` (animations, decorations, layouts, monitors, window borders) is ready to go, not an abandoned fragment to reconstruct from memory.
 
 ## Zsh Configuration
 
