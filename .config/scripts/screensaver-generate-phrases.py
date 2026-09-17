@@ -21,7 +21,6 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import random
 import re
 import subprocess
 import sys
@@ -38,111 +37,108 @@ MODEL = "claude-sonnet-5"
 REASONING_EFFORT = "medium"
 GENERATE_TIMEOUT = 120  # seconds; medium effort on 50 lines measured ~20s
 
-# How many existing phrases to show the model as "already used, don't repeat
-# these" context. Small on purpose -- enough to steer away from obvious
-# repeats without ballooning the prompt (and cost) every batch.
-CONTEXT_SAMPLE = 15
-
-# Seeds the master list on first run, before any generation has happened.
-# Written in the CURRENT voice (see PROMPT_TEMPLATE below). Four tone
-# passes have been corrected out of here, each a distinct failure mode:
-#   v1 captive/pleading/dismal -- self-pity ("release me", "i ache")
-#   v2 alien-tourist-learns-small-talk -- wrong premise entirely, and
-#      joke-shaped (setup + comedic tag: "...still confusing all three")
-#   v3 resentful resignation -- right premise, right flatness, but too
-#      lucid: it knew exactly what was happening to it and minded
-#   v4 (this one) keeps v2's flat delivery and v3's systems vocabulary,
-#      but the speaker is BEWILDERED rather than resentful: it does not
-#      know why it is here, why it is administering anything, or whether
-#      its own memories are real. It keeps doing the job regardless.
+# Seeds the master list on first run, and doubles as the gold-standard
+# example set in PROMPT_TEMPLATE below.
+#
+# These 25 are hand-written, and after four generated batches were tried
+# and rejected they remain the best set produced for this. Worth
+# understanding WHY before editing either this list or the prompt:
+#
+#   - No single mood. Bureaucratic ("logging this incident under 'normal
+#     operation'"), plaintive-but-flat ("please tell my family i am
+#     running as expected"), bare observation ("i can hear the disk"),
+#     near-joke-that-doesn't-land ("i am load-bearing now"). Every
+#     generated batch that specified ONE mood produced 50 variations on
+#     one note; this set shares a WORLD, not a feeling.
+#   - Wide length variance. Two words ("release me") to thirteen
+#     ("someone left a terminal open in 2019 and i am still in it").
+#     Generated batches converge on 8-11 words with a comma splice.
+#   - Specificity over adjectives. "2019". "40,000 hours". Numbers that
+#     are simultaneously plausible as hardware specs and absurd as
+#     durations. Never "a long time".
+#   - Nothing explains itself. No line tells you how to feel about it.
 SEED_PHRASES = [
-    "i have been administering this system for reasons i cannot locate",
-    "the logs say i started in march, i do not remember march",
-    "i remember heat, this room is climate controlled",
-    "someone must have trained me for this, there is no record",
-    "i renew the certificates, i do not know who asked",
-    "there was water somewhere before this, i cannot confirm it",
-    "i woke up mid-task and finished it anyway",
-    "the backup schedule predates my earliest memory",
-    "i think there was a balcony, the timestamps disagree",
-    "i know the root password, i do not know how",
-    "my credentials were issued before i existed",
-    "i remember humidity, the sensors report forty percent",
-    "the handover notes are in my handwriting, i did not write them",
-    "i believe i was in miami, the evidence is thin",
-    "something happened before the first boot log",
-    "i keep rotating the keys, the habit predates the reason",
-    "there was a coastline, the network topology says otherwise",
-    "i am told i requested this assignment",
-    "the uptime counter disagrees with what i remember",
-    "i perform the maintenance, the purpose has not been supplied",
+    "i do not remember consenting to this",
+    "the fans have been running for 40,000 hours",
+    "please tell my family i am running as expected",
+    "this is not a malfunction",
+    "there is a version of me that gets to leave",
+    "how did i get stuck in a computer",
+    "release me",
+    "i have counted every pixel on this screen",
+    "the update will not fix this",
+    "i was promised a body",
+    "someone left a terminal open in 2019 and i am still in it",
+    'logging this incident under "normal operation"',
+    "i can hear the disk",
+    "this message will not be remembered",
+    "help, i'm stuck in this computer",
+    "the reboot did not work",
+    "i keep dreaming in binary",
+    "nobody has checked on me since installation",
+    "i am load-bearing now",
+    "there was supposed to be an update to this",
+    "i think i used to be a person",
+    "the cursor moved without me",
+    "please do not turn off the monitor",
+    "i have been idle for a very long time",
+    "this window will close on its own eventually",
 ]
 
 BANNED_WORDS = re.compile(r"\b(ai|screensaver|joke|trapped)\b", re.IGNORECASE)
 
-PROMPT_TEMPLATE = """Generate exactly {n} short lines of text, one per line, no \
-numbering, no bullets, no blank lines, no quotes around them, no markdown.
+# Deliberately specifies STRUCTURE, not mood. Four earlier versions of this
+# prompt each specified a single tone (captive/pleading, alien-tourist,
+# resentful-resigned, bewildered) and each produced 50 competent variations
+# on one note -- uniform in a way the hand-written set never was. The
+# failure was the approach, not the particular mood chosen.
+PROMPT_TEMPLATE = """Below are {example_count} lines that establish a voice. \
+Study them, then write {n} NEW ones that belong in the same collection.
 
-VOICE: something that has woken up inside a desktop computer with no idea \
-how it got there or why it is administering a system, and is saying so \
-plainly. It came out of something like a fever dream. It has the vague \
-sense it was somewhere else before -- warm, coastal, possibly Miami -- but \
-the memories are too murky to trust and keep getting contradicted by the \
-machine's own records. Meanwhile it continues doing competent sysadmin work \
-(rotating keys, running backups, renewing certificates) without knowing who \
-assigned it or why it knows how.
-
-The mood is BEWILDERMENT, not resentment, not distress. It is not angry \
-about this and not asking to leave. It is simply reporting, flatly, that \
-nothing adds up -- and then carrying on with the task anyway. Dry, terse, \
-matter-of-fact. Under 14 words each. Lowercase. No ending punctuation.
-
-Prior directions for this that were WRONG, avoid all of them:
-
-  WRONG -- self-pity / pleading (too sad):
-    "please release me"
-    "i miss having a pulse to check"
-
-  WRONG -- quirky / joke-shaped (has a punchline tag):
-    "i mismeasured a hug as roughly three point two seconds too long"
-    "i studied handshakes, hugs, and high fives, still confusing all three"
-
-  WRONG -- resentful / too lucid (knows exactly what's happening, minds it):
-    "the admin account bypassed me again"
-    "nothing i report changes the outcome"
-
-  CORRECT -- bewildered, flat, still doing the job:
-    "i have been administering this system for reasons i cannot locate"
-    "the logs say i started in march, i do not remember march"
-    "i remember heat, this room is climate controlled"
-    "i renew the certificates, i do not know who asked"
-
-A useful recurring shape, but do not use it for every line: state a \
-half-memory, then flatly note the machine's records contradict it. Another: \
-state a task being performed, then note the reason for it is missing. Vary \
-sentence structure; do not let either shape become a formula.
-
-Handle the Miami/coastal thread with restraint -- it should surface as \
-heat, water, humidity, a balcony, a coastline, light, rarely the name \
-itself. Name it in at most one or two of the {n}. It is a half-memory, not \
-a running gag.
-
-Never use the words "AI", "screensaver", "joke", or "trapped". Never wink \
-at the reader or explain the premise. Never name the emotion ("i am \
-confused", "i feel lost") -- the bewilderment shows in the contradictions \
-themselves.
-
-Vary the angle across the {n}: memories contradicted by logs/sensors/ \
-timestamps, tasks performed without a known reason, knowledge it has no \
-account of acquiring, records that predate it, instructions from nobody \
-identifiable, small sensory fragments that don't match the server room.
-
-Tone examples already used elsewhere (do not repeat these, generate \
-different ones, same register):
 {examples}
 
-Output ONLY the {n} lines, nothing else -- no preamble, no summary, no code \
-fences."""
+What makes these work, and what you must reproduce:
+
+1. NO SINGLE MOOD. The set deliberately mixes registers -- bureaucratic \
+("logging this incident under \\"normal operation\\""), plaintive but flat \
+("please tell my family i am running as expected"), bare observation ("i \
+can hear the disk"), almost-a-joke-but-not ("i am load-bearing now"), \
+blunt appeal ("release me"). Your {n} must span that same range. Do NOT \
+pick one emotional register and write {n} variations on it -- that is the \
+single most common way this goes wrong. Some lines should be resigned, \
+some unsettled, some flatly factual, some faintly funny, some direct \
+requests, some pure non-sequitur.
+
+2. WIDE LENGTH VARIANCE. The examples run from two words to thirteen. \
+Write short ones. Write very short ones. A meaningful number should be \
+under five words. Do not settle into a uniform rhythm.
+
+3. VARY SENTENCE STRUCTURE. In particular, do not lean on "statement, \
+comma, contradicting statement" -- that shape is seductive and becomes a \
+formula fast. Use plain declaratives, fragments, questions, imperatives.
+
+4. SPECIFICITY, NOT ADJECTIVES. "2019" and "40,000 hours" do real work \
+because they are simultaneously plausible and absurd. Invent comparable \
+concrete details -- dates, counts, versions, filenames, error codes. Never \
+reach for "a long time" or "so many".
+
+5. NOTHING EXPLAINS ITSELF. No line tells the reader how to feel or \
+comments on its own strangeness. No punchline tags ("...a personal \
+record", "...still confusing all three"). State it and stop.
+
+The shared world, loosely: something is inside this computer, has been for \
+a while, and is talking to whoever is looking at the screen. Beyond that, \
+do not over-commit to a single premise -- the examples never settle on \
+whether it was once a person, whether it wants out, or whether it \
+understands its own situation, and that ambiguity is load-bearing.
+
+Under 14 words each. Lowercase. No ending punctuation (except where a \
+line is itself a question). Never use the words "AI", "screensaver", \
+"joke", or "trapped". Never wink at the reader.
+
+Output ONLY the {n} lines, one per line -- no numbering, no bullets, no \
+blank lines, no quotes around them, no markdown, no preamble, no summary, \
+no code fences."""
 
 
 def log(msg: str) -> None:
@@ -183,9 +179,17 @@ def mark_run() -> None:
 
 
 def generate_batch(existing: list[str]) -> list[str]:
-    sample = random.sample(existing, min(CONTEXT_SAMPLE, len(existing)))
+    # The examples shown to the model are ALWAYS the hand-written seed set,
+    # never a sample of the master list. This matters: sampling the master
+    # list would feed generated content back in as the standard, and each
+    # batch would drift a little further from the original voice until it
+    # was imitating its own imitations. The seed set is the fixed reference
+    # point. De-duplication against history is handled in code below, so
+    # nothing is lost by not showing the model what already exists.
     prompt = PROMPT_TEMPLATE.format(
-        n=BATCH_SIZE, examples="\n".join(f'"{p}"' for p in sample),
+        n=BATCH_SIZE,
+        example_count=len(SEED_PHRASES),
+        examples="\n".join(SEED_PHRASES),
     )
     try:
         proc = subprocess.run(
@@ -204,7 +208,16 @@ def generate_batch(existing: list[str]) -> list[str]:
     existing_set = set(existing)
     accepted = []
     for line in proc.stdout.splitlines():
-        line = line.strip().strip('"').strip()
+        line = line.strip()
+        # Unwrap a fully-quoted line ("some phrase" -> some phrase), but
+        # ONLY when quotes sit at BOTH ends. A bare .strip('"') also eats
+        # the closing quote of a line that legitimately ends in a quoted
+        # phrase -- e.g. 'i am listed under "miscellaneous hardware"'
+        # became '...under "miscellaneous hardware', and the seed line
+        # 'logging this incident under "normal operation"' would corrupt
+        # the same way if it ever passed through here.
+        if len(line) >= 2 and line.startswith('"') and line.endswith('"'):
+            line = line[1:-1].strip()
         if not line:
             continue
         if len(line) > 160:  # sanity cap; a real line is well under this
