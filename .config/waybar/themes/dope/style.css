@@ -331,10 +331,16 @@ tooltip label {
 #bluetooth             { min-width: 29px; }
 #power-profiles-daemon { min-width: 12px; }
 #idle_inhibitor        { min-width: 13px; }
-#custom-weather        { min-width: 218px; }
 #custom-cpufreq        { min-width: 94px; }
 #custom-aiagents       { min-width: 53px; }
 #custom-github         { min-width: 52px; }
+
+/* custom-weather deliberately has NO min-width floor, unlike its neighbours
+   above: it refreshes every 900s (weather.py's interval), so the jitter a
+   floor exists to prevent is not a real problem in practice -- the module
+   can just hug its (now much shorter, unpadded) content. The old 218px
+   floor was measured against the previous double-spaced, padded text
+   format and was holding the box open long after that text shrank. */
 
 @keyframes blink {
     to { color: @bg; background: @red; }

@@ -178,14 +178,14 @@ def build_output(data):
     if loc.get("region"):
         place = f"{place}, {loc['region']}" if place else loc["region"]
 
-    # Bar text carries the three readings worth a glance, single-spaced and
-    # unpadded -- this module isn't part of the fixed-width convention the
-    # CPU/battery modules use (see AGENTS.md), so there's no reason to
-    # reserve slack for alignment stability at the cost of bar width.
+    # Single space everywhere -- glued icon+value (no space at all) read as
+    # a mistake rather than compact, and this module isn't part of the
+    # fixed-width convention the CPU/battery modules use (see AGENTS.md), so
+    # there's no alignment padding to reserve either.
     temp_s = f"{temp}{unit}"
     hum_s = f"{hum}%"
     wind_s = f"{wind}"
-    text = f"{icon} {temp_s} {ICON_HUMIDITY}{hum_s} {ICON_WIND}{wind_s}"
+    text = f"{icon} {temp_s} {ICON_HUMIDITY} {hum_s} {ICON_WIND} {wind_s}"
     pop_line = f"\n{ICON_UMBRELLA}  {pop}% precip" if pop is not None else ""
     tooltip = (
         f"<b>{desc}</b>  {temp}{unit}   {place}\n"
