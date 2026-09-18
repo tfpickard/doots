@@ -823,11 +823,11 @@ window-rule {
 // general rule must come first; niri applies rules top-to-bottom and a later
 // matching rule overrides the property, so "Agents" gets the last word.
 window-rule {
-    match app-id=r#"^code-insiders$"#
+    match app-id=r#"^com\.microsoft\.VSCodeInsiders$"#
     open-on-workspace "code"
 }
 window-rule {
-    match app-id=r#"^code-insiders$"# title=r#"Agents"#
+    match app-id=r#"^com\.microsoft\.VSCodeInsiders$"# title=r#"Agents"#
     open-on-workspace "agents"
 }
 

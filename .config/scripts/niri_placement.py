@@ -29,6 +29,7 @@ spawn-at-startup) never launches duplicates.
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
 import sys
@@ -63,9 +64,9 @@ SLOTS: list[Slot] = [
     # make the "code" slot steal the "agents" window before the rule (which
     # actually fires at window-creation, before this script ever sees it) --
     # this is belt-and-braces, not the primary mechanism.
-    Slot("agents", "code-insiders", None,
+    Slot("agents", "com.microsoft.VSCodeInsiders", None,
          title_hint=re.compile("Agents"), rule_placed=True),
-    Slot("code", "code-insiders", ["code-insiders"], rule_placed=True),
+    Slot("code", "com.microsoft.VSCodeInsiders", ["code-insiders"], rule_placed=True),
 
     # Chat: two different apps, same workspace. No ambiguity -- app_id alone
     # distinguishes them from each other; both are rule-placed.
@@ -99,6 +100,44 @@ EXTERNAL_SERIALS = ("BJ4X5X2", "920C993")
 SPAWN_WAIT_TIMEOUT = 20  # seconds to wait for one launched window to appear
 ADOPT_ONLY_TIMEOUT = 15  # seconds to wait for a window we never spawn ourselves
 OUTPUT_WAIT_TIMEOUT = 15  # seconds to wait for external monitors at login
+
+# If not one external has appeared by this point, we are almost certainly
+# undocked rather than mid-enumeration, so stop waiting. Partial docking
+# (one monitor up, one still negotiating) still gets the full timeout --
+# that case really is a race worth waiting out. Without this, every
+# laptop-only login paid OUTPUT_WAIT_TIMEOUT in full before placing
+# anything.
+OUTPUT_WAIT_GRACE = 3.0
+
+# Snap apps must not inherit XDG_*_HOME. prezto exports those even when they
+# hold the spec default; snaps then try to write to the real ~/.config,
+# ~/.cache, ... and the snap `home` AppArmor profile denies top-level
+# dotfiles, so the app dies with SIGTRAP before mapping a window.
+#
+# .zshrc already works around this (see its "ESSENTIAL PLUGINS" section) by
+# defining a zsh function per /snap/bin/* command that strips the variables.
+# That only covers interactive shells. This script launches via Popen, which
+# inherits the environment directly and bypasses the function entirely --
+# so placement worked when niri ran it via spawn-at-startup (clean
+# environment) and silently failed for every snap slot when run by hand from
+# a terminal, which is exactly how it gets re-run after docking.
+#
+# Confirmed by coredump rather than inferred: four Slack SIGTRAPs in one
+# session, the last reproduced on demand from a shell with XDG_CONFIG_HOME
+# set to nothing more exotic than its own default value.
+SNAP_HOSTILE_VARS = ("XDG_CACHE_HOME", "XDG_CONFIG_HOME",
+                     "XDG_DATA_HOME", "XDG_STATE_HOME")
+
+
+def spawn_env(cmd: list[str]) -> dict[str, str] | None:
+    """Environment for a slot launch: None (inherit) for ordinary commands,
+    XDG-stripped for snaps."""
+    if not cmd or not os.path.realpath(cmd[0]).startswith("/snap/"):
+        return None
+    env = os.environ.copy()
+    for var in SNAP_HOSTILE_VARS:
+        env.pop(var, None)
+    return env
 
 
 def log(msg: str) -> None:
@@ -137,13 +176,18 @@ def wait_for_outputs(serials: tuple[str, ...], timeout: float) -> None:
     is a normal case, not an error; the named workspaces just collapse onto
     eDP-1 and redistribute whenever the monitors do appear."""
     deadline = time.time() + timeout
+    grace = time.time() + OUTPUT_WAIT_GRACE
     missing = set(serials)
     while missing and time.time() < deadline:
         outputs = niri_json("outputs") or {}
         seen = {info.get("serial") for info in outputs.values()}
         missing -= seen
-        if missing:
-            time.sleep(0.5)
+        if not missing:
+            break
+        # Nothing at all after the grace period means undocked, not slow.
+        if len(missing) == len(serials) and time.time() >= grace:
+            break
+        time.sleep(0.5)
     if missing:
         log(f"proceeding without: {', '.join(sorted(missing))} (undocked?)")
 
@@ -262,6 +306,7 @@ def run(spawn: bool) -> None:
                 subprocess.Popen(
                     slot.cmd, stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL, start_new_session=True,
+                    env=spawn_env(slot.cmd),
                 )
             except OSError as err:
                 log(f"{slot.ws}: launch failed: {err}")
