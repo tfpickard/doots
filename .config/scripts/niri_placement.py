@@ -73,7 +73,23 @@ SLOTS: list[Slot] = [
     Slot("chat", f"chrome-{TEAMS_APP_ID}-Default",
          [CHROME, "--profile-directory=Default", f"--app-id={TEAMS_APP_ID}"],
          rule_placed=True),
-    Slot("chat", "slack", ["/snap/bin/slack"], rule_placed=True),
+    # Slack. --disable-gpu is required, not cosmetic: the snap's EGL stack
+    # fails to initialise on this machine ("Failed to get system egl
+    # display", then "Initialization of all (2) EGL display types failed"),
+    # and Electron then never constructs its BrowserWindow at all. The
+    # process starts, authenticates, loads the whole workspace and sits
+    # there with no window AND no tray icon, which is what made this look
+    # like a placement bug rather than a rendering one. With GPU disabled
+    # the window maps in about three seconds.
+    #
+    # Worth re-testing after a snap or Mesa update -- host Mesa (25.2.8) and
+    # the mesa-2404 snap (25.2.8-snap288) already match, and the opengl and
+    # gnome-46-2404 interfaces are connected, so this is not simple version
+    # skew and may well be fixed upstream without warning. Software
+    # rendering is fine for chat; if huddles or screen-share regress, that
+    # is the first thing to revisit.
+    Slot("chat", "slack", ["/snap/bin/slack", "--disable-gpu"],
+         rule_placed=True),
 
     # Mail: rule-placed, same shape as Teams.
     Slot("mail", f"chrome-{OUTLOOK_APP_ID}-Default",
