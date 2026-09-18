@@ -69,6 +69,18 @@ source ~/Repos/znap/znap.zsh
 # Core prezto modules for basic environment setup
 znap source sorin-ionescu/prezto modules/{environment,history}
 
+# prezto exports XDG_*_HOME even when they match the spec defaults. Snaps
+# inherit them and then try to write to the real ~/.config, ~/.cache, ...
+# which the snap `home` AppArmor profile denies for top-level dotfiles, so
+# e.g. Slack dies with SIGTRAP. Strip them for snap-provided commands only
+# (other tools here, such as znap, rely on the variables being set).
+if [[ -d /snap/bin ]]; then
+  for _snap_cmd in /snap/bin/*(N:t); do
+    functions[$_snap_cmd]="env -u XDG_CACHE_HOME -u XDG_CONFIG_HOME -u XDG_DATA_HOME -u XDG_STATE_HOME /snap/bin/${_snap_cmd} \"\$@\""
+  done
+  unset _snap_cmd
+fi
+
 # Oh My Zsh library modules
 znap source ohmyzsh/ohmyzsh lib/{cli,git,theme-and-appearance,directories,functions,grep,history,termsupport}
 
