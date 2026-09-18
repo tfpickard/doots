@@ -113,6 +113,12 @@ SLOTS: list[Slot] = [
 # long to wait for docking before giving up and proceeding laptop-only.
 EXTERNAL_SERIALS = ("BJ4X5X2", "920C993")
 
+# Named workspace that evict_unclaimed() sweeps squatters onto. Must match
+# the `workspace "overflow"` block in niri/config.kdl, and must be a name
+# rather than an index -- see that block's comment for why indexes cannot
+# work here.
+OVERFLOW_WS = "overflow"
+
 SPAWN_WAIT_TIMEOUT = 20  # seconds to wait for one launched window to appear
 ADOPT_ONLY_TIMEOUT = 15  # seconds to wait for a window we never spawn ourselves
 OUTPUT_WAIT_TIMEOUT = 15  # seconds to wait for external monitors at login
@@ -275,6 +281,40 @@ def matches(slot: Slot, w: dict) -> bool:
     return True
 
 
+def evict_unclaimed(tracker: "WindowTracker", ws_by_name: dict[str, int],
+                    claimed: set[int]) -> None:
+    """Move windows squatting on a slot's workspace to OVERFLOW_WS.
+
+    Placing alone is not enough to keep the desk tidy, because the engine is
+    otherwise pull-only: it guarantees each slot HAS its window, never that a
+    workspace holds ONLY that window. Anything without a slot -- a fourth
+    ghostty, a fifth Chrome, Slack's duplicate main window -- therefore sat
+    wherever it first opened and stayed there permanently, invisible to every
+    re-run. That is what made re-running the engine look like a no-op while
+    the desk was visibly wrong.
+
+    Deliberately narrow: only windows sitting on a workspace some slot is
+    actually responsible for are candidates. Unnamed workspaces, and overflow
+    itself, are left alone entirely -- a window you parked somewhere of your
+    own accord is not the engine's business.
+
+    Note this still evicts a window you deliberately dragged onto a named
+    workspace (a browser parked on `code` to read docs against). That is the
+    accepted cost of the workspaces meaning something fixed; park it on an
+    unnamed workspace instead and nothing will touch it.
+    """
+    overflow_id = ws_by_name.get(OVERFLOW_WS)
+    if overflow_id is None:
+        log(f"no {OVERFLOW_WS!r} workspace found, skipping eviction")
+        return
+    owned = {ws_by_name[slot.ws] for slot in SLOTS if slot.ws in ws_by_name}
+    for w in sorted(tracker.snapshot().values(), key=lambda w: w["id"]):
+        if w["id"] in claimed or w.get("workspace_id") not in owned:
+            continue
+        move_window_to_workspace(w["id"], OVERFLOW_WS)
+        log(f"evicted window {w['id']} ({w.get('app_id')}) -> {OVERFLOW_WS}")
+
+
 def run(spawn: bool) -> None:
     """Place every slot. spawn=False (niri-replace.py) only adopts and moves
     windows that already exist; spawn=True (niri-autostart-apps.py) also
@@ -353,4 +393,5 @@ def run(spawn: bool) -> None:
             move_window_to_workspace(win["id"], slot.ws)
             log(f"{slot.ws}: placed window {win['id']} ({slot.app_id})")
 
+    evict_unclaimed(tracker, ws_by_name, claimed)
     focus_workspace("code")

@@ -344,6 +344,26 @@ workspace "term3" {
     open-on-output "eDP-1"
 }
 
+// Where niri_placement.py's eviction pass puts windows it finds squatting on
+// a named workspace without a slot to justify them -- a fourth ghostty, a
+// fifth Chrome, Slack's duplicate main window. Those used to sit wherever
+// they happened to open and stay there forever, because the placement engine
+// only ever pulled windows INTO slots and never pushed strangers out.
+//
+// It has to be a *named* workspace. `move-window-to-workspace` takes an index
+// or a name, and indexes are not stable: evicting three windows to "index 1"
+// moves them to three different workspaces, because each move creates a
+// workspace and shifts every index after it. Confirmed the hard way.
+//
+// Deliberately NOT pinned with open-on-output, unlike every other workspace
+// here. Pinning it to eDP-1 would fling evicted windows onto the laptop panel
+// while docked -- possibly with the lid shut -- so it opens on whichever
+// output is focused instead, keeping evictions next to where you are working.
+// Being named also means it shows up in waybar's niriws module, so evicted
+// windows announce themselves rather than vanishing.
+workspace "overflow" {
+}
+
 // Settings that influence how windows are positioned and sized.
 // Find more information on the wiki:
 // https://niri-wm.github.io/niri/Configuration:-Layout
@@ -927,6 +947,19 @@ binds {
     Mod+Ctrl+Z       repeat=false hotkey-overlay-title="Toggle Screensaver (atlantis / off)" { spawn "/home/tom/.config/scripts/toggle-atlantis.sh"; }
     Mod+Ctrl+P    hotkey-overlay-title="Toggle Teams Keep-Active (anti-idle)" { spawn "/home/tom/.config/scripts/teams-keep-active.sh"; }
     Mod+Shift+T   hotkey-overlay-title="Switch Global Theme" { spawn "/home/tom/.config/themes/theme-set"; }
+
+    // Re-place every window onto the workspace it belongs on, and sweep
+    // anything without a slot onto "overflow". Adopts and moves only -- it
+    // never launches, so it is safe to hit at any time and will not
+    // resurrect an app you closed on purpose. Use niri-autostart-apps.py
+    // (run at login) if you do want the missing ones started.
+    //
+    // Worth a binding because the situations that scramble the desk --
+    // docking, undocking, an app restarting itself onto the wrong
+    // workspace -- happen often enough that the only other triggers
+    // (login, and lid-open below) leave long stretches with no way to fix
+    // it short of running the script by hand.
+    Mod+Shift+U   repeat=false hotkey-overlay-title="Re-place Windows (tidy up)" { spawn "/home/tom/.config/scripts/niri-replace.py"; }
 
     // Notification centre. Only does anything while swaync is the running
     // daemon (mako is the default); switch with
