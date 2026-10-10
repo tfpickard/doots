@@ -1,3 +1,4 @@
+confirm-close-surface = false
 adjust-underline-position = 8
 adjust-underline-thickness = 2
 # auto-update = "stable"  # was "tip" - removed as this option doesn't exist
