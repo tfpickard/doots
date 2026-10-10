@@ -204,8 +204,10 @@ _tmux_project_autostart() {
   # Attach through a private grouped session (independent current-window pointer =>
   # no mirroring/resize lock) that self-destroys on detach (=> no sprawl). Created
   # and attached in one call so it never gets reaped before we attach.
+  # Run as a child, not `exec`, so detaching falls back to this zsh instead of
+  # leaving the terminal with no process and closing the window.
   view="${name}-$$"
-  exec command tmux new-session -t "$name" -s "$view" \; set-option -t "$view" destroy-unattached on
+  command tmux new-session -t "$name" -s "$view" \; set-option -t "$view" destroy-unattached on
 }
 _tmux_project_autostart
 
@@ -272,6 +274,7 @@ fi
 for x in ~/.config/zsh/completions/*(N); do
     [[ "$x" =~ ".zwc" ]] && continue
     if [[ -f $x ]]; then
+        echo $x
         source $x
     fi
 done
@@ -618,3 +621,13 @@ autoload -Uz add-zsh-hook && add-zsh-hook precmd _hist_cycle_end
 # classifies them as buffer-modifying, fetches a suggestion after every press, and
 # the async autosuggest-suggest widget fires in the middle of a cycling run.
 ZSH_AUTOSUGGEST_CLEAR_WIDGETS+=(hist-cycle-up hist-cycle-down)
+
+# bun completions
+[ -s "/home/tom/.bun/_bun" ] && source "/home/tom/.bun/_bun"
+
+# bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+
+# opencode
+export PATH=/home/tom/.opencode/bin:$PATH

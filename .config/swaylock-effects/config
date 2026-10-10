@@ -101,6 +101,29 @@ font=JetBrainsMono Nerd Font
 font-size=30
 
 # ---------------------------------------------------------------------------
+# Status text -- monochrome glyphs instead of words
+# ---------------------------------------------------------------------------
+# These are Nerd Font private-use glyphs, not standard emoji, on purpose:
+# swaylock draws text with cairo's toy font API, which uses ONE font and does
+# no per-glyph fallback. JetBrainsMono NF has no U+2620 skull or U+263A smiley,
+# so those would render as tofu; these icons are guaranteed to be in the font
+# set above, and they're single-colour so the -ver/-wrong/-clear text colours
+# below still tint them.
+#
+# Vanilla /usr/bin/swaylock 1.7.2 has no such options (its words are compiled
+# in), so this only applies to the swaylock-effects lock.
+#
+# There is no "success" state to label: on a correct password swaylock just
+# exits. `text-clear` is the green one, shown when the input is cleared.
+#
+#   verifying  U+EE48   fa-face_grimace
+#   wrong      U+F068C  md-skull
+#   cleared    U+F0409  md-pizza
+text-ver=
+text-wrong=󰚌
+text-clear=󰐉
+
+# ---------------------------------------------------------------------------
 # Colours -- SGI indigo and white
 # ---------------------------------------------------------------------------
 #
