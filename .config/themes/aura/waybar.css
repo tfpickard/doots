@@ -1,0 +1,15 @@
+/* Aura — waybar color definitions (imported by themes/dope/style.css) */
+@define-color bg        #15141b;
+@define-color bg_dark   #110f18;
+@define-color surface   #29263c;
+@define-color overlay   #4d4d4d;
+@define-color text      #edecee;
+@define-color subtext   #bdbdbd;
+@define-color accent    #a277ff;
+@define-color accent2   #61ffca;
+@define-color blue      #82e2ff;
+@define-color green     #61ffca;
+@define-color yellow    #ffca85;
+@define-color orange    #ffca85;
+@define-color red       #ff6767;
+@define-color pink      #f694ff;

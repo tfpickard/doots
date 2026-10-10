@@ -1,0 +1,386 @@
+/* ============================================================
+   "dope" — niri waybar theme.
+   Grouped floating "islands" (cards) with JetBrainsMono NF Propo.
+   Reload style with SIGUSR2; theme-set does it for you.
+   ============================================================ */
+
+/* colors.css is a COMMITTED SYMLINK in this directory, pointing at
+   ../../../themes/active/waybar.css -- i.e. the palette of whichever theme
+   theme-set has made active. It defines @bg, @text, @accent and the rest.
+
+   It is tracked in git (`git ls-files` lists it); tooling that doesn't follow
+   symlinks reports it as missing, which it isn't. */
+@import "colors.css";
+
+* {
+    font-family: "JetBrainsMono Nerd Font Propo", "Symbols Nerd Font", sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    min-height: 0;
+    border: none;
+    border-radius: 0;
+}
+
+window#waybar {
+    background: transparent;
+    color: @text;
+}
+
+tooltip {
+    background: @bg_dark;
+    border: 2px solid alpha(@surface, 0.9);
+    border-radius: 12px;
+}
+tooltip label {
+    color: @text;
+    padding: 6px;
+    font-family: "JetBrainsMono Nerd Font", monospace;
+}
+
+/* ---- group "islands" ------------------------------------------------- */
+#left,
+#info,
+#sys,
+#session {
+    background: alpha(@bg, 0.92);
+    border: 1px solid alpha(@surface, 0.55);
+    border-radius: 16px;
+    padding: 0 3px;
+    margin: 0 2px;
+    box-shadow: 0 2px 6px alpha(@bg_dark, 0.55);
+}
+
+/* center clock — accent island of its own */
+#clock {
+    background: alpha(@surface, 0.95);
+    color: @accent2;
+    border: 1px solid alpha(@accent2, 0.25);
+    border-radius: 16px;
+    padding: 0 12px;
+    margin: 0 2px;
+    box-shadow: 0 2px 6px alpha(@bg_dark, 0.55);
+    transition: background 0.2s ease-in-out;
+}
+#clock:hover { background: @surface; }
+
+/* ---- modules inside islands: transparent, just colored glyphs -------- */
+#custom-logo,
+#custom-niriws,
+#custom-niriwindow,
+#workspaces,
+#window,
+#custom-weather,
+#mpris,
+#pulseaudio,
+#backlight,
+#network,
+#bluetooth,
+#cpu,
+#custom-cpufreq,
+#temperature,
+#memory,
+#disk,
+#power-profiles-daemon,
+#battery,
+#custom-battery,
+#idle_inhibitor,
+#custom-clipboard,
+#custom-ai,
+#custom-aiagents,
+#custom-github,
+#tray,
+#custom-power {
+    background: transparent;
+    padding: 0 5px;
+    margin: 0;
+    transition: background 0.15s ease-in-out, color 0.15s ease-in-out;
+}
+
+/* ---- separators -----------------------------------------------------------
+   Horizontal padding used to do all the visual separating, which cost ~16px
+   between every pair of modules. These 1px rules do the same job for 1px, and
+   carry meaning: a dotted rule joins related readings, a solid rule marks the
+   boundary between unrelated clusters.
+
+   They are drawn as border-LEFT on the first module of each run, never
+   border-right on the last. Modules hide themselves when they have nothing to
+   say (mpris with no player, tray with no icons); anchoring the rule to the
+   left means a separator disappears along with the module it belongs to,
+   instead of being left dangling at the edge of an island.
+
+   Dotted gets more alpha than solid because a broken line reads fainter than
+   a continuous one at the same value. Both should whisper.
+
+   Both rules are painted as background gradients rather than with
+   `border-style`. Two reasons: GTK3 here draws a 1px `dotted` border as
+   nothing at all and a 1px `dashed` border as a solid line, so borders cannot
+   express "these two readings belong together"; and insetting a border needs
+   vertical margins, which push the module's minimum height past the bar's own
+   and make waybar warn. A gradient's height is set directly, so neither
+   problem arises. */
+#custom-niriws,
+#custom-niriwindow,
+#workspaces,
+#window,
+#mpris,
+#network,
+#cpu,
+#memory,
+#power-profiles-daemon,
+#idle_inhibitor,
+#tray,
+#custom-power {
+    background-image: linear-gradient(
+        alpha(@overlay, 0.30), alpha(@overlay, 0.30));
+    background-repeat: no-repeat;
+    background-size: 1px 20px;
+    background-position: left center;
+}
+
+#backlight,
+#bluetooth,
+#custom-cpufreq,
+#temperature,
+#disk,
+#battery,
+#custom-battery,
+#custom-aiagents,
+#custom-clipboard,
+#custom-ai {
+    background-image: repeating-linear-gradient(
+        to bottom,
+        alpha(@overlay, 0.60) 0px, alpha(@overlay, 0.60) 2px,
+        transparent 2px, transparent 5px);
+    background-repeat: no-repeat;
+    background-size: 1px 16px;
+    background-position: left center;
+}
+
+/* subtle rounded highlight on hover for clickable modules */
+#custom-logo:hover,
+#custom-weather:hover,
+#custom-clipboard:hover,
+#custom-ai:hover,
+#custom-aiagents:hover,
+#custom-github:hover,
+#custom-power:hover,
+#idle_inhibitor:hover,
+#network:hover,
+#bluetooth:hover,
+#pulseaudio:hover,
+#cpu:hover,
+#custom-cpufreq:hover,
+#custom-battery:hover,
+#memory:hover,
+#power-profiles-daemon:hover {
+    /* background-color, not the `background` shorthand: the shorthand would
+       reset background-image and wipe out the dotted separators on hover. */
+    background-color: alpha(@surface, 0.8);
+    border-radius: 11px;
+}
+
+/* left: logo doubles as theme switcher */
+#custom-logo {
+    color: @accent;
+    font-size: 15px;
+    padding: 0 10px 0 12px;
+}
+
+/* workspaces (pango markup / colors come from the script) */
+#custom-niriws {
+    padding: 0 4px;
+}
+
+/* focused window title */
+#custom-niriwindow {
+    color: @subtext;
+    font-weight: 500;
+    padding-right: 12px;
+}
+
+/* Hyprland equivalents of the two modules above. launch.sh substitutes
+   hyprland/workspaces and hyprland/window for the niri helpers when the bar is
+   started inside a Hyprland session, so both compositors get the same look. */
+#workspaces {
+    padding: 0 2px;
+}
+
+#workspaces button {
+    background: transparent;
+    color: @subtext;
+    padding: 0 7px;
+    margin: 0 2px;
+    border-radius: 11px;
+    transition: background 0.15s ease-in-out, color 0.15s ease-in-out;
+}
+
+#workspaces button.active {
+    background: @accent;
+    color: @bg;
+    font-weight: 700;
+}
+
+#workspaces button.urgent {
+    background: @red;
+    color: @bg;
+}
+
+#workspaces button:hover {
+    background: alpha(@surface, 0.8);
+    color: @text;
+}
+
+#window {
+    color: @subtext;
+    font-weight: 500;
+    padding-right: 12px;
+}
+
+/* media player */
+#mpris        { color: @pink; font-weight: 500; }
+#mpris.paused { color: @overlay; }
+
+/* weather — colored by condition class from the script */
+#custom-weather              { color: @yellow; }
+#custom-weather.night        { color: @subtext; }
+#custom-weather.rain         { color: @blue; }
+#custom-weather.snow         { color: @text; }
+#custom-weather.storm        { color: @accent; }
+#custom-weather.error        { color: @overlay; }
+
+/* right-side accents */
+#idle_inhibitor           { color: @overlay; }
+#idle_inhibitor.activated { color: @yellow; }
+#custom-clipboard         { color: @accent2; }
+#custom-ai                { color: @accent; }
+
+/* Copilot agents — colour follows the most urgent live session.
+   min-width absorbs the differing advance widths of the state glyphs, so the
+   module holds its size whichever state it is showing. */
+#custom-aiagents             { color: @overlay; }
+#custom-aiagents.none        { color: @overlay; }
+#custom-aiagents.idle        { color: @subtext; }
+#custom-aiagents.working     { color: @accent2; }
+#custom-aiagents.done        { color: @green; }
+#custom-aiagents.blocked     { color: @red; font-weight: 700; }
+#custom-aiagents.error       { color: @orange; }
+
+/* GitHub review queue / PR activity */
+#custom-github            { color: @overlay; }
+#custom-github.clear      { color: @overlay; }
+#custom-github.ready      { color: @green; }
+#custom-github.cifail     { color: @orange; }
+#custom-github.activity   { color: @accent2; }
+#custom-github.review     { color: @accent; font-weight: 700; }
+#custom-github.stale      { color: @overlay; }
+#custom-github.error      { color: @overlay; }
+
+#cpu                      { color: @orange; }
+#custom-cpufreq           { color: @orange; }
+#custom-cpufreq.performance { color: @red; }
+#custom-cpufreq.powersave { color: @green; }
+#custom-cpufreq.busy      { color: @yellow; }
+#custom-cpufreq.throttling { color: @red; font-weight: 600; }
+#temperature              { color: @subtext; }
+#temperature.critical     { color: @red; }
+#memory                   { color: @blue; }
+#disk                     { color: @subtext; }
+#backlight                { color: @yellow; }
+#network                  { color: @blue; }
+#network.disconnected     { color: @red; }
+#bluetooth                { color: @accent2; }
+#bluetooth.disabled       { color: @overlay; }
+#pulseaudio               { color: @accent; }
+#pulseaudio.muted         { color: @overlay; }
+#power-profiles-daemon    { color: @subtext; }
+#power-profiles-daemon.performance { color: @red; }
+#power-profiles-daemon.power-saver { color: @green; }
+#battery                  { color: @green; }
+#battery.warning          { color: @yellow; }
+#battery.critical         { color: @red; }
+#battery.charging         { color: @green; }
+#custom-battery           { color: @green; }
+#custom-battery.warning   { color: @yellow; }
+#custom-battery.critical  { color: @red; }
+#custom-battery.charging  { color: @green; }
+#custom-power             { color: @red; }
+
+/* ---- stable widths --------------------------------------------------------
+   The bar used to twitch every time a reading gained or lost a digit, which
+   shifted every module to the left of it.
+
+   Two mechanisms fix it, and both are needed:
+
+   1. Fixed character counts. The config pads numeric fields (`{usage:>3}`)
+      and sets `min-length` where a module has alternate formats of different
+      lengths. JetBrainsMono renders every digit and the space at exactly the
+      same advance, so equal character counts really are equal widths.
+
+   2. min-width floors, below. Nerd Font *icons* are not uniform width -- the
+      set used here ranges from 9px to 16px -- so a module that swaps its icon
+      still resizes even with the character count pinned. These floors are the
+      measured width of each module's widest variant, which parks the module
+      at that size permanently.
+
+   When adding a module whose icon or text length varies, measure its widest
+   rendering and add it here rather than eyeballing the number. These values
+   are font-size dependent -- re-measure if the size above changes.
+   -------------------------------------------------------------------------- */
+#pulseaudio            { min-width: 74px; }
+#network               { min-width: 67px; }
+#bluetooth             { min-width: 29px; }
+#power-profiles-daemon { min-width: 12px; }
+#idle_inhibitor        { min-width: 13px; }
+#custom-cpufreq        { min-width: 94px; }
+#custom-aiagents       { min-width: 53px; }
+#custom-github         { min-width: 52px; }
+
+/* custom-battery's widest case is "vi" mode with both current and voltage
+   shown: 1 icon + "  100% ↑ 99.99A 99.9V" = 1 icon + 21 regular characters.
+   Not directly re-measured (no bar instance available to screenshot pixel-
+   for-pixel here) -- cross-calibrated instead against the three floors
+   above that share this module's icon style: custom-cpufreq is 94px for
+   1 icon + 9 chars, custom-aiagents/custom-github are ~52-53px for 2 icons
+   + 3 chars. Both solve consistently to ~8px/character and ~9-12px/icon
+   (including this module's own padding), which projects to ~190-195px for
+   battery's 22-codepoint worst case. If this turns out visibly wrong,
+   re-derive the same way rather than eyeballing a replacement -- the
+   method is more durable than any specific number here. */
+#custom-battery         { min-width: 195px; }
+
+/* custom-weather deliberately has NO min-width floor, unlike its neighbours
+   above: it refreshes every 900s (weather.py's interval), so the jitter a
+   floor exists to prevent is not a real problem in practice -- the module
+   can just hug its (now much shorter, unpadded) content. The old 218px
+   floor was measured against the previous double-spaced, padded text
+   format and was holding the box open long after that text shrank. */
+
+/* mpris ALSO deliberately has no min-width floor, for a related but
+   distinct reason: artist-len/title-len (waybar config) cap it at 1 icon +
+   44 characters in the theoretical worst case (both fields fully
+   truncated), which would want a ~400px floor by the same method used for
+   custom-battery above -- but track metadata changes once per song, not
+   every few seconds like CPU/battery readings do. Paying ~400px of
+   permanently reserved bar space to prevent jitter that happens once
+   every few minutes, for content that's normally much shorter than the
+   cap, is the same mistake custom-weather's old floor made. Let it hug
+   its content; an occasional between-track width change is the right
+   trade against a permanently oversized module. */
+
+@keyframes blink {
+    to { color: @bg; background: @red; }
+}
+#battery.critical:not(.charging) {
+    animation: blink 1s steps(2) infinite alternate;
+}
+#custom-battery.critical:not(.charging) {
+    animation: blink 1s steps(2) infinite alternate;
+}
+
+/* An agent blocked on you is the one thing here worth interrupting for. */
+#custom-aiagents.blocked {
+    animation: blink 1.6s steps(2) infinite alternate;
+}
+
+#tray > .passive { -gtk-icon-effect: dim; }
+#tray > .needs-attention { -gtk-icon-effect: highlight; }

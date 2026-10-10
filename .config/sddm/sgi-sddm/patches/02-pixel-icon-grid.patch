@@ -1,0 +1,43 @@
+--- a/Components/Input.qml
++++ b/Components/Input.qml
+@@ -100,8 +100,20 @@
+                     anchors.left: parent.left
+                     anchors.verticalCenter: parent.verticalCenter
+                     anchors.leftMargin: selectUser.height * 0.125
+-                    icon.height: parent.height * 0.25
+-                    icon.width: parent.height * 0.25
++                    // The Assets are pixel art on a 14-cell grid, so the drawn
++                    // size has to be a whole multiple of 14 -- at anything else
++                    // the renderer lands cell boundaries on fractions of a
++                    // pixel and antialiases the blocks back into the smooth
++                    // glyphs they were drawn to replace.
++                    //
++                    // The floor is 28, not 14. One cell per screen pixel is
++                    // technically crisp but there is nothing left to see: the
++                    // art only reads as pixel art once a cell is a visible
++                    // block, which means two screen pixels or more. Upstream's
++                    // 0.25 of the field height lands around 12px, so this asks
++                    // for a bigger icon than upstream did.
++                    icon.height: Math.max(28, Math.round(parent.height * 0.5 / 14) * 14)
++                    icon.width: icon.height
+                     enabled: false
+                     icon.color: root.palette.text
+                     icon.source: Qt.resolvedUrl("../Assets/User.svgz")
+--- a/Components/SystemButtons.qml
++++ b/Components/SystemButtons.qml
+@@ -47,8 +47,13 @@
+             font.pointSize: root.font.pointSize * 0.8
+             Layout.alignment: Qt.AlignHCenter
+             icon.source: modelData ? Qt.resolvedUrl("../Assets/" + modelData[0] + ".svgz") : ""
+-            icon.height: 2 * Math.round((root.font.pointSize * 3) / 2)
+-            icon.width: 2 * Math.round((root.font.pointSize * 3) / 2)
++            // Snapped to a whole multiple of the icon's 14-cell grid, floored
++            // at two screen pixels per cell, for the reasons in Input.qml.
++            // Upstream already rounded to an even number, which is not the
++            // same thing: 2 * round(11 * 3 / 2) is 34, and 34 over 14 cells is
++            // 2.43 pixels each.
++            icon.height: Math.max(28, Math.round(root.font.pointSize * 3 / 14) * 14)
++            icon.width: icon.height
+             display: AbstractButton.TextUnderIcon
+             visible: config.ForceHideSystemButtons != "true" && modelData[2]
+             hoverEnabled: true

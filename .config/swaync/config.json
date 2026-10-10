@@ -1,0 +1,98 @@
+{
+  "$schema": "/etc/xdg/swaync/configSchema.json",
+  "positionX": "right",
+  "positionY": "top",
+  "layer": "overlay",
+  "layer-shell": true,
+  "control-center-layer": "top",
+  "control-center-margin-top": 8,
+  "control-center-margin-bottom": 8,
+  "control-center-margin-right": 12,
+  "control-center-margin-left": 0,
+  "control-center-width": 420,
+  "control-center-height": 860,
+  "notification-window-width": 420,
+  "timeout": 8,
+  "timeout-low": 4,
+  "timeout-critical": 0,
+  "transition-time": 200,
+  "notification-icon-size": 48,
+  "notification-body-image-height": 160,
+  "notification-body-image-width": 200,
+  "image-visibility": "when-available",
+  "hide-on-action": true,
+  "hide-on-clear": true,
+  "notification-inline-replies": true,
+  "fit-to-screen": true,
+  "cssPriority": "user",
+  "widgets": [
+    "title",
+    "buttons-grid",
+    "mpris",
+    "volume",
+    "backlight",
+    "dnd",
+    "notifications"
+  ],
+  "widget-config": {
+    "title": {
+      "text": "Notifications",
+      "clear-all-button": true,
+      "button-text": "Clear all"
+    },
+    "dnd": {
+      "text": "Do not disturb"
+    },
+    "mpris": {
+      "image-size": 88,
+      "image-radius": 12
+    },
+    "volume": {
+      "label": "\udb81\udd7e",
+      "show-per-app": true,
+      "show-per-app-icon": true,
+      "show-per-app-label": false
+    },
+    "backlight": {
+      "label": "\udb80\udcdf",
+      "device": "intel_backlight",
+      "subsystem": "backlight"
+    },
+    "buttons-grid": {
+      "actions": [
+        {
+          "label": "\udb82\udd28",
+          "command": "nm-connection-editor"
+        },
+        {
+          "label": "\udb80\udcaf",
+          "command": "blueman-manager"
+        },
+        {
+          "label": "\udb81\udd7e",
+          "command": "pavucontrol"
+        },
+        {
+          "label": "\udb80\udd04",
+          "command": "sh -c '$HOME/.config/scripts/screenshot-annotate.sh'"
+        },
+        {
+          "label": "\udb80\udce8",
+          "command": "sh -c '$HOME/.config/themes/theme-set'"
+        },
+        {
+          "label": "\udb81\udc25",
+          "command": "sh -c '$HOME/.config/scripts/fuzzel-powermenu.sh'"
+        }
+      ]
+    }
+  },
+  "notification-visibility": {
+    "spotify-quiet": {
+      "state": "transient",
+      "app-name": "Spotify"
+    }
+  },
+  "script-fail-notify": true,
+  "scripts": {}
+}

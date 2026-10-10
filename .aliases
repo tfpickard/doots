@@ -13,3 +13,17 @@ alias dcu="docker compose up -d"
 alias dcd="docker compose down"
 alias dcdu="docker compose down ; docker compose up -d"
 alias dcl="docker compose logs -f"
+
+# --- Terminal eyecandy ------------------------------------------------------
+# cbonsai has no config file, so the presets live here as aliases.
+#
+# bonsai        grow one tree, slowly, then stop
+# bonsai-idle   infinite screensaver mode; any key quits. Good in a spare pane.
+# bonsai-zen    slower growth, denser branching, seasonal leaves
+alias bonsai="cbonsai --live --time=0.02 --life=40"
+alias bonsai-idle="cbonsai --screensaver --wait=12 --life=45 --multiplier=6"
+alias bonsai-zen="cbonsai --live --time=0.05 --life=60 --multiplier=8 \
+    --base=2 --leaf='&,*,۞,❀' --message='breathe'"
+
+# Print a finished tree and exit -- handy at the end of a long-running command.
+alias bonsai-print="cbonsai --print --life=45"

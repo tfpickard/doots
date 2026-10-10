@@ -1,0 +1,26 @@
+# Dreamcore Pastel — desaturated vaporwave (self-contained).
+# Included via ~/.config/ghostty/theme/active -> themes/active/ghostty.
+background = 1b1a26
+foreground = e6e2f1
+cursor-color = ffb3e6
+cursor-text = 1b1a26
+selection-background = 2a2839
+selection-foreground = e6e2f1
+
+palette = 0=#2a2839
+palette = 1=#ff9db0
+palette = 2=#b6f0c2
+palette = 3=#ffe6a7
+palette = 4=#a7c8ff
+palette = 5=#c9a7ff
+palette = 6=#a7f0e0
+palette = 7=#e6e2f1
+palette = 8=#6f6b86
+palette = 9=#ffb3c6
+palette = 10=#c9f5d3
+palette = 11=#fff0c6
+palette = 12=#c2d8ff
+palette = 13=#dcc2ff
+palette = 14=#c2f5ea
+palette = 15=#ffffff
+# vim: ft=config

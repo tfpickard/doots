@@ -1,0 +1,18 @@
+[Unit]
+Description=Describe new screenshots with Copilot and rename them
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=%h/.config/scripts/screenshot-watch.sh
+Restart=on-failure
+RestartSec=5
+# The describe step shells out to the copilot CLI, which is not on the default
+# systemd user PATH.
+Environment=PATH=%h/.local/bin:%h/.cargo/bin:/usr/local/bin:/usr/bin:/bin
+# Uncomment to spend more per screenshot for a wordier description.
+#Environment=SHOTDESC_MODEL=claude-haiku-4.5
+
+[Install]
+WantedBy=graphical-session.target

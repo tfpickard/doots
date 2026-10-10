@@ -1,0 +1,218 @@
+/* ============================================================
+   gtklock -- Silicon Graphics styling.
+
+   Matches the swaylock/swaylock-effects lock screens and the SDDM greeter:
+   the #29558e Indigo field with the white logo, and squared-off IRIX-era
+   chrome instead of the rounded modern look.
+
+   Like the two swaylock configs, this is deliberately PINNED to SGI rather
+   than following theme-set. The lock screen and the login greeter are the two
+   places where a half-applied theme is most jarring, and they should agree
+   with each other whatever the desktop palette happens to be.
+
+   WIDGET NAMES are gtklock's own, read out of the binary rather than guessed
+   (strings /usr/bin/gtklock): window-box, body-grid, body-revealer,
+   clock-label, input-field, input-label, error-label, warning-label,
+   message-box, unlock-button. There is no #info-label, #username-label or
+   #user-image -- the previous version of this file styled those three and they
+   never matched anything.
+   ============================================================ */
+
+/* ---- background -----------------------------------------------------------
+   gtklock has a --background flag, but gtklock(1) notes CSS overrides it, and
+   CSS is the only way to control scaling. The image is generated per
+   resolution by ~/.config/scripts/lock-background.py into ~/.cache/sgi-lock/.
+
+   Unlike swaylock, gtklock has ONE window selector shared by every monitor: it
+   does not name its windows per output, so a per-output image cannot be
+   targeted. lock.sh therefore renders a single image at the size of the
+   LARGEST connected output and lets `background-size: cover` crop it on the
+   smaller ones. That is only acceptable because the artwork is a logo on a
+   flat field -- cropping shifts the logo slightly, but the field colour is
+   identical everywhere, and background-color below is set to the same blue so
+   any gap is invisible.
+
+   The path here is a PLACEHOLDER. lock.sh substitutes the real one into a copy
+   of this file under ~/.cache/sgi-lock/ and passes that with -s, so the
+   tracked stylesheet never acquires a machine-specific resolution. If gtklock
+   is run by hand without lock.sh, the placeholder simply doesn't resolve and
+   the flat background-color shows through, which still looks right. */
+window {
+    background-color: #29558e;
+    /* SGI:background */
+    background-image: url("/home/tom/.cache/sgi-lock/gtklock.png");
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+/* ---- clock ----------------------------------------------------------------
+   SGI branding used a condensed italic face that no monospace font imitates
+   well, so the clock leans on the other half of the IRIX look instead: wide
+   letterspacing, no rounding, hard offset shadow rather than a soft blur.
+
+   The clock lives INSIDE #window-box, above the form, so its width sets the
+   width of the whole panel. Keeping the size and letterspacing modest stops
+   the panel stretching into a letterbox across the screen. */
+#clock-label {
+    color: #ffffff;
+    font-family: "JetBrainsMono Nerd Font", monospace;
+    font-size: 40px;
+    font-weight: 500;
+    letter-spacing: 2px;
+    margin-bottom: 22px;
+    text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.45);
+}
+
+/* ---- the form panel -------------------------------------------------------
+   IRIX widgets were beveled: light edge top-left, dark edge bottom-right, for
+   a chiselled plastic look. GTK has no bevel primitive, so it is built from a
+   2px border with a different colour per side. Everything is square --
+   border-radius 0 throughout is most of what sells the period. */
+#window-box {
+    background-color: #1c3a6b;
+    border-top: 2px solid #6b8dbe;
+    border-left: 2px solid #6b8dbe;
+    border-bottom: 2px solid #14294d;
+    border-right: 2px solid #14294d;
+    border-radius: 0;
+    padding: 26px 32px;
+    box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.35);
+}
+
+#body-grid {
+    background-color: transparent;
+    margin-top: 4px;
+}
+
+/* ---- password entry -------------------------------------------------------
+   Bevel inverted relative to the panel, so the field reads as sunk into it
+   rather than raised off it -- the Motif/IRIX convention for an editable
+   field. */
+#input-field,
+entry {
+    background-color: #14294d;
+    color: #ffffff;
+    /* The "shadowed" edges have to be DARKER than the panel behind them
+       (#1c3a6b) or the field reads as floating rather than recessed. */
+    border-top: 2px solid #0d1c36;
+    border-left: 2px solid #0d1c36;
+    border-bottom: 2px solid #6b8dbe;
+    border-right: 2px solid #6b8dbe;
+    border-radius: 0;
+    padding: 10px 12px;
+    /* Wide enough that the entry row spans most of the panel the clock sets,
+       instead of leaving a band of empty blue to its right. */
+    min-width: 470px;
+    min-height: 26px;
+    font-family: "JetBrainsMono Nerd Font", monospace;
+    font-size: 15px;
+    caret-color: #ffffff;
+}
+
+#input-field:focus,
+entry:focus {
+    background-color: #0d1c36;
+    border-top-color: #0d1c36;
+    border-left-color: #0d1c36;
+    border-bottom-color: #8fc0ff;
+    border-right-color: #8fc0ff;
+    box-shadow: none;
+}
+
+#input-field selection,
+entry selection {
+    background-color: #8fc0ff;
+    color: #14294d;
+}
+
+/* The caption beside the field. */
+#input-label {
+    color: #c8d8ef;
+    font-family: "JetBrainsMono Nerd Font", monospace;
+    font-size: 14px;
+    letter-spacing: 1px;
+    margin-right: 12px;
+}
+
+/* ---- unlock button --------------------------------------------------------
+   Raised bevel matching the panel, inverting on press so it looks physically
+   pushed in. */
+#unlock-button,
+button {
+    background-image: none;
+    background-color: #29558e;
+    color: #ffffff;
+    border-top: 2px solid #6b8dbe;
+    border-left: 2px solid #6b8dbe;
+    border-bottom: 2px solid #14294d;
+    border-right: 2px solid #14294d;
+    border-radius: 0;
+    padding: 7px 22px;
+    margin: 10px 0 0 0;
+    font-family: "JetBrainsMono Nerd Font", monospace;
+    font-size: 14px;
+    letter-spacing: 1px;
+}
+
+#unlock-button:hover,
+button:hover {
+    background-color: #3567a8;
+}
+
+#unlock-button:active,
+button:active,
+#unlock-button:checked,
+button:checked {
+    background-color: #14294d;
+    border-top-color: #14294d;
+    border-left-color: #14294d;
+    border-bottom-color: #6b8dbe;
+    border-right-color: #6b8dbe;
+}
+
+#unlock-button:focus,
+button:focus {
+    outline: 1px dotted #8fc0ff;
+    outline-offset: -5px;
+}
+
+/* ---- messages -------------------------------------------------------------
+   Colours line up with the swaylock ring states: red for a failed attempt,
+   yellow for Caps Lock and other warnings. */
+#message-box {
+    background-color: transparent;
+    margin-top: 12px;
+}
+
+#error-label {
+    color: #e8706b;
+    font-family: "JetBrainsMono Nerd Font", monospace;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin-top: 10px;
+}
+
+#warning-label {
+    color: #f0cd6b;
+    font-family: "JetBrainsMono Nerd Font", monospace;
+    font-size: 13px;
+    letter-spacing: 1px;
+    margin-top: 6px;
+}
+
+/* A failed attempt also tints the field itself. */
+#input-field.error,
+entry.error {
+    border-top-color: #e8706b;
+    border-left-color: #e8706b;
+    color: #e8706b;
+}
+
+/* ---- idle-hide reveal -----------------------------------------------------
+   With idle-hide the form fades out and leaves the logo and clock, which is
+   the closest this gets to a screensaver. Slow enough to read as deliberate. */
+#body-revealer {
+    transition: opacity 400ms ease-in-out;
+}

@@ -1,0 +1,337 @@
+diff --git a/Components/Input.qml b/Components/Input.qml
+index dfbc3da..1752c9f 100644
+--- a/Components/Input.qml
++++ b/Components/Input.qml
+@@ -74,6 +74,14 @@ Column {
+                 contentItem: Text {
+                     text: model.name
+                     font.pointSize: root.font.pointSize * 0.8
++                    // Qt Quick Controls propagates the root font to a Control's
++                    // *default* contentItem only. This theme substitutes its own
++                    // plain Text, which does not participate in that propagation
++                    // (unlike Label, which is why Clock.qml alone came out in the
++                    // configured face), so config.Font has to be re-applied by
++                    // hand at every such site or the label quietly falls back to
++                    // the default sans while still honouring pointSize.
++                    font.family: root.font.family
+                     font.capitalization: Font.Capitalize
+                     color: selectUser.highlightedIndex === index ? root.palette.highlight.hslLightness >= 0.7 ? "#16161E" : "white" : root.palette.window.hslLightness >= 0.8 ? root.palette.highlight.hslLightness >= 0.8 ? "#16161E" : root.palette.highlight : "white"
+                     verticalAlignment: Text.AlignVCenter
+@@ -193,11 +201,39 @@ Column {
+                 if(focus)
+                     selectAll()
+             }
++            // Motif sunken bevel. A text entry is a hole cut into the panel, so
++            // the shadow falls top-left and the highlight bottom-right -- the
++            // exact inverse of a button, which is what makes the two read as
++            // different kinds of thing at a glance.
++            //
++            // Rectangle has a single border.color, so two-tone edges are built
++            // by stacking three of them: the outermost supplies the bottom-right
++            // edge, the middle covers all but 2px of it to supply the top-left
++            // edge, and the innermost insets by 2px so both stay visible.
++            //
++            // radius is pinned to 0 rather than read from RoundCorners. A
++            // bevelled corner is square by definition, and rounding one clips
++            // the mitre into a pair of ragged slivers.
+             background: Rectangle {
+-                color: "transparent"
+-                border.color: root.palette.text
+-                border.width: parent.activeFocus ? 2 : 1
+-                radius: config.RoundCorners || 0
++                id: usernameBevel
++                radius: 0
++                color: "#6b8dbe"
++                property color faceColor: "#14294d"
++                property color edgeTopLeft: "#0d1c36"
++
++                Rectangle {
++                    anchors.fill: parent
++                    anchors.rightMargin: 2
++                    anchors.bottomMargin: 2
++                    radius: 0
++                    color: usernameBevel.edgeTopLeft
++                }
++                Rectangle {
++                    anchors.fill: parent
++                    anchors.margins: 2
++                    radius: 0
++                    color: usernameBevel.faceColor
++                }
+             }
+             onAccepted: loginButton.clicked()
+             KeyNavigation.down: password
+@@ -209,7 +245,8 @@ Column {
+                     when: username.activeFocus
+                     PropertyChanges {
+                         target: username.background
+-                        border.color: root.palette.highlight
++                        color: "#8fc0ff"
++                        faceColor: "#0d1c36"
+                     }
+                     PropertyChanges {
+                         target: username
+@@ -240,11 +277,27 @@ Column {
+             passwordCharacter: "•"
+             passwordMaskDelay: config.ForceHideCompletePassword == "true" ? undefined : 1000
+             renderType: Text.QtRendering
++            // Sunken bevel, as for the username field above.
+             background: Rectangle {
+-                color: "transparent"
+-                border.color: root.palette.text
+-                border.width: parent.activeFocus ? 2 : 1
+-                radius: config.RoundCorners || 0
++                id: passwordBevel
++                radius: 0
++                color: "#6b8dbe"
++                property color faceColor: "#14294d"
++                property color edgeTopLeft: "#0d1c36"
++
++                Rectangle {
++                    anchors.fill: parent
++                    anchors.rightMargin: 2
++                    anchors.bottomMargin: 2
++                    radius: 0
++                    color: passwordBevel.edgeTopLeft
++                }
++                Rectangle {
++                    anchors.fill: parent
++                    anchors.margins: 2
++                    radius: 0
++                    color: passwordBevel.faceColor
++                }
+             }
+             onAccepted: loginButton.clicked()
+             KeyNavigation.down: revealSecret
+@@ -256,7 +309,8 @@ Column {
+                 when: password.activeFocus
+                 PropertyChanges {
+                     target: password.background
+-                    border.color: root.palette.highlight
++                    color: "#8fc0ff"
++                    faceColor: "#0d1c36"
+                 }
+                 PropertyChanges {
+                     target: password
+@@ -286,6 +340,11 @@ Column {
+             width: parent.width
+             hoverEnabled: true
+ 
++            // Sunken bevel, matching the entries -- a Motif checkbox is a hole
++            // with a lit square dropped into it when set. The dot is declared
++            // last so it paints over the face, but stays parented to the
++            // indicator so its size keeps tracking the whole control rather
++            // than the 2px-inset face, which would leave it 1px across.
+             indicator: Rectangle {
+                 id: indicator
+                 anchors.left: parent.left
+@@ -294,15 +353,31 @@ Column {
+                 anchors.leftMargin: 4
+                 implicitHeight: root.font.pointSize
+                 implicitWidth: root.font.pointSize
+-                color: "transparent"
+-                border.color: root.palette.text
+-                border.width: parent.activeFocus ? 2 : 1
++                radius: 0
++                color: "#6b8dbe"
++                property color faceColor: "#14294d"
++                property color edgeTopLeft: "#0d1c36"
++
++                Rectangle {
++                    anchors.fill: parent
++                    anchors.rightMargin: 2
++                    anchors.bottomMargin: 2
++                    radius: 0
++                    color: indicator.edgeTopLeft
++                }
++                Rectangle {
++                    anchors.fill: parent
++                    anchors.margins: 2
++                    radius: 0
++                    color: indicator.faceColor
++                }
+                 Rectangle {
+                     id: dot
+                     anchors.centerIn: parent
+                     implicitHeight: parent.width - 6
+                     implicitWidth: parent.width - 6
+-                    color: root.palette.text
++                    radius: 0
++                    color: "#8fc0ff"
+                     opacity: revealSecret.checked ? 1 : 0
+                 }
+             }
+@@ -315,6 +390,7 @@ Column {
+                 anchors.left: indicator.right
+                 anchors.leftMargin: indicator.width / 2
+                 font.pointSize: root.font.pointSize * 0.8
++                font.family: root.font.family
+                 color: root.palette.text
+             }
+ 
+@@ -349,7 +425,7 @@ Column {
+                 }
+                 PropertyChanges {
+                     target: indicator
+-                    border.color: Qt.darker(root.palette.highlight, 1.1)
++                    color: Qt.darker(root.palette.highlight, 1.1)
+                 }
+                 PropertyChanges {
+                     target: revealSecret.background
+@@ -365,7 +441,7 @@ Column {
+                 }
+                 PropertyChanges {
+                     target: indicator
+-                    border.color: Qt.lighter(root.palette.highlight, 1.1)
++                    color: Qt.lighter(root.palette.highlight, 1.1)
+                 }
+                 PropertyChanges {
+                     target: dot
+@@ -385,7 +461,7 @@ Column {
+                 }
+                 PropertyChanges {
+                     target: indicator
+-                    border.color: root.palette.highlight
++                    color: root.palette.highlight
+                 }
+                 PropertyChanges {
+                     target: dot
+@@ -470,26 +546,57 @@ Column {
+                 text: parent.text
+                 color: config.OverrideLoginButtonTextColor != "" ? config.OverrideLoginButtonTextColor : root.palette.highlight.hslLightness >= 0.7 ? "#16161E" : "white"
+                 font.pointSize: root.font.pointSize
++                font.family: root.font.family
+                 horizontalAlignment: Text.AlignHCenter
+                 verticalAlignment: Text.AlignVCenter
+                 opacity: 0.5
+             }
+ 
++            // Motif raised bevel: highlight top-left, shadow bottom-right --
++            // the inverse of the entries, so a button reads as sitting proud of
++            // the panel rather than sunk into it. Pressing swaps the two edges,
++            // which is the entirety of the Motif click affordance.
++            //
++            // The old opacity-based dimming is gone on purpose: a translucent
++            // face lets the background image show through the bevel and kills
++            // the illusion of a solid slab. Disabled is carried by faceColor
++            // instead, and contentItem keeps its own opacity for the label.
+             background: Rectangle {
+                 id: buttonBackground
+-                color: "white"
+-                opacity: 0.2
+-                radius: config.RoundCorners || 0
++                radius: 0
++                color: "#14294d"
++                property color faceColor: "#1c3a6b"
++                property color edgeTopLeft: "#6b8dbe"
++
++                Rectangle {
++                    anchors.fill: parent
++                    anchors.rightMargin: 2
++                    anchors.bottomMargin: 2
++                    radius: 0
++                    color: buttonBackground.edgeTopLeft
++                }
++                Rectangle {
++                    anchors.fill: parent
++                    anchors.margins: 2
++                    radius: 0
++                    color: buttonBackground.faceColor
++                }
+             }
+ 
++            // These four states are ordered pressed -> hovered -> focused ->
++            // enabled and must stay that way: when several `when` clauses are
++            // true at once QML applies the first match, so `enabled` (true
++            // whenever the form is filled in) has to sit last or it would mask
++            // every interactive state above it.
+             states: [
+                 State {
+                     name: "pressed"
+                     when: loginButton.down
+                     PropertyChanges {
+                         target: buttonBackground
+-                        color: Qt.darker(root.palette.highlight, 1.1)
+-                        opacity: 1
++                        color: "#6b8dbe"
++                        faceColor: "#14294d"
++                        edgeTopLeft: "#14294d"
+                     }
+                     PropertyChanges {
+                         target: loginButton.contentItem
+@@ -500,8 +607,7 @@ Column {
+                     when: loginButton.hovered
+                     PropertyChanges {
+                         target: buttonBackground
+-                        color: Qt.lighter(root.palette.highlight, 1.15)
+-                        opacity: 1
++                        faceColor: "#3567a8"
+                     }
+                     PropertyChanges {
+                         target: loginButton.contentItem
+@@ -513,8 +619,7 @@ Column {
+                     when: loginButton.activeFocus
+                     PropertyChanges {
+                         target: buttonBackground
+-                        color: Qt.lighter(root.palette.highlight, 1.2)
+-                        opacity: 1
++                        faceColor: "#3567a8"
+                     }
+                     PropertyChanges {
+                         target: loginButton.contentItem
+@@ -525,9 +630,8 @@ Column {
+                     name: "enabled"
+                     when: loginButton.enabled
+                     PropertyChanges {
+-                        target: buttonBackground;
+-                        color: root.palette.highlight;
+-                        opacity: 1
++                        target: buttonBackground
++                        faceColor: "#29558e"
+                     }
+                     PropertyChanges {
+                         target: loginButton.contentItem;
+diff --git a/Components/SessionButton.qml b/Components/SessionButton.qml
+index c69cd13..d65f13b 100644
+--- a/Components/SessionButton.qml
++++ b/Components/SessionButton.qml
+@@ -69,6 +69,7 @@ Item {
+             contentItem: Text {
+                 text: model.name
+                 font.pointSize: root.font.pointSize * 0.8
++                font.family: root.font.family
+                 color: selectSession.highlightedIndex === index ? root.palette.highlight.hslLightness >= 0.7 ? "#16161E" : "white" : root.palette.window.hslLightness >= 0.8 ? root.palette.highlight.hslLightness >= 0.8 ? "#16161E" : root.palette.highlight : "white"
+                 verticalAlignment: Text.AlignVCenter
+                 horizontalAlignment: Text.AlignHCenter
+@@ -91,6 +92,7 @@ Item {
+             anchors.left: parent.left
+             anchors.leftMargin: 3
+             font.pointSize: root.font.pointSize * 0.8
++            font.family: root.font.family
+             Keys.onReleased: parent.popup.open()
+         }
+ 
+diff --git a/Components/UserList.qml b/Components/UserList.qml
+index c6844be..987b681 100644
+--- a/Components/UserList.qml
++++ b/Components/UserList.qml
+@@ -59,6 +59,7 @@ Item {
+             contentItem: Text {
+                 text: model.name
+                 font.pointSize: root.font.pointSize * 0.8
++                font.family: root.font.family
+                 font.capitalization: Font.Capitalize
+                 color: selectUser.highlightedIndex === index ? "white" : root.palette.window.hslLightness >= 0.8 ? root.palette.highlight : "white"
+                 verticalAlignment: Text.AlignVCenter
+diff --git a/Main.qml b/Main.qml
+index 06a132f..3a7dd41 100644
+--- a/Main.qml
++++ b/Main.qml
+@@ -119,6 +119,7 @@ Pane {
+                 text: config.TranslateVirtualKeyboardButton || "Virtual Keyboard"
+                 color: parent.visualFocus ? palette.highlight : palette.text
+                 font.pointSize: root.font.pointSize * 0.8
++                font.family: root.font.family
+             }
+             background: Rectangle {
+                 id: vkbbg

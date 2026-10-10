@@ -1,0 +1,281 @@
+/* ============================================================
+   SwayNotificationCenter -- styled to match the "dope" waybar theme.
+
+   Colours come from the global theme system: colors.css is a symlink to
+   ~/.config/themes/active/waybar.css, exactly like the waybar theme does it,
+   so `theme-set` restyles notifications for free with no extra plumbing.
+
+   Reload after editing:  swaync-client -rs
+   ============================================================ */
+
+@import "colors.css";
+
+* {
+    font-family: "JetBrainsMono Nerd Font Propo", "Symbols Nerd Font", sans-serif;
+    font-size: 13px;
+}
+
+/* ---- popup notifications ------------------------------------------------ */
+
+.notification-row {
+    outline: none;
+    background: transparent;
+}
+
+.notification-row:focus,
+.notification-row:hover {
+    background: transparent;
+}
+
+/* The card itself. Same 12px radius and shadow as niri's window rule, so
+   popups look like they belong to the same desktop. */
+.notification {
+    border-radius: 12px;
+    margin: 6px 12px;
+    padding: 0;
+    background: @bg;
+    border: 1px solid @surface;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+}
+
+.notification-content {
+    padding: 10px;
+    border-radius: 12px;
+}
+
+.notification.critical {
+    border: 1px solid @red;
+}
+
+.notification.low {
+    opacity: 0.92;
+}
+
+.summary {
+    color: @text;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.time {
+    color: @overlay;
+    font-size: 11px;
+}
+
+.body {
+    color: @subtext;
+}
+
+.body-image {
+    border-radius: 8px;
+    margin-top: 6px;
+}
+
+/* Close button in the corner of each card. */
+.close-button {
+    background: transparent;
+    color: @overlay;
+    border-radius: 999px;
+    margin: 6px;
+    padding: 2px;
+}
+
+.close-button:hover {
+    background: @red;
+    color: @bg;
+}
+
+/* Action buttons attached to a notification. */
+.notification-action {
+    background: @surface;
+    color: @text;
+    border: none;
+    border-radius: 8px;
+    margin: 4px;
+    padding: 6px 10px;
+}
+
+.notification-action:hover {
+    background: @accent;
+    color: @bg;
+}
+
+.inline-reply-entry {
+    background: @surface;
+    color: @text;
+    border: 1px solid @overlay;
+    border-radius: 8px;
+    padding: 4px 8px;
+}
+
+/* ---- control centre ----------------------------------------------------- */
+
+.control-center {
+    background: alpha(@bg, 0.94);
+    border: 1px solid @surface;
+    border-radius: 16px;
+    padding: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
+}
+
+.control-center .notification-row .notification {
+    background: @surface;
+    border: none;
+    box-shadow: none;
+    margin: 4px 0;
+}
+
+.widget-title {
+    color: @text;
+    font-size: 16px;
+    font-weight: 700;
+    margin: 4px 6px 10px 6px;
+}
+
+.widget-title > button {
+    background: @surface;
+    color: @subtext;
+    border: none;
+    border-radius: 999px;
+    padding: 4px 12px;
+    font-size: 12px;
+}
+
+.widget-title > button:hover {
+    background: @red;
+    color: @bg;
+}
+
+/* Do-not-disturb toggle. */
+.widget-dnd {
+    color: @text;
+    margin: 8px 6px;
+}
+
+.widget-dnd > switch {
+    background: @surface;
+    border: none;
+    border-radius: 999px;
+}
+
+.widget-dnd > switch:checked {
+    background: @accent;
+}
+
+.widget-dnd > switch slider {
+    background: @overlay;
+    border-radius: 999px;
+}
+
+.widget-dnd > switch:checked slider {
+    background: @bg;
+}
+
+/* Quick-action grid. */
+.widget-buttons-grid {
+    background: transparent;
+    padding: 4px 0;
+}
+
+.widget-buttons-grid > flowbox > flowboxchild > button {
+    background: @surface;
+    color: @accent;
+    border: none;
+    border-radius: 12px;
+    margin: 4px;
+    padding: 10px;
+    font-size: 18px;
+}
+
+.widget-buttons-grid > flowbox > flowboxchild > button:hover {
+    background: @accent;
+    color: @bg;
+}
+
+/* Media player. */
+.widget-mpris {
+    background: @surface;
+    border-radius: 12px;
+    padding: 8px;
+    margin: 6px 0;
+}
+
+.widget-mpris-player {
+    background: transparent;
+}
+
+.widget-mpris-title {
+    color: @text;
+    font-weight: 700;
+}
+
+.widget-mpris-subtitle {
+    color: @subtext;
+    font-size: 12px;
+}
+
+.widget-mpris button {
+    background: transparent;
+    color: @accent;
+    border: none;
+}
+
+.widget-mpris button:hover {
+    color: @accent2;
+}
+
+/* Volume + backlight sliders. */
+.widget-volume,
+.widget-backlight {
+    background: @surface;
+    border-radius: 12px;
+    padding: 8px 12px;
+    margin: 6px 0;
+    color: @text;
+}
+
+.widget-volume trough,
+.widget-backlight trough {
+    background: @bg;
+    border-radius: 999px;
+    min-height: 8px;
+}
+
+.widget-volume highlight,
+.widget-backlight highlight {
+    background: @accent;
+    border-radius: 999px;
+}
+
+.widget-volume slider,
+.widget-backlight slider {
+    background: @text;
+    border-radius: 999px;
+    min-width: 14px;
+    min-height: 14px;
+}
+
+/* Idle inhibitor list. */
+.widget-inhibitors {
+    color: @text;
+    margin: 6px;
+}
+
+.widget-inhibitors > button {
+    background: @surface;
+    color: @subtext;
+    border: none;
+    border-radius: 999px;
+    padding: 4px 12px;
+}
+
+.widget-inhibitors > button:hover {
+    background: @yellow;
+    color: @bg;
+}
+
+/* Free-text label widget, if you add one to `widgets`. */
+.widget-label {
+    color: @subtext;
+    margin: 6px;
+}

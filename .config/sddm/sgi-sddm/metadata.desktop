@@ -1,0 +1,16 @@
+[SddmGreeterTheme]
+Name=SGI Indigo
+Description=Silicon Graphics styled greeter, matching the desktop lock screen
+Author=tfpickard
+License=GPL-3.0-or-later
+Type=sddm-theme
+Version=1.0
+Screenshot=preview.png
+MainScript=Main.qml
+ConfigFile=theme.conf
+Theme-Id=sgi-sddm
+
+# Derived from simple-sddm / tokyo-night-sddm by rototrash
+# (https://github.com/tokyo-night-sddm/), which is GPL-3.0-or-later. The QML is
+# unmodified; only theme.conf and the background asset differ. Upstream LICENSE
+# and COPYING are kept alongside this file.

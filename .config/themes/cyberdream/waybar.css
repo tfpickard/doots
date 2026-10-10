@@ -1,0 +1,15 @@
+/* Cyberdream — waybar color definitions (imported by themes/dope/style.css) */
+@define-color bg        #16181a;
+@define-color bg_dark   #0f1113;
+@define-color surface   #1e2124;
+@define-color overlay   #7b8496;
+@define-color text      #ffffff;
+@define-color subtext   #b3bccb;
+@define-color accent    #bd5eff;
+@define-color accent2   #5ef1ff;
+@define-color blue      #5ea1ff;
+@define-color green     #5eff6c;
+@define-color yellow    #f1ff5e;
+@define-color orange    #ffbd5e;
+@define-color red       #ff6e5e;
+@define-color pink      #ff5ef1;

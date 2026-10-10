@@ -1,0 +1,17 @@
+{
+  "name": "dreamcore-pastel",
+  "bg": "#1b1a26",
+  "bg_dark": "#14131d",
+  "surface": "#2a2839",
+  "overlay": "#6f6b86",
+  "text": "#e6e2f1",
+  "subtext": "#b0aac6",
+  "accent": "#c9a7ff",
+  "accent2": "#a7f0e0",
+  "blue": "#a7c8ff",
+  "green": "#b6f0c2",
+  "yellow": "#ffe6a7",
+  "orange": "#ffc6a7",
+  "red": "#ff9db0",
+  "pink": "#ffb3e6"
+}

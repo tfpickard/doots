@@ -1,0 +1,18 @@
+{
+  "name": "sgi",
+  "bg": "#1c3a6b",
+  "bg_dark": "#14294d",
+  "surface": "#29558e",
+  "overlay": "#6b8dbe",
+  "text": "#ffffff",
+  "subtext": "#c8d8ef",
+  "accent": "#8fc0ff",
+  "accent2": "#ffffff",
+  "blue": "#5e9eff",
+  "green": "#66c98a",
+  "yellow": "#f0cd6b",
+  "orange": "#f0a068",
+  "red": "#e8706b",
+  "pink": "#c99ad6",
+  "focus_gradient": { "from": "#8fc0ff", "to": "#ffffff", "angle": 45 }
+}

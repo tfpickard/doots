@@ -1,13 +1,10 @@
 # Primary font - GitHub's revolutionary Monaspace
 font-family = "Monaspace Neon"
 
-# Nerd Font fallback for icons
-# font-family-fallback = [
-#     "JetBrainsMono Nerd Font",
-#     "FiraCode Nerd Font",
-#     "Hack Nerd Font",
-#     "Symbols Nerd Font"
-# ]
+# Nerd Font fallback for icons: Monaspace has no icon glyphs, so prompts and
+# `eza --icons` would render tofu without this. Ghostty treats repeated
+# font-family lines as fallbacks, in order.
+font-family = "JetBrainsMono Nerd Font"
 
 # Modern font settings
 font-size = 14

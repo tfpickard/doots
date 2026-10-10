@@ -1,0 +1,300 @@
+{
+    "layer": "top",
+    "position": "top",
+    "height": 34,
+    "margin-top": 8,
+    "margin-left": 12,
+    "margin-right": 12,
+    "spacing": 2,
+    "reload_style_on_change": true,
+    "modules-left": [
+        "group/left"
+    ],
+    "modules-center": [
+        "clock"
+    ],
+    "modules-right": [
+        "group/info",
+        "group/sys",
+        "group/session"
+    ],
+    "group/left": {
+        "orientation": "horizontal",
+        "modules": [
+            "custom/logo",
+            "custom/niriws",
+            "custom/niriwindow"
+        ]
+    },
+    "group/info": {
+        "orientation": "horizontal",
+        "modules": [
+            "custom/weather",
+            "mpris"
+        ]
+    },
+    "group/sys": {
+        "orientation": "horizontal",
+        "modules": [
+            "pulseaudio",
+            "backlight",
+            "network",
+            "bluetooth",
+            "cpu",
+            "custom/cpufreq",
+            "temperature",
+            "memory",
+            "disk",
+            "power-profiles-daemon",
+            "custom/battery"
+        ]
+    },
+    "group/session": {
+        "orientation": "horizontal",
+        "modules": [
+            "custom/github",
+            "custom/aiagents",
+            "idle_inhibitor",
+            "custom/clipboard",
+            "custom/ai",
+            "tray",
+            "custom/power"
+        ]
+    },
+    "custom/logo": {
+        "format": "󰏘",
+        "on-click": "~/.config/themes/theme-set",
+        "tooltip-format": "Switch global theme"
+    },
+    // These two follow niri's IPC event stream and emit Pango markup.
+    //
+    // No "escape" key is needed: waybar's escape option DEFAULTS TO FALSE
+    // (see waybar-custom(5)), so markup is passed through and the pills render
+    // styled. Setting "escape": true is what would break them.
+    //
+    // Under Hyprland there is no niri socket, so these helpers would exit at
+    // once and be respawned every 5s behind a blank bar. launch.sh detects
+    // that and generates a variant config substituting hyprland/workspaces and
+    // hyprland/window -- see ../../scripts/compositor-config.py.
+    "custom/niriws": {
+        "exec": "~/.config/waybar/scripts/niri-workspaces.py",
+        "return-type": "json",
+        "restart-interval": 5,
+        "on-click": "niri msg action toggle-overview",
+        "on-scroll-up": "niri msg action focus-workspace-up",
+        "on-scroll-down": "niri msg action focus-workspace-down",
+        "tooltip": false
+    },
+    "custom/niriwindow": {
+        "exec": "~/.config/waybar/scripts/niri-window.py",
+        "return-type": "json",
+        "restart-interval": 5,
+        "max-length": 34,
+        "tooltip": false
+    },
+    "clock": {
+        "format": "󰃭  {:%a %d %b   %H:%M}",
+        "format-alt": "󰃭  {:%Y-%m-%d   %H:%M:%S}",
+        "interval": 1,
+        "tooltip-format": "<tt><small>{calendar}</small></tt>",
+        "calendar": {
+            "mode": "month",
+            "weeks-pos": "left",
+            "format": {
+                "today": "<b><u>{}</u></b>",
+                "weeks": "<span alpha='60%'>{}</span>"
+            }
+        }
+    },
+    "custom/weather": {
+        "exec": "~/.config/scripts/weather.py",
+        "return-type": "json",
+        "interval": 900,
+        "min-length": 12,
+        "align": 0,
+        "on-click": "ghostty -e bash -c 'curl -s wttr.in | less -R'",
+        "tooltip": true
+    },
+    "mpris": {
+        "format": "{status_icon} {artist} — {title}",
+        "format-paused": "{status_icon} <i>{artist} — {title}</i>",
+        "status-icons": {
+            "playing": "󰐊",
+            "paused": "󰏤",
+            "stopped": "󰓛"
+        },
+        "artist-len": 16,
+        "title-len": 24,
+        "on-click": "playerctl play-pause",
+        "on-scroll-up": "playerctl next",
+        "on-scroll-down": "playerctl previous",
+        "tooltip-format": "{player}: {artist} — {title}"
+    },
+    "idle_inhibitor": {
+        "format": "{icon}",
+        "format-icons": {
+            "activated": "󰛨",
+            "deactivated": "󰖔"
+        },
+        "tooltip-format-activated": "Caffeine on — screen stays awake",
+        "tooltip-format-deactivated": "Caffeine off"
+    },
+    "custom/clipboard": {
+        "format": "󰆒",
+        "on-click": "~/.config/scripts/cliphist-fuzzel.sh",
+        "on-click-right": "~/.config/scripts/cliphist-fuzzel.sh d",
+        "on-click-middle": "~/.config/scripts/cliphist-fuzzel.sh w",
+        "tooltip-format": "Clipboard history\nLeft: pick · Right: delete · Middle: wipe"
+    },
+    "custom/ai": {
+        "format": "󰚩",
+        "on-click": "~/.config/scripts/ask-ai.sh",
+        "tooltip-format": "Ask AI (Mod+Shift+A)"
+    },
+    // Live Copilot agent sessions, read from ~/.copilot/session-state.
+    // Turns red and blinks when an agent is blocked waiting on you.
+    "custom/aiagents": {
+        "exec": "~/.config/waybar/scripts/ai-agents.py",
+        "return-type": "json",
+        "interval": 3,
+        "signal": 10,
+        "on-click": "~/.config/waybar/scripts/ai-agents-click.sh focus",
+        "on-click-right": "~/.config/waybar/scripts/ai-agents-click.sh summary",
+        "tooltip": true
+    },
+    // Review queue + activity on your own PRs, across every `gh` account.
+    // Polled often but only hits the network every WAYBAR_GH_TTL seconds;
+    // clicking marks the current comment/review counts as seen.
+    "custom/github": {
+        "exec": "~/.config/waybar/scripts/github-status.py",
+        "return-type": "json",
+        "interval": 30,
+        "signal": 11,
+        "on-click": "~/.config/waybar/scripts/github-status.py --open",
+        "on-click-right": "~/.config/waybar/scripts/github-status.py --ack",
+        "on-click-middle": "~/.config/waybar/scripts/github-status.py --refresh",
+        "tooltip": true
+    },
+    "pulseaudio": {
+        "format": "{icon}  {volume:>3}%",
+        "format-muted": "󰖁  muted",
+        "min-length": 8,
+        "align": 0.5,
+        "format-icons": {
+            "default": [
+                "󰕿",
+                "󰖀",
+                "󰕾"
+            ],
+            "headphone": "󰋋",
+            "headset": "󰋍"
+        },
+        "on-click": "pavucontrol",
+        "on-click-right": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
+        "on-scroll-up": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.02+ -l 1.0",
+        "on-scroll-down": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.02-",
+        "tooltip": false
+    },
+    "backlight": {
+        "device": "nvidia_wmi_ec_backlight",
+        "format": "󰃠  {percent:>3}%",
+        "min-length": 8,
+        "align": 0.5,
+        "on-scroll-up": "brightnessctl set +5%",
+        "on-scroll-down": "brightnessctl set 5%-",
+        "tooltip": false
+    },
+    "network": {
+        "format-wifi": "󰖩  {signalStrength:>3}%",
+        "format-ethernet": "󰈀  {ifname}",
+        "format-disconnected": "󰤯  off",
+        "min-length": 8,
+        "align": 0.5,
+        "on-click": "ghostty -e nmtui",
+        "tooltip-format": "{ifname}: {ipaddr}\ngw {gwaddr} · ↑{bandwidthUpBits} ↓{bandwidthDownBits}",
+        "tooltip-format-disconnected": "disconnected"
+    },
+    "bluetooth": {
+        "format": "󰂯",
+        "format-connected": "󰂱 {num_connections}",
+        "format-disabled": "󰂲",
+        "min-length": 3,
+        "align": 0.5,
+        "on-click": "ghostty -e bluetoothctl",
+        "tooltip-format": "{controller_alias}\t{controller_address}",
+        "tooltip-format-connected": "{device_enumerate}"
+    },
+    "cpu": {
+        "format": "  {usage:>3}%",
+        "interval": 2,
+        "on-click": "ghostty -e btm",
+        "tooltip": false
+    },
+    // Was "thermal-zone": 12, which is iwlwifi_1 (the WiFi card) on this
+    // machine -- thermal_zone numbering isn't stable across boots anyway.
+    // hwmon-path-abs pins to the coretemp *device* path, which survives a
+    // hwmonN renumber; input-filename picks "Package id 0" specifically
+    // (cpu-freq.py:102-116 resolves the same sensor the same way).
+    "temperature": {
+        "hwmon-path-abs": "/sys/devices/platform/coretemp.0/hwmon",
+        "input-filename": "temp1_input",
+        "critical-threshold": 90,
+        "format": "{icon} {temperatureC:>2}°",
+        "on-click": "ghostty -e btm",
+        "tooltip-format": "CPU package: {temperatureC}°C",
+        "format-icons": [
+            "󱃃",
+            "󰔏",
+            "󱃂"
+        ],
+        "tooltip": false
+    },
+    "memory": {
+        "format": "  {percentage:>3}%",
+        "interval": 5,
+        "on-click": "ghostty -e btm",
+        "tooltip-format": "{used:0.1f}G / {total:0.1f}G"
+    },
+    "disk": {
+        "format": "󰋊  {percentage_used:>3}%",
+        "path": "/",
+        "interval": 60,
+        "tooltip-format": "{used} / {total} on {path}"
+    },
+    "power-profiles-daemon": {
+        "format": "{icon}",
+        "format-icons": {
+            "default": "󰗑",
+            "performance": "󰉁",
+            "balanced": "󰗑",
+            "power-saver": "󰌪"
+        },
+        "tooltip-format": "Power profile: {profile}\nClick to cycle"
+    },
+    "custom/cpufreq": {
+        "exec": "~/.config/waybar/scripts/cpu-freq.py",
+        "return-type": "json",
+        "interval": 3,
+        "signal": 9,
+        "on-click": "~/.config/scripts/cpu-governor-toggle.sh",
+        "on-click-right": "~/.config/scripts/monitor-toggle.sh com.waybar.cpumon s-tui"
+    },
+    "custom/battery": {
+        "exec": "~/.config/waybar/scripts/battery-power.py",
+        "return-type": "json",
+        "interval": 5,
+        "signal": 8,
+        "on-click": "~/.config/waybar/scripts/battery-click.sh",
+        "on-click-right": "~/.config/scripts/monitor-toggle.sh com.waybar.powermon sudo powertop",
+        "tooltip": true
+    },
+    "tray": {
+        "icon-size": 14,
+        "spacing": 6
+    },
+    "custom/power": {
+        "format": "󰐥",
+        "on-click": "~/.config/scripts/fuzzel-powermenu.sh",
+        "tooltip-format": "Power menu (Mod+X)"
+    }
+}

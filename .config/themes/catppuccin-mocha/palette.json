@@ -1,0 +1,17 @@
+{
+  "name": "catppuccin-mocha",
+  "bg": "#1e1e2e",
+  "bg_dark": "#181825",
+  "surface": "#313244",
+  "overlay": "#6c7086",
+  "text": "#cdd6f4",
+  "subtext": "#a6adc8",
+  "accent": "#cba6f7",
+  "accent2": "#b4befe",
+  "blue": "#89b4fa",
+  "green": "#a6e3a1",
+  "yellow": "#f9e2af",
+  "orange": "#fab387",
+  "red": "#f38ba8",
+  "pink": "#f5c2e7"
+}
