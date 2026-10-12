@@ -38,12 +38,11 @@ HOME_FILES := .zshrc .tmux.conf .aliases .functions .gitignore .p10k.zsh \
 #              Replacing that directory with a symlink into the repo would throw
 #              away every enabled unit. The individual units are linked by the
 #              `systemd` target instead.
-#   nvim-old - handled by its own special case further down.
 #
 # `nvim` is listed below but is a git submodule (tfpickard/dotenvim); the
 # `symlinks` and `nvim` targets init it first.
 CONFIG_DIRS := nvim hypr ghostty waybar dunst rofi alacritty \
-               niri themes scripts mako eww satty gptcommit paru \
+               niri themes scripts mako satty paru \
                swaylock swaylock-effects gtklock swaync fnott \
                fuzzel gtk-3.0 gtk-4.0
 all: deps backup symlinks ghostty nvim
@@ -160,13 +159,6 @@ symlinks: backup
 			ln -sf $(DOTFILES_DIR)/.config/$$dir $(CONFIG_DIR)/$$dir; \
 		fi; \
 	done
-	
-	# Legacy nvim config, kept alongside the submodule
-	@if [ -d $(DOTFILES_DIR)/.config/nvim-old ]; then \
-		echo "Linking .config/nvim-old"; \
-		rm -rf $(CONFIG_DIR)/nvim-old; \
-		ln -sf $(DOTFILES_DIR)/.config/nvim-old $(CONFIG_DIR)/nvim-old; \
-	fi
 	
 	@echo "🔗 Symlinks created!"
 
