@@ -16,7 +16,7 @@ This is a personal dotfiles repository, primarily for a Linux/niri desktop with 
 | `.config/ghostty/` | Ghostty terminal emulator config |
 | `.config/niri/` | niri window manager (Linux) -- the live WM; see below |
 | `.config/hypr/` | Hyprland window manager config -- **dormant**, not the active WM (see note below) |
-| `.config/nvim/` | Neovim configuration |
+| `.config/nvim/` | Neovim configuration (git submodule: tfpickard/dotenvim) |
 | `.config/eww/` | Eww widget system -- **dormant**, not installed, no niri binding (see note below) |
 | `.config/waybar/` | Waybar status bar (Linux) |
 
