@@ -38,9 +38,11 @@ HOME_FILES := .zshrc .tmux.conf .aliases .functions .gitignore .p10k.zsh \
 #              Replacing that directory with a symlink into the repo would throw
 #              away every enabled unit. The individual units are linked by the
 #              `systemd` target instead.
-#   nvim-old - handled by its own special case further down.
+#
+# `nvim` is listed below but is a git submodule (tfpickard/dotenvim); the
+# `symlinks` and `nvim` targets init it first.
 CONFIG_DIRS := nvim hypr ghostty waybar dunst rofi alacritty \
-               niri themes scripts mako eww satty gptcommit paru \
+               niri themes scripts mako satty paru \
                swaylock swaylock-effects gtklock swaync fnott \
                fuzzel gtk-3.0 gtk-4.0
 all: deps backup symlinks ghostty nvim
@@ -136,6 +138,8 @@ backup:
 
 symlinks: backup
 	@echo "🔗 Creating symlinks..."
+	@# .config/nvim is a submodule; make sure it is populated before linking it.
+	@git -C $(DOTFILES_DIR) submodule update --init .config/nvim
 	@mkdir -p $(CONFIG_DIR)
 	
 	# Symlink home directory files
@@ -156,43 +160,17 @@ symlinks: backup
 		fi; \
 	done
 	
-	# Handle special nvim case (both old and new configs exist)
-	@if [ -d $(DOTFILES_DIR)/.config/nvim-old ]; then \
-		echo "Linking .config/nvim-old"; \
-		rm -rf $(CONFIG_DIR)/nvim-old; \
-		ln -sf $(DOTFILES_DIR)/.config/nvim-old $(CONFIG_DIR)/nvim-old; \
-	fi
-	
-	# Handle lua config in root
-	@if [ -d $(DOTFILES_DIR)/lua ]; then \
-		echo "Linking nvim lua config"; \
-		rm -rf $(CONFIG_DIR)/nvim; \
-		ln -sf $(DOTFILES_DIR) $(CONFIG_DIR)/nvim; \
-	fi
-	
 	@echo "🔗 Symlinks created!"
 
 nvim:
 	@echo "⚡ Setting up Neovim..."
-	@mkdir -p $(CONFIG_DIR)/nvim
-	
-	# Check if we have a LazyVim setup (lua/ dir in root)
-	@if [ -d $(DOTFILES_DIR)/lua ]; then \
-		echo "Found LazyVim configuration"; \
-		rm -rf $(CONFIG_DIR)/nvim; \
-		ln -sf $(DOTFILES_DIR) $(CONFIG_DIR)/nvim; \
-	elif [ -d $(DOTFILES_DIR)/.config/nvim-old ]; then \
-		echo "Found legacy Neovim configuration"; \
-		rm -rf $(CONFIG_DIR)/nvim; \
-		ln -sf $(DOTFILES_DIR)/.config/nvim-old $(CONFIG_DIR)/nvim; \
-	fi
-	
-	# Install vim-plug if using legacy config
-	@if [ -f $(CONFIG_DIR)/nvim/lua/core/lazy.lua ]; then \
-		echo "LazyVim will auto-install on first run"; \
-	fi
-	
-	@echo "⚡ Neovim configuration linked!"
+	@# .config/nvim is a git submodule (tfpickard/dotenvim), so it has to be
+	@# checked out before there is anything to link to.
+	@git -C $(DOTFILES_DIR) submodule update --init .config/nvim
+	@mkdir -p $(CONFIG_DIR)
+	@rm -rf $(CONFIG_DIR)/nvim
+	@ln -sfn $(DOTFILES_DIR)/.config/nvim $(CONFIG_DIR)/nvim
+	@echo "⚡ Neovim configuration linked: ~/.config/nvim -> $(DOTFILES_DIR)/.config/nvim"
 	@echo "💡 Run 'nvim' and install plugins with :Lazy"
 
 hypr:
