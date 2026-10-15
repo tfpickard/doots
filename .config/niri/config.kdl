@@ -909,7 +909,11 @@ binds {
     Mod+Shift+Slash { show-hotkey-overlay; }
 
     // Suggested binds for running programs: terminal, app launcher, screen locker.
-    Mod+Return hotkey-overlay-title="Open a Terminal: ghostty" { spawn "ghostty"; }
+    // Ghostty runs single-instance, so a plain `ghostty` here is handed to the
+    // running process and can't carry per-window env. `+new-window -e` can: the
+    // shell sees TMUX_NEW_WINDOW=1 and .zshrc's tmux autostart opens a fresh
+    // tmux window on attach.
+    Mod+Return hotkey-overlay-title="Open a Terminal: ghostty (new tmux window)" { spawn "ghostty" "+new-window" "--working-directory=home" "-e" "env" "TMUX_NEW_WINDOW=1" "zsh"; }
     Mod+T hotkey-overlay-title="Open a Terminal: foot (bash)" { spawn "foot" "bash"; }
     Mod+D hotkey-overlay-title="Run an Application: fuzzel" { spawn "fuzzel"; }
     // lock.sh picks the best available locker (swaylock-effects, falling back
