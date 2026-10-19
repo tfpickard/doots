@@ -218,8 +218,12 @@ assert_eq "gtk.css points into themes/active" "../themes/active/gtk.css" \
     "$(readlink "$REPO_ROOT/.config/gtk-4.0/gtk.css")"
 
 FUZZEL=$(cat "$REPO_ROOT/.config/fuzzel/fuzzel.ini")
+# fuzzel rejects a relative include= at runtime ("not an absolute path"), so
+# the include must be absolute; fuzzel expands the leading ~ itself.
 assert_contains "fuzzel includes the active theme" "$FUZZEL" \
-    "include=../themes/active/fuzzel.ini"
+    "include=~/.config/themes/active/fuzzel.ini"
+assert_not_contains "fuzzel include is not relative" "$FUZZEL" \
+    "include=../"
 
 # Every theme must ship both snippets, or switching to one breaks a consumer.
 # Driven off --list rather than a hardcoded set, so a theme added later is
