@@ -16,14 +16,13 @@ This is a personal dotfiles repository, primarily for a Linux/niri desktop with 
 | `.config/ghostty/` | Ghostty terminal emulator config |
 | `.config/niri/` | niri window manager (Linux) -- the live WM; see below |
 | `.config/hypr/` | Hyprland window manager config -- **dormant**, not the active WM (see note below) |
-| `.config/nvim/` | Neovim configuration |
-| `.config/eww/` | Eww widget system -- **dormant**, not installed, no niri binding (see note below) |
+| `.config/nvim/` | Neovim configuration -- git submodule ([tfpickard/dotenvim](https://github.com/tfpickard/dotenvim)); `make nvim` inits it and links `~/.config/nvim` |
 | `.config/waybar/` | Waybar status bar (Linux) |
 
 ## Key Architectural Patterns
 
-### niri is the live window manager; hypr/eww are dormant, not deleted
-This repo was originally built around Hyprland (see `.config/hypr/`, a full preset-based config with 25 scripts) with an eww sidebar. The desktop now runs **niri**, and neither of those is wired into it: `niri/config.kdl` never references `hypr/` or `eww/`, and `eww` itself isn't installed (its sidebar calls `hypr/scripts/*.sh`, which is Hyprland-only anyway). They're kept in the repo deliberately rather than deleted -- if you ever go back to Hyprland, the preset system in `hypr/conf/` is a complete, working config, not an abandoned fragment. `waybar/scripts/compositor-config.py`'s "hyprland" mode is the one live bridge between the two setups: it derives a Hyprland-compatible bar config from the same niri theme source, for exactly the day this might get used again.
+### niri is the live window manager; hypr is dormant, not deleted
+This repo was originally built around Hyprland (see `.config/hypr/`, a full preset-based config with 25 scripts); an eww sidebar that went with it has since been removed. The desktop now runs **niri**, and `hypr/` isn't wired into it: `niri/config.kdl` never references it. It's kept in the repo deliberately rather than deleted -- if you ever go back to Hyprland, the preset system in `hypr/conf/` is a complete, working config, not an abandoned fragment. `waybar/scripts/compositor-config.py`'s "hyprland" mode is the one live bridge between the two setups: it derives a Hyprland-compatible bar config from the same niri theme source, for exactly the day this might get used again.
 
 `dunst` is genuinely stale rather than dormant-by-design: it's not in the notification-daemon switcher (`scripts/notify-daemon.sh`), not in `theme-set`'s applier table, and its only callers are inside the dormant `hypr/` tree. `mako`/`swaync`/`fnott` are the three real, switchable options.
 
