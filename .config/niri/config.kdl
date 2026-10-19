@@ -364,6 +364,12 @@ workspace "term3" {
 workspace "overflow" {
 }
 
+// Parking spot for the drop-down scratch terminal (Mod+Space) while it is
+// hidden. Unpinned for the same reason as "overflow": it follows the focused
+// output. See ~/.config/scripts/scratch-term.sh.
+workspace "scratch" {
+}
+
 // Settings that influence how windows are positioned and sized.
 // Find more information on the wiki:
 // https://niri-wm.github.io/niri/Configuration:-Layout
@@ -893,6 +899,17 @@ window-rule {
     default-column-width { proportion 0.85; }
 }
 
+// Drop-down scratch terminal (Mod+Space, scripts/scratch-term.sh): a floating
+// ghostty hanging from the top edge, attached to the persistent "scratch"
+// tmux session. The app-id is set by the script's --class.
+window-rule {
+    match app-id=r#"^dev\.tom\.scratch$"#
+    open-floating true
+    default-column-width { proportion 0.85; }
+    default-window-height { proportion 0.6; }
+    default-floating-position x=0 y=0 relative-to="top"
+}
+
 binds {
     // Keys consist of modifiers separated by + signs, followed by an XKB key name
     // in the end. To find an XKB name for a particular key, you may use a program
@@ -915,6 +932,8 @@ binds {
     // tmux window on attach.
     Mod+Return hotkey-overlay-title="Open a Terminal: ghostty (new tmux window)" { spawn "ghostty" "+new-window" "--working-directory=home" "-e" "env" "TMUX_NEW_WINDOW=1" "zsh"; }
     Mod+T hotkey-overlay-title="Open a Terminal: foot (bash)" { spawn "foot" "bash"; }
+    // Toggle: summon to the focused workspace, or hide if already focused.
+    Mod+Space hotkey-overlay-title="Scratch Terminal (drop-down tmux)" { spawn "/home/tom/.config/scripts/scratch-term.sh"; }
     Mod+D hotkey-overlay-title="Run an Application: fuzzel" { spawn "fuzzel"; }
     // lock.sh picks the best available locker (swaylock-effects, falling back
     // to swaylock then gtklock) and takes the pre-lock screenshot that the
