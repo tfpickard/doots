@@ -1,0 +1,19 @@
+# Mod+Space drop-in scratch terminal (scripts/scratch-term.sh). Passed with
+# --config-file, which loads after every config-file in the main config, so
+# these settings win over the theme, opacity and shader picks there.
+#
+# Deliberately off-theme colours: a dusky plum you can't mistake for a
+# regular terminal, so a throwaway command never lands in the wrong place.
+background = #1d1029
+foreground = #f3e8ff
+cursor-color = #ff9de2
+selection-background = #4a2a63
+background-opacity = 1.0
+
+# Reset the shader list first (custom-shader is repeatable, so this would
+# otherwise stack on top of whatever shader/<name> the main config picked).
+# The cursor smear stays still until the cursor moves.
+custom-shader =
+custom-shader = ~/.config/ghostty/shaders/smear_cursor_blocks.glsl
+
+# vim: ft=config

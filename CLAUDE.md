@@ -68,10 +68,29 @@ Custom keybindings of note:
 - `prefix + C-g` / `prefix + g` — summon Muxgeist AI pane
 - `prefix + h` — open sidechat pane
 - `prefix + j` — open sc-picker popup
-- `Alt+backtick` (no prefix) — toggle a popup on the persistent `scratch` session
+- `Alt+backtick` (no prefix) — toggle a popup on the persistent `scratch` session (shared with niri's `Mod+Space`)
 
-### Scratch terminal: one tmux session, two ways in
-`scratch` is a persistent tmux session for throwaway commands, reachable two ways that share the same shells: the `Alt+backtick` popup inside any tmux client (`.tmux.conf`), and `Mod+Space` in niri, which runs `scripts/scratch-term.sh`. niri has no native scratchpad, so the script emulates one over IPC. The first press spawns a ghostty with `--class=dev.tom.scratch` (a window rule floats it from the top edge). Later presses move it onto the focused workspace, or, if it already has focus, park it on the unpinned named workspace `scratch`. It moves the window to the focused output before it moves it by workspace index, because indexes are per-output. Both launchers set `detach-on-destroy on` for this session, because the global `off` would otherwise make `exit` switch the scratch window to another session instead of closing it.
+### Scratch terminals: two of them, on persistent tmux sessions
+`scripts/scratch-term.sh` emulates a scratchpad over IPC, because niri doesn't have one. There are two independent terminals, each with its own window, its own tmux session and its own look:
+
+| Key | Window | tmux session | Look (`ghostty/scratch/*`) |
+|---|---|---|---|
+| `Mod+Space` | centred float, 70% x 65%, heavy drop shadow | `scratch` | plum, cursor-smear shader |
+| `Mod+Shift+Space` | fills the working area, translucent, desktop blurred behind it | `scratch-full` | teal, falling-snow shader |
+
+The `Alt+backtick` popup inside any tmux client (`.tmux.conf`) attaches to the same `scratch` session as `Mod+Space`, so they share shells.
+
+- **Toggling:** the first press spawns the terminal. Later presses summon it, or, if it already has focus, park it on the unpinned named workspace `scratch` and give focus back to whatever had it before the summon (kept in `$XDG_RUNTIME_DIR/scratch-term.<variant>.prev`).
+- **Telling them apart:** each is a ghostty with its own `--class` (`dev.tom.scratch`, `dev.tom.scratch-full`), so niri's window rules can match it. Each also gets its own `--config-file`, which loads after the main config and therefore wins over the theme, opacity and shader picks.
+- **Which display:** it is summoned onto a display that does *not* hold the focus, so the window you are working in stays visible:
+  - with 2 or more external screens, the nearest other external (never the laptop panel);
+  - with 1 external, the other of the two displays;
+  - with none, the only display.
+
+  "Nearest" means the smallest gap between screen edges, then the closest centres, then left-to-right. `scratch-term.sh pick-output` exposes this rule, and `tests/test-scratch-term.sh` covers each case.
+- **The full-screen one is a float, not fullscreen:** niri draws a solid backdrop behind real fullscreen windows, so a translucent one would never show anything through it. It is a float sized to 100% of the working area, which leaves waybar visible. `background-effect { blur true; xray false; }` blurs the actual windows underneath; niri marks this kind of blur experimental, and it disappears during open/close animations.
+- **Focus-follows-mouse:** focus-follows-mouse is on and `warp-mouse-to-focus` is off, so after a summon the pointer is still on the other screen. Nudging the mouse hands focus back to the window under it; pressing the key again refocuses the scratch terminal, and the press after that hides it.
+- **`exit`:** both launchers set `detach-on-destroy on` for their session. With the global `off`, `exit` would otherwise move the scratch window to another session instead of closing it.
 
 ### Hyprland config uses switchable presets (dormant)
 `.config/hypr/conf/` contains named preset files for animations, decorations, layouts, monitors, and window borders. The active preset for each category is referenced from the parent `.conf` file (e.g., `animation.conf` sources one of `conf/animations/*.conf`). Not currently read by anything -- see "niri is the live window manager" above.

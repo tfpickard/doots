@@ -1,0 +1,22 @@
+# Mod+Shift+Space full-screen scratch terminal (scripts/scratch-term.sh full).
+# Passed with --config-file, which loads after every config-file in the main
+# config, so these settings win over the theme, opacity and shader picks there.
+#
+# Deep teal, a different colour from the plum Mod+Space terminal so you can
+# tell the two apart at a glance. The background is mostly see-through; niri
+# blurs whatever is underneath (see the dev.tom.scratch-full window rule).
+background = #032a2c
+foreground = #d4fff4
+cursor-color = #5effd2
+selection-background = #0d5a5a
+background-opacity = 0.55
+
+# Reset, then gentle drifting snow. Chosen after trying the alpha-safe shaders
+# in this translucent, blurred window: snow keeps the teal and the blur
+# visible and leaves text readable. sin-interference swamped the teal with a
+# pink ripple; mnoise and cubes drop the alpha, so the desktop showed sharp
+# through them; animated-gradient and starfield painted over the background.
+custom-shader =
+custom-shader = ~/.config/ghostty/shaders/just-snow.glsl
+
+# vim: ft=config

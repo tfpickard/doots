@@ -364,8 +364,8 @@ workspace "term3" {
 workspace "overflow" {
 }
 
-// Parking spot for the drop-down scratch terminal (Mod+Space) while it is
-// hidden. Unpinned for the same reason as "overflow": it follows the focused
+// Parking spot for both scratch terminals (Mod+Space, Mod+Shift+Space)
+// while they are hidden. Unpinned for the same reason as "overflow": it follows the focused
 // output. See ~/.config/scripts/scratch-term.sh.
 workspace "scratch" {
 }
@@ -899,15 +899,53 @@ window-rule {
     default-column-width { proportion 0.85; }
 }
 
-// Drop-down scratch terminal (Mod+Space, scripts/scratch-term.sh): a floating
-// ghostty hanging from the top edge, attached to the persistent "scratch"
-// tmux session. The app-id is set by the script's --class.
+// Scratch terminals (scripts/scratch-term.sh), each on its own persistent
+// tmux session. The app-ids come from the script's --class. Both drop the
+// focus ring and border; their off-theme colours (ghostty/scratch/*) are
+// the reminder that this is a scratch terminal.
+//
+// Mod+Space: centred float that casts a heavy shadow onto the desktop
+// underneath. With no default-floating-position, niri centres it.
 window-rule {
     match app-id=r#"^dev\.tom\.scratch$"#
     open-floating true
-    default-column-width { proportion 0.85; }
-    default-window-height { proportion 0.6; }
-    default-floating-position x=0 y=0 relative-to="top"
+    default-column-width { proportion 0.7; }
+    default-window-height { proportion 0.65; }
+    focus-ring { off; }
+    border { off; }
+    shadow {
+        on
+        softness 70
+        spread 14
+        offset x=0 y=22
+        color "#000000c0"
+    }
+}
+
+// Mod+Shift+Space: covers the whole working area (everything but waybar),
+// translucent, with the desktop beneath it blurred.
+//
+// Deliberately a full-size float rather than real fullscreen: niri draws a
+// solid backdrop behind fullscreen windows, so a translucent one would only
+// ever show that backdrop. Fullscreening a float also turns it back into a
+// tiled window. The cost is that waybar's top layer stays visible.
+//
+// xray false blurs the windows actually underneath, not just the wallpaper.
+// niri marks that as experimental: the blur drops out while the window is
+// opening or closing.
+window-rule {
+    match app-id=r#"^dev\.tom\.scratch-full$"#
+    open-floating true
+    default-column-width { proportion 1.0; }
+    default-window-height { proportion 1.0; }
+    focus-ring { off; }
+    border { off; }
+    shadow { off; }
+    geometry-corner-radius 0
+    background-effect {
+        blur true
+        xray false
+    }
 }
 
 binds {
@@ -932,8 +970,9 @@ binds {
     // tmux window on attach.
     Mod+Return hotkey-overlay-title="Open a Terminal: ghostty (new tmux window)" { spawn "ghostty" "+new-window" "--working-directory=home" "-e" "env" "TMUX_NEW_WINDOW=1" "zsh"; }
     Mod+T hotkey-overlay-title="Open a Terminal: foot (bash)" { spawn "foot" "bash"; }
-    // Toggle: summon to the focused workspace, or hide if already focused.
-    Mod+Space hotkey-overlay-title="Scratch Terminal (drop-down tmux)" { spawn "/home/tom/.config/scripts/scratch-term.sh"; }
+    // Scratch terminals; each key summons its own, or hides it if focused.
+    Mod+Space       hotkey-overlay-title="Scratch Terminal (floating)"    { spawn "/home/tom/.config/scripts/scratch-term.sh"; }
+    Mod+Shift+Space hotkey-overlay-title="Scratch Terminal (full screen)" { spawn "/home/tom/.config/scripts/scratch-term.sh" "full"; }
     Mod+D hotkey-overlay-title="Run an Application: fuzzel" { spawn "fuzzel"; }
     // lock.sh picks the best available locker (swaylock-effects, falling back
     // to swaylock then gtklock) and takes the pre-lock screenshot that the
