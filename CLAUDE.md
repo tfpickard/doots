@@ -69,6 +69,10 @@ Custom keybindings of note:
 - `prefix + C-g` / `prefix + g` — summon Muxgeist AI pane
 - `prefix + h` — open sidechat pane
 - `prefix + j` — open sc-picker popup
+- `Alt+backtick` (no prefix) — toggle a popup on the persistent `scratch` session
+
+### Scratch terminal: one tmux session, two ways in
+`scratch` is a persistent tmux session for throwaway commands, reachable two ways that share the same shells: the `Alt+backtick` popup inside any tmux client (`.tmux.conf`), and `Mod+Space` in niri, which runs `scripts/scratch-term.sh`. niri has no native scratchpad, so the script emulates one over IPC. The first press spawns a ghostty with `--class=dev.tom.scratch` (a window rule floats it from the top edge). Later presses move it onto the focused workspace, or, if it already has focus, park it on the unpinned named workspace `scratch`. It moves the window to the focused output before it moves it by workspace index, because indexes are per-output. Both launchers set `detach-on-destroy on` for this session, because the global `off` would otherwise make `exit` switch the scratch window to another session instead of closing it.
 
 ### Hyprland config uses switchable presets (dormant)
 `.config/hypr/conf/` contains named preset files for animations, decorations, layouts, monitors, and window borders. The active preset for each category is referenced from the parent `.conf` file (e.g., `animation.conf` sources one of `conf/animations/*.conf`). Not currently read by anything -- see "niri is the live window manager" above.
