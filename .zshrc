@@ -186,7 +186,12 @@ _tmux_project_autostart() {
 
   # Project name: git superproject (so submodules map to the parent) -> toplevel
   # -> current dir. A manual ZSH_TMUX_DEFAULT_SESSION_NAME always wins.
-  local root name view
+  # TMUX_NEW_WINDOW=1 (set by niri's Mod+Return) also opens a fresh window in the
+  # project session, so each new terminal starts on an empty prompt instead of
+  # landing on whatever window the session was last looking at. Consumed here so
+  # it never leaks into the tmux server's environment.
+  local root name view new_window=$TMUX_NEW_WINDOW
+  unset TMUX_NEW_WINDOW
   if [[ -n "$ZSH_TMUX_DEFAULT_SESSION_NAME" ]]; then
     name="$ZSH_TMUX_DEFAULT_SESSION_NAME"
   else
@@ -199,7 +204,11 @@ _tmux_project_autostart() {
   [[ -z "$name" ]] && name="main"
 
   # Persistent per-project session that owns the windows/work.
-  command tmux has-session -t "=$name" 2>/dev/null || command tmux new-session -d -s "$name"
+  # A just-created session already has an empty window, so don't add a second.
+  if ! command tmux has-session -t "=$name" 2>/dev/null; then
+    command tmux new-session -d -s "$name"
+    new_window=
+  fi
 
   # Attach through a private grouped session (independent current-window pointer =>
   # no mirroring/resize lock) that self-destroys on detach (=> no sprawl). Created
@@ -207,7 +216,11 @@ _tmux_project_autostart() {
   # Run as a child, not `exec`, so detaching falls back to this zsh instead of
   # leaving the terminal with no process and closing the window.
   view="${name}-$$"
-  command tmux new-session -t "$name" -s "$view" \; set-option -t "$view" destroy-unattached on
+  if [[ "$new_window" == 1 ]]; then
+    command tmux new-session -t "$name" -s "$view" \; set-option -t "$view" destroy-unattached on \; new-window -c "$PWD"
+  else
+    command tmux new-session -t "$name" -s "$view" \; set-option -t "$view" destroy-unattached on
+  fi
 }
 _tmux_project_autostart
 
