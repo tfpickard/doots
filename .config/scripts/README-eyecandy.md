@@ -153,6 +153,17 @@ real news; the v1 random-phrase corpus survives as `phrases-master.txt`, which
 the picker still resurfaces as old memories. The v1 code is tagged
 `screensaver-phrases-v1`, and snapshots live under `backups/` in that directory.
 
+The entries are written by the Copilot CLI. If it reports the monthly quota as
+used up, the generator waits 6 hours before trying again (the usual 45 minutes
+would only resubmit a request that is guaranteed to fail), and the journal picks
+up again by itself once the quota resets. The first week, 11–19 October 2026,
+was written while the quota was exhausted, so it was written by hand as the
+voice. It went through the generator's own line filters and is built on the
+real boot/suspend history and real headlines; those entries are tagged `model:
+"hand-authored backfill …"` in `journal.jsonl`. A local `qwen2.5:7b` was tried
+as a fallback and dropped: it copied the example lines word for word and ignored
+the news.
+
 X/Twitter is deliberately absent: it serves nothing without a login, and its
 usual mirror (nitter) is now just a placeholder page. Bluesky's public trending
 topics stand in for it.

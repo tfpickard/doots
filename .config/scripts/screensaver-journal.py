@@ -95,6 +95,15 @@ MIN_SPACING_MINUTES = 25
 # After a failed generation, wait this long before trying again rather than
 # retrying (and paying for) a model call on every 20-minute tick.
 RETRY_MINUTES = 45
+# ...unless the failure was the account's model quota running out, which the
+# CLI reports as "You have exceeded your monthly quota". That lasts until the
+# quota resets, so retrying every 45 minutes would just be ~30 pointless calls
+# a day for weeks. Back off for hours instead; the picker keeps reading (and
+# flipping back through) the existing journal in the meantime.
+QUOTA_BACKOFF_HOURS = 6
+QUOTA_ERROR = re.compile(r"exceeded your \w* ?quota|quota exceeded", re.I)
+# Set by call_model() when the last failure was the quota, not a bad response.
+quota_exhausted = False
 
 # Entry lengths, drawn per entry. Deliberately lumpy: a three-line entry next
 # to a twelve-line one is part of what makes it read like thinking.
@@ -682,6 +691,14 @@ def clean_line(raw) -> str | None:
 def too_similar(line: str, known: list[str]) -> str | None:
     """The closest known line if `line` is a near-copy of it, else None."""
     norm = _normalize(line)
+    chars = norm.replace(" ", "")
+    if len(norm) < 10 or 2 * sum(c.isdigit() for c in chars) >= len(chars):
+        # A character ratio means nothing on a very short or mostly-numeric
+        # line: '1,732,000' vs '1,472,000' scores over the threshold, so every
+        # progress count after the first would be thrown out as an "echo" --
+        # and counting is the voice's whole boulder. Only an exact repeat
+        # counts as one here.
+        return next((k for k in known if _normalize(k) == norm), None)
     for k in known:
         sm = difflib.SequenceMatcher(None, norm, _normalize(k))
         if (sm.real_quick_ratio() >= SIMILARITY_THRESHOLD
@@ -910,6 +927,8 @@ def build_prompt(moments: list[dict], memory: dict, entries: list[dict],
 # --------------------------------------------------------------------------
 
 def call_model(prompt: str, timeout: int) -> str | None:
+    global quota_exhausted
+    quota_exhausted = False
     env = dict(os.environ)
     env["PATH"] = f"{Path.home()}/.local/bin:" + env.get("PATH", "/usr/bin:/bin")
     cmd = ["copilot", "-s", "--no-custom-instructions", "--no-auto-update",
@@ -924,6 +943,8 @@ def call_model(prompt: str, timeout: int) -> str | None:
         log(f"copilot invocation failed: {err}")
         return None
     if proc.returncode != 0:
+        if QUOTA_ERROR.search(proc.stderr + proc.stdout):
+            quota_exhausted = True
         log(f"copilot exited {proc.returncode}: {proc.stderr.strip()[:300]}")
         return None
     return proc.stdout
@@ -1103,11 +1124,13 @@ def run_live(force: bool, dry_run: bool) -> int:
 
     result = compose([moment], headlines, entries, memory, "live", rng)
     if result is None:
+        wait = (timedelta(hours=QUOTA_BACKOFF_HOURS) if quota_exhausted
+                else timedelta(minutes=RETRY_MINUTES))
         if not dry_run:
-            state["retry_after"] = (
-                now + timedelta(minutes=RETRY_MINUTES)).timestamp()
+            state["retry_after"] = (now + wait).timestamp()
             _write_json(STATE_FILE, state)
-        log(f"nothing usable; will try again in {RETRY_MINUTES} minutes")
+        log(("model quota exhausted" if quota_exhausted else "nothing usable")
+            + f"; will try again in {fmt_duration(wait)}")
         return 1
 
     new_entries, new_memory = result
@@ -1191,7 +1214,7 @@ def run_backfill(since: datetime, days: int | None, dry_run: bool) -> int:
         result = None
         for attempt in (1, 2):
             result = compose(moments, headlines, entries, memory, "backfill", rng)
-            if result:
+            if result or quota_exhausted:
                 break
             log(f"{day}: attempt {attempt} failed")
         if result is None:
