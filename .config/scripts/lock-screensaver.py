@@ -32,9 +32,10 @@ PINNED OUTPUTS
 --------------
 Two physical monitors don't participate in the random shortlist at all: the
 centre external always gets a clock (xdaliclock or dclock), the left external
-always gets rotating text (phosphor or apple2, fed a random phrase from
-screensaver-phrases.txt via screensaver-phrase.sh). See OUTPUT_POOLS, matched
-by monitor serial the same way niri/config.kdl's own `output` blocks are.
+always gets rotating text (phosphor or apple2, fed one line at a time by
+screensaver-phrase.py, which reads the voice's journal in order). See
+OUTPUT_POOLS, matched by monitor serial the same way niri/config.kdl's own
+`output` blocks are.
 
 xdaliclock and dclock aren't xscreensaver hacks -- they don't live in
 HACK_DIR and (xdaliclock especially) don't necessarily go through the :12
@@ -53,10 +54,11 @@ a wall-clock timer regardless of activity, for as long as the screensaver
 is up, and the `shuffle` it calls goes through the exact same cycle() as
 the manual keybind -- nothing special-cased for the automatic case.
 
-The same tick also fires screensaver-generate-phrases.py, fire-and-forget,
-which grows the text pool's phrase list in batches every few days (see
-that file). It gates its own timing and is a no-op the rest of the time,
-so calling it every 5 minutes is cheap.
+The same tick also fires screensaver-journal.py, fire-and-forget, which
+writes the next entry in the text screen's stream-of-consciousness journal
+when one is due (see that file). It gates its own timing and is a no-op the
+rest of the time, so calling it every 5 minutes is cheap; its own systemd
+timer is the main driver, this is the backstop.
 
 CYCLING, AND "ANY KEY BUT THIS ONE"
 -----------------------------------
@@ -127,12 +129,12 @@ SHUFFLERFILE = os.path.join(RUNTIME, "lock-screensaver.shuffler")
 # (cycle() already re-picks a dedicated screen's own pool on any cycle call).
 SHUFFLE_INTERVAL = 300
 
-# screensaver-generate-phrases.py grows the text pool's phrase list in
-# batches every few days (see that file for the actual schedule/model) --
-# called here on the same 5-minute tick, fire-and-forget, since it gates its
-# own timing internally and exits in a stat() the rest of the time.
+# screensaver-journal.py writes the text screen's journal, an entry every few
+# hours (see that file for the schedule/model) -- poked here on the same
+# 5-minute tick, fire-and-forget, since it gates its own timing internally
+# and its systemd timer does the real scheduling.
 GENERATE_PHRASES_SCRIPT = os.path.join(
-    os.path.dirname(SELF), "screensaver-generate-phrases.py")
+    os.path.dirname(SELF), "screensaver-journal.py")
 
 # How long `wake` waits for a cycle request to show up before concluding there
 # isn't one and dismissing the screensaver. The keypress reaches niri's bind and
@@ -240,10 +242,10 @@ SCREEN_GRABBERS = {"decayscreen", "slidescreen", "xanalogtv"}
 # apple2 respectively) -- their windows carry the usual "from the
 # XScreenSaver" title, so screensaver_window_ids() below needs no changes for
 # them. They're just invoked with --program pointed at a script that prints
-# one random phrase and exits; both hacks relaunch --program a few seconds
-# after it exits (5s for phosphor, 3s for apple2), which is what gives the
-# rotation -- the picker script itself has no loop.
-PHRASE_SCRIPT = os.path.join(os.path.dirname(SELF), "screensaver-phrase.sh")
+# the next line of the journal and exits; both hacks relaunch --program a few
+# seconds after it exits (5s for phosphor, 3s for apple2), which is what gives
+# the rotation -- the picker script itself has no loop.
+PHRASE_SCRIPT = os.path.join(os.path.dirname(SELF), "screensaver-phrase.py")
 
 EXTRA_PROVIDERS: dict[str, dict] = {
     "xdaliclock": {"argv": ["xdaliclock"], "native_wayland": True},
@@ -608,8 +610,8 @@ def autoshuffle_loop() -> int:
             return 0
         subprocess.run([SELF, "shuffle"], stdout=subprocess.DEVNULL,
                         stderr=subprocess.DEVNULL)
-        # Fire-and-forget: this script gates its own 3-day interval and
-        # exits in a single stat() when it isn't due, so calling it every
+        # Fire-and-forget: screensaver-journal.py decides for itself whether
+        # an entry is due and exits fast when it isn't, so calling it every
         # SHUFFLE_INTERVAL is cheap. Detached so a slow (or hung) generation
         # run can never delay the next reshuffle.
         try:

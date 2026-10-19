@@ -1,0 +1,18 @@
+[Unit]
+Description=Write the next entry in the screensaver voice's journal, if one is due
+After=network-online.target
+
+[Service]
+Type=oneshot
+# Decides for itself whether an entry is due (every 2.3-4.2h, or straight
+# after a reboot or a sleep of an hour or more) and exits in well under a
+# second when it isn't. Holds a lock, so it never overlaps a backfill or the
+# screensaver's own fire-and-forget call.
+ExecStart=%h/.config/scripts/screensaver-journal.py
+# The generator shells out to the copilot CLI, which is not on the default
+# systemd user PATH.
+Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin
+# A day's worth of backfill can run several minutes; a single live entry
+# takes well under one.
+TimeoutStartSec=15min
+Nice=10

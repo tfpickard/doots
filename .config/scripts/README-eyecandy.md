@@ -125,6 +125,38 @@ here, these are the bare GL hacks on rootless XWayland, so "next" means kill and
 relaunch. Cycling also clears the ambient atlantis, since otherwise the new hack
 just stacks on top of it.
 
+### The text screen keeps a journal
+
+The left external always shows text, one line at a time — and the lines are a
+**stream of consciousness**: one salty voice living inside this machine,
+narrating its day, building on what it said before, and reacting (badly, and
+personally) to headlines that leak in from Reddit, Hacker News, Bluesky
+trending, the BBC and Wikipedia's current-events portal.
+
+```sh
+screensaver-journal.py --status   # entries, next one due, its current boulder
+screensaver-journal.py --news     # the headlines it would see right now
+screensaver-journal.py --force    # write an entry now
+screensaver-phrase.py             # the next line, exactly as the screen gets it
+```
+
+`screensaver-journal.timer` checks every 20 minutes; an entry is due every
+2.3–4.2 hours, or straight after a reboot or an hour-plus sleep. The voice only
+exists while the machine is awake — entries are never dated inside a shutdown or
+suspend, and on waking it is told how long it was gone. A reboot also resets the
+task it grinds at daily, which is the point.
+
+Everything grown lives in `~/.local/share/lock-screensaver/` (`journal.jsonl`,
+`memory.json`), deliberately outside the repo. `--backfill "2026-10-11 23:08"`
+reconstructs entries from the machine's real boot/suspend history and each day's
+real news; the v1 random-phrase corpus survives as `phrases-master.txt`, which
+the picker still resurfaces as old memories. The v1 code is tagged
+`screensaver-phrases-v1`, and snapshots live under `backups/` in that directory.
+
+X/Twitter is deliberately absent: it serves nothing without a login, and its
+usual mirror (nitter) is now just a placeholder page. Bluesky's public trending
+topics stand in for it.
+
 ### How "every key except that one" works
 
 swayidle cannot tell the cycle keys from any other key: it only knows the

@@ -1,0 +1,12 @@
+[Unit]
+Description=Check every 20 minutes whether the screensaver voice is due a journal entry
+
+[Timer]
+OnCalendar=*:0/20
+# Catch up on a missed check after resume from sleep -- which is exactly when
+# the voice should notice the missing time.
+Persistent=true
+RandomizedDelaySec=90
+
+[Install]
+WantedBy=timers.target
