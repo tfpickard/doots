@@ -112,18 +112,19 @@ lock-screensaver.py shuffle     # a new random hack on each screen
 | `Mod+Shift+Z` | **new random animation on each screen, without dismissing it** |
 | `Mod+Ctrl+Shift+Z` / `Mod+Alt+Z` | walk the shortlist in order instead, forwards / back |
 | `Mod+Ctrl+Z` | atlantis on the built-in panel — and the off switch for any hack |
+| `Mod+Ctrl+T` | **just the journal text on the built-in panel**, toggled; stays up while you work |
 | anything else | dismisses the screensaver, as always |
 
-All of these act on **every monitor**, one hack per screen; only `Mod+Ctrl+Z` is
-atlantis-specific. `shuffle` never hands back a hack that is already on screen,
+All of these act on **every monitor**, one hack per screen; only `Mod+Ctrl+Z` and
+`Mod+Ctrl+T` are single-screen. `shuffle` never hands back a hack that is already on screen,
 and the ordered walk moves a screenful at a time (position remembered in
 `$XDG_RUNTIME_DIR/lock-screensaver.cycle`), so with three monitors you see nine
 different hacks in three presses.
 
 There is no `xscreensaver-command -next` to bind: no xscreensaver daemon runs
 here, these are the bare GL hacks on rootless XWayland, so "next" means kill and
-relaunch. Cycling also clears the ambient atlantis, since otherwise the new hack
-just stacks on top of it.
+relaunch. Cycling also clears the ambient atlantis and the `Mod+Ctrl+T` text,
+since otherwise the new hack just stacks on top of them.
 
 ### The text screen keeps a journal
 
@@ -138,6 +139,8 @@ screensaver-journal.py --status   # entries, next one due, its current boulder
 screensaver-journal.py --news     # the headlines it would see right now
 screensaver-journal.py --force    # write an entry now
 screensaver-phrase.py             # the next line, exactly as the screen gets it
+lock-screensaver.py text          # the text itself, on the laptop panel (Mod+Ctrl+T);
+                                  # again to stop; -o DP-2 for another screen
 ```
 
 `screensaver-journal.timer` checks every 20 minutes; an entry is due every

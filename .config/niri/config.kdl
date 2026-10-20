@@ -1007,6 +1007,10 @@ binds {
     Mod+Ctrl+Shift+Z repeat=false hotkey-overlay-title="Screensaver: Next Animation"       { spawn "/home/tom/.config/scripts/lock-screensaver.py" "next"; }
     Mod+Alt+Z        repeat=false hotkey-overlay-title="Screensaver: Previous Animation"   { spawn "/home/tom/.config/scripts/lock-screensaver.py" "prev"; }
     Mod+Ctrl+Z       repeat=false hotkey-overlay-title="Toggle Screensaver (atlantis / off)" { spawn "/home/tom/.config/scripts/toggle-atlantis.sh"; }
+    // Just the journal text (phosphor or apple2, the left external's pinned
+    // screensaver) on the laptop panel, until pressed again. Not the
+    // screensaver: input doesn't dismiss it, so it can run while you work.
+    Mod+Ctrl+T       repeat=false hotkey-overlay-title="Toggle Journal Text (laptop panel)"  { spawn "/home/tom/.config/scripts/lock-screensaver.py" "text"; }
     Mod+Ctrl+P    hotkey-overlay-title="Toggle Teams Keep-Active (anti-idle)" { spawn "/home/tom/.config/scripts/teams-keep-active.sh"; }
     Mod+Shift+T   hotkey-overlay-title="Switch Global Theme" { spawn "/home/tom/.config/themes/theme-set"; }
 

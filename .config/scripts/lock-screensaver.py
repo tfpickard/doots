@@ -90,6 +90,8 @@ USAGE
     lock-screensaver.py wake         swayidle's resume hook (cycle, or stop)
     lock-screensaver.py list         show installed hacks and the shortlist
     lock-screensaver.py test NAME    run one hack, to audition it
+    lock-screensaver.py text         toggle just the journal text, on the
+                                     laptop panel (-o OUTPUT for another)
 """
 
 from __future__ import annotations
@@ -122,6 +124,12 @@ WATCHERFILE = os.path.join(RUNTIME, "lock-screensaver.watcher")
 # Companion process that reshuffles every SHUFFLE_INTERVAL while the
 # screensaver is up (see start_shuffler() / stop_shuffler() below).
 SHUFFLERFILE = os.path.join(RUNTIME, "lock-screensaver.shuffler")
+# The pid behind `text` (Mod+Ctrl+T): the journal text on one screen, as
+# ambient decoration rather than as the screensaver. Kept out of PIDFILE on
+# purpose -- `stop` and swayidle's `wake` are about the screensaver and must
+# not take this down with it, the same reason the hand-toggled atlantis isn't
+# tracked there either.
+TEXTFILE = os.path.join(RUNTIME, "lock-screensaver.text")
 
 # How often the screensaver reshuffles itself with no input at all -- a
 # request, not a guess: "shuffle the program every 5 minutes" while idle.
@@ -366,10 +374,11 @@ def write_pids(pids: list[int]) -> None:
 def stray_hack_pids() -> list[int]:
     """Hacks running that this script did not start.
 
-    The atlantis spawned at login and the one behind Mod+Ctrl+Z are ordinary
-    processes with no pidfile entry. `stop` leaves them alone on purpose -- they
-    are ambient decoration, not the screensaver -- but cycling has to clear them
-    or the next hack simply stacks on top of them.
+    The atlantis spawned at login, the one behind Mod+Ctrl+Z and the journal
+    text behind Mod+Ctrl+T (`text`) are ordinary processes with no pidfile
+    entry. `stop` leaves them alone on purpose -- they are ambient decoration,
+    not the screensaver -- but cycling has to clear them or the next hack
+    simply stacks on top of them.
     """
     tracked = set(read_pids())
     found = []
@@ -731,6 +740,22 @@ def spawn(hack: str) -> int | None:
     return proc.pid
 
 
+def await_window(pid: int, before: set[int], timeout: float = 5) -> int | None:
+    """Id of the screensaver window `pid` just opened -- the newest one not
+    already in `before`, which is updated in place -- or None if it exits or
+    times out without showing one."""
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        fresh = set(screensaver_window_ids()) - before
+        if fresh:
+            before |= fresh
+            return max(fresh)
+        if not os.path.exists(f"/proc/{pid}"):
+            return None  # gave up before it ever had a window
+        time.sleep(0.15)
+    return None
+
+
 def stop() -> int:
     stop_watcher()
     stop_shuffler()
@@ -762,18 +787,7 @@ def launch(picks: dict[str, str], watch: bool = True,
             continue
         # Start them one at a time: each new window has to be identified before
         # the next appears, otherwise there is no way to tell which is which.
-        deadline = time.time() + 5
-        new_id = None
-        while time.time() < deadline:
-            current = screensaver_window_ids()
-            fresh = set(current) - before
-            if fresh:
-                new_id = max(fresh)
-                before |= fresh
-                break
-            if not os.path.exists(f"/proc/{pid}"):
-                break  # gave up before it ever had a window
-            time.sleep(0.15)
+        new_id = await_window(pid, before)
 
         if new_id is None and not os.path.exists(f"/proc/{pid}"):
             # A hack that dies before showing anything means the X server is
@@ -888,6 +902,116 @@ def start(only: str | None = None) -> int:
         if first_shared in picks:
             write_cycle(vintage_pool.index(picks[first_shared]))
     return rc
+
+
+def default_text_output() -> str | None:
+    """The laptop's own panel if one is connected, else the focused output.
+    An eDP connector is the built-in display by definition, so unlike the
+    externals (matched by serial everywhere else) its name is safe to key on."""
+    names = outputs()
+    panel = next((n for n in names if n.startswith("eDP")), None)
+    if panel:
+        return panel
+    focused = niri_json("focused-output") or {}
+    return focused.get("name") or (names[0] if names else None)
+
+
+def read_text_pid() -> int | None:
+    """The running `text` hack, if any. Checking the exe is what stops a
+    recycled pid from being taken for it -- and killed as it."""
+    try:
+        with open(TEXTFILE) as fh:
+            pid = int(fh.read().strip())
+        exe = os.path.realpath(os.readlink(f"/proc/{pid}/exe"))
+    except (OSError, ValueError):
+        return None
+    return pid if os.path.dirname(exe) == HACK_DIR else None
+
+
+def toggle_text(output: str | None, name: str | None) -> int:
+    """Just the journal text, on one screen, until toggled off again.
+
+    Unlike `test`, this is one screen and it is not the screensaver: no pidfile
+    entry, no dismiss-on-input watcher, no shuffler. It stays up while you work
+    on the other screens, which is the point.
+    """
+    pid = read_text_pid()
+    if pid:
+        kill_pids([pid])
+        try:
+            os.unlink(TEXTFILE)
+        except OSError:
+            pass
+        return 0
+
+    pool = available_providers(TEXT_POOL)
+    if name:
+        if name not in pool:
+            print(f"not an available text hack: {name} "
+                  f"(have: {', '.join(pool) or 'none'})", file=sys.stderr)
+            return 1
+        pool = [name]
+    if not pool:
+        print(f"neither phosphor nor apple2 found in {HACK_DIR}",
+              file=sys.stderr)
+        return 1
+    target = output or default_text_output()
+    if target and target not in outputs():
+        print(f"no such output: {target} (have: {', '.join(outputs())})",
+              file=sys.stderr)
+        return 1
+    if not ensure_xwayland():
+        return 1
+
+    was_window = (niri_json("focused-window") or {}).get("id")
+    was_output = (niri_json("focused-output") or {}).get("name")
+    # Open it on the target screen to begin with, instead of over whatever
+    # you're working on and then moving it: there is no window-rule to place
+    # it (phosphor/apple2 also serve the left external during the screensaver,
+    # so pinning their app-ids to one output would fight that).
+    if target:
+        niri_action("focus-monitor", target)
+
+    hack = random.choice(pool)
+    pid = new_id = None
+    for attempt in range(2):
+        before = set(screensaver_window_ids())
+        pid = spawn(hack)
+        if pid is None:
+            break
+        new_id = await_window(pid, before)
+        if new_id is not None or os.path.exists(f"/proc/{pid}"):
+            break
+        # Died before showing anything: the X server is wedged, same as in
+        # launch(). Replace it and try once more.
+        pid = None
+        if attempt or not restart_xwayland():
+            break
+
+    if pid is not None:
+        with open(TEXTFILE, "w") as fh:
+            fh.write(f"{pid}\n")
+        if new_id is not None and target:
+            niri_action("move-window-to-monitor", "--id", str(new_id), target)
+            # Focusing it is what scrolls it into view on that screen (see
+            # launch() for why fullscreen alone isn't enough)...
+            niri_action("focus-window", "--id", str(new_id))
+
+    # ...and focus goes straight back to where you were, so it's on the screen
+    # without taking your keyboard. Not if you were already on that screen,
+    # though: then it's covering what you were looking at anyway, and handing
+    # focus back would scroll it straight out of view again.
+    if was_output and was_output != target:
+        if was_window is not None:
+            niri_action("focus-window", "--id", str(was_window))
+        else:
+            niri_action("focus-monitor", was_output)
+
+    if pid is None:
+        print(f"{hack} exited immediately", file=sys.stderr)
+        return 1
+    print(f"{hack} -> {target or '<focused output>'}")
+    return 0
 
 
 def cycle(step: int | None) -> int:
@@ -1009,6 +1133,11 @@ def main() -> int:
     sub.add_parser("list", help="list installed hacks and the shortlist")
     t = sub.add_parser("test", help="run one hack by name on every monitor")
     t.add_argument("name")
+    x = sub.add_parser("text", help="toggle just the journal text on one "
+                       "screen (the laptop panel unless -o says otherwise)")
+    x.add_argument("name", nargs="?", choices=TEXT_POOL,
+                   help="which text hack (default: either, at random)")
+    x.add_argument("-o", "--output", help="connector name, e.g. DP-2")
     # Internal: the detached loop start_shuffler() spawns. Not meant to be
     # run by hand -- undocumented in the module docstring's USAGE list on
     # purpose, same reasoning as swayidle's own watcher subprocess.
@@ -1030,6 +1159,8 @@ def main() -> int:
     if args.cmd == "test":
         stop()
         return start(args.name)
+    if args.cmd == "text":
+        return toggle_text(args.output, args.name)
     if args.cmd == "_autoshuffle_loop":
         return autoshuffle_loop()
 
