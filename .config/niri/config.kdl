@@ -1077,12 +1077,14 @@ binds {
     // Example brightness key mappings for brightnessctl.
     // You can use regular spawn with multiple arguments too (to avoid going through "sh"),
     // but you need to manually put each argument in separate "" quotes.
-    XF86MonBrightnessUp allow-when-locked=true { spawn "brightnessctl" "--class=backlight" "set" "+10%"; }
-    XF86MonBrightnessDown allow-when-locked=true { spawn "brightnessctl" "--class=backlight" "set" "10%-"; }
+    // --exponent=2 steps along a squared curve, so each press moves less the
+    // dimmer it gets (100->81->64->...->9->4->1% raw) instead of a flat 10%.
+    XF86MonBrightnessUp allow-when-locked=true { spawn "brightnessctl" "--class=backlight" "--exponent=2" "set" "+10%"; }
+    XF86MonBrightnessDown allow-when-locked=true { spawn "brightnessctl" "--class=backlight" "--exponent=2" "set" "10%-"; }
 
     // 60%-friendly brightness: same -/= pair, one modifier over from volume.
-    Mod+Ctrl+Equal allow-when-locked=true hotkey-overlay-title="Brightness Up"   { spawn "brightnessctl" "--class=backlight" "set" "+10%"; }
-    Mod+Ctrl+Minus allow-when-locked=true hotkey-overlay-title="Brightness Down" { spawn "brightnessctl" "--class=backlight" "set" "10%-"; }
+    Mod+Ctrl+Equal allow-when-locked=true hotkey-overlay-title="Brightness Up"   { spawn "brightnessctl" "--class=backlight" "--exponent=2" "set" "+10%"; }
+    Mod+Ctrl+Minus allow-when-locked=true hotkey-overlay-title="Brightness Down" { spawn "brightnessctl" "--class=backlight" "--exponent=2" "set" "10%-"; }
 
     // Open/close the Overview: a zoomed-out view of workspaces and windows.
     // You can also move the mouse into the top-left hot corner,
