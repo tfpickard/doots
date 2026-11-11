@@ -1,4 +1,8 @@
 [[ -d "$HOME/Library/bin" ]] && export PATH="$HOME"/Library/bin:$PATH
+# Homebrew (Apple Silicon) must be on PATH before anything below probes for
+# brew-installed tools (direnv, fzf, pyenv, ...).
+[[ -d /opt/homebrew/bin ]] && \
+    export PATH="/opt/homebrew/bin:/opt/homebrew/opt/gnu-getopt/bin:$PATH"
 export PATH="$HOME"/.local/bin:$PATH
 # # =====================================================
 # #   POWERLEVEL10K INSTANT PROMPT
@@ -374,10 +378,6 @@ export PATH="$GOPATH/bin:$PATH"
 # =====================================================
 #   PATH CONFIGURATION
 # =====================================================
-# Add Homebrew to PATH
-[[ -d /opt/homebrew/bin ]] && \
-    export PATH="/opt/homebrew/bin:/opt/homebrew/opt/gnu-getopt/bin:$PATH"
-
 # Add local bin directories
 export PATH="$HOME/.local/share/nvim/bin:$PATH"
 
@@ -623,11 +623,11 @@ autoload -Uz add-zsh-hook && add-zsh-hook precmd _hist_cycle_end
 ZSH_AUTOSUGGEST_CLEAR_WIDGETS+=(hist-cycle-up hist-cycle-down)
 
 # bun completions
-[ -s "/home/tom/.bun/_bun" ] && source "/home/tom/.bun/_bun"
+[ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
 
 # bun
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
 
 # opencode
-export PATH=/home/tom/.opencode/bin:$PATH
+export PATH="$HOME/.opencode/bin:$PATH"
