@@ -200,8 +200,8 @@
         "format": "󰃠  {percent:>3}%",
         "min-length": 8,
         "align": 0.5,
-        "on-scroll-up": "brightnessctl set +5%",
-        "on-scroll-down": "brightnessctl set 5%-",
+        "on-scroll-up": "brightnessctl --exponent=2 set +5%",
+        "on-scroll-down": "brightnessctl --exponent=2 set 5%-",
         "tooltip": false
     },
     "network": {
