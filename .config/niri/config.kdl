@@ -1036,6 +1036,10 @@ binds {
     // -- mako has no toggle flag at all, only add/remove.
     Mod+Ctrl+N  hotkey-overlay-title="Toggle Do Not Disturb"      { spawn "/home/tom/.config/scripts/dnd.sh"; }
 
+    // Copy ~/.p/x to the clipboard. If it's missing, leave the clipboard alone
+    // and say so via whichever notification daemon is running.
+    Mod+Shift+X hotkey-overlay-title="Copy ~/.p/x to Clipboard" { spawn-sh "f=\"$HOME/.p/x\"; if [ -f \"$f\" ] && [ -r \"$f\" ]; then wl-copy < \"$f\"; else notify-send -u critical 'Clipboard' \"$f does not exist or is not readable\"; fi"; }
+
     // Use spawn-sh to run a shell command. Do this if you need pipes, multiple commands, etc.
     // Note: the entire command goes as a single argument. It's passed verbatim to `sh -c`.
     // For example, this is a standard bind to toggle the screen reader (orca).
